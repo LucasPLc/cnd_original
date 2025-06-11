@@ -17,44 +17,24 @@ import java.util.Optional;
 public class RegistroClienteService {
 
     private final ClienteRepository clienteRepository;
-    private final CadastroEmpresaService cadastroEmpresaService;
     private final EmpresaRepository empresaRepository;
     private final CndResultadoRepository cndResultadoRepository;
 
-//    @Transactional
-//    public Cliente salvar(Cliente cliente) {
-//
-//        if (cliente.getEmpresa() == null || cliente.getEmpresa().getIdEmpresa() == null) {
-//            throw new EmpresaVinculoObrigatorioException("É necessário informar uma empresa válida (fk_empresa).");
-//        }
-//
-//        // Verifica se empresa existe ou cadastra automaticamente
-//        Empresa empresa = cadastroEmpresaService.buscarOuCadastrarEmpresa(cliente.getEmpresa());
-//
-//        // Atualiza no cliente
-//        cliente.setEmpresa(empresa);
-//
-//        return clienteRepository.save(cliente);
-//    }
 @Transactional
 public Cliente salvar(Cliente cliente) {
     if (cliente.getEmpresa() == null || cliente.getEmpresa().getIdEmpresa() == null) {
         throw new EmpresaVinculoObrigatorioException("É necessário informar uma empresa válida (fk_empresa).");
     }
-
-    // Verifica se a empresa já existe
     Optional<Empresa> empresaExistente = empresaRepository.findByIdEmpresa(cliente.getEmpresa().getIdEmpresa());
 
     Empresa empresaSalva;
 
     if (empresaExistente.isPresent()) {
-        // Atualiza os dados da empresa existente (caso algo tenha mudado)
         Empresa empresa = empresaExistente.get();
         empresa.setNomeEmpresa(cliente.getEmpresa().getNomeEmpresa());
         empresa.setCnpj(cliente.getEmpresa().getCnpj());
         empresaSalva = empresaRepository.save(empresa);
     } else {
-        // Cria nova empresa
         empresaSalva = empresaRepository.save(cliente.getEmpresa());
     }
 

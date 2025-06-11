@@ -1,6 +1,5 @@
 package br.com.sisaudcon.saam.saam_sped_cnd.domain.model;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;

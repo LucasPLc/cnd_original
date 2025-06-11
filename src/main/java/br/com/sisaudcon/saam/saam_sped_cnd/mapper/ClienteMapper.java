@@ -23,7 +23,6 @@ public class ClienteMapper {
             empresa.setIdEmpresa(dto.getEmpresa().getIdEmpresa());
             empresa.setNomeEmpresa(dto.getEmpresa().getNomeEmpresa());
             empresa.setCnpj(dto.getEmpresa().getCnpj());
-            //empresa.setStatusEmpresa(dto.getEmpresa().getStatusEmpresa()); ver com o Pablo se passo esse status aqui acredito que ele vem de outro lugar
             cliente.setEmpresa(empresa);
         }
 

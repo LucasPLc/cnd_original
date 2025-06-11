@@ -5,7 +5,6 @@ import br.com.sisaudcon.saam.saam_sped_cnd.domain.model.Cliente;
 import br.com.sisaudcon.saam.saam_sped_cnd.domain.repository.ClienteRepository;
 import br.com.sisaudcon.saam.saam_sped_cnd.domain.service.RegistroClienteService;
 import br.com.sisaudcon.saam.saam_sped_cnd.dto.ClienteDTO;
-import br.com.sisaudcon.saam.saam_sped_cnd.exceptionhandler.GlobalExceptionHandler;
 import br.com.sisaudcon.saam.saam_sped_cnd.mapper.ClienteMapper;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;

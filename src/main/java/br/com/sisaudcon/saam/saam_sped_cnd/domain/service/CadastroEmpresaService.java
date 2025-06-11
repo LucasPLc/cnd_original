@@ -1,7 +1,5 @@
 package br.com.sisaudcon.saam.saam_sped_cnd.domain.service;
 
-import br.com.sisaudcon.saam.saam_sped_cnd.domain.exception.EmpresaNotFoundException;
-import br.com.sisaudcon.saam.saam_sped_cnd.domain.exception.InternalServerErrorException;
 import br.com.sisaudcon.saam.saam_sped_cnd.domain.model.Empresa;
 import br.com.sisaudcon.saam.saam_sped_cnd.domain.repository.EmpresaRepository;
 import lombok.AllArgsConstructor;
@@ -38,28 +36,4 @@ public class CadastroEmpresaService {
             return empresaRepository.save(novaEmpresa);
         }
     }
-
-//    private Empresa consultarEmpresaNoSAAM(String idEmpresa) {
-//        try {
-//
-//            System.out.println(">>> Buscando no SAAM...");
-//
-//            // Simulando falha (exemplo de erro de integração)
-//            if ("999999".equals(idEmpresa)) {
-//                throw new RuntimeException("Falha simulada na chamada ao SAAM");
-//            }
-//
-//            // Se não falhar, retorna uma empresa mock
-//            Empresa empresa = new Empresa();
-//            empresa.setCnpj("00.000.000/0001-" + idEmpresa);
-//            empresa.setNomeEmpresa("Empresa " + idEmpresa);
-//            empresa.setIdEmpresa(idEmpresa);
-//            empresa.setStatusEmpresa("ATIVA");
-//
-//            return empresa;
-//
-//        } catch (Exception ex) {
-//            throw new InternalServerErrorException("Erro na comunicação com o SAAM. Verifique o serviço externo.", ex);
-//        }
-//    }
 }
