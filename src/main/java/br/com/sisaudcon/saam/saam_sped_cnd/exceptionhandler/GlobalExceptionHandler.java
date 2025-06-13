@@ -89,4 +89,11 @@ public class GlobalExceptionHandler {
         body.put("error", ex.getMessage());
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(body);
     }
+    @ExceptionHandler(ClienteDuplicadoException.class)
+    public ResponseEntity<Map<String,String>> handleDuplicado(
+            ClienteDuplicadoException ex) {
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(Map.of("error", ex.getMessage()));
+    }
 }

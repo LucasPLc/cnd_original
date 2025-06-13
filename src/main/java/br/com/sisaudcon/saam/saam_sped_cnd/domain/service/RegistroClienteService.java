@@ -23,35 +23,40 @@ public class RegistroClienteService {
 
 @Transactional
 public Cliente salvar(Cliente cliente) {
-    if (cliente.getEmpresa() == null || cliente.getEmpresa().getIdEmpresa() == null) {
-        throw new EmpresaVinculoObrigatorioException("É necessário informar uma empresa válida (fk_empresa).");
+    // 1) valida fk_empresa
+    if (cliente.getEmpresa() == null
+            || cliente.getEmpresa().getIdEmpresa() == null) {
+        throw new EmpresaVinculoObrigatorioException(
+                "É necessário informar uma empresa válida (fk_empresa).");
     }
 
-    // Verifica se a empresa existe ou cadastra nova
-    Optional<Empresa> empresaExistenteOpt = empresaRepository.findByIdEmpresa(cliente.getEmpresa().getIdEmpresa());
-    Empresa empresaSalva;
-
-    if (empresaExistenteOpt.isPresent()) {
-        Empresa empresaExistente = empresaExistenteOpt.get();
-        empresaExistente.setNomeEmpresa(cliente.getEmpresa().getNomeEmpresa());
-        empresaExistente.setCnpj(cliente.getEmpresa().getCnpj());
-        empresaSalva = empresaRepository.save(empresaExistente);
-
-        // Verifica se já existe um cliente com o mesmo CNPJ para essa empresa
-        Optional<Cliente> clienteDuplicado = clienteRepository.findByCnpjAndEmpresa_IdEmpresa(
-                cliente.getCnpj(), cliente.getEmpresa().getIdEmpresa());
-
-        if (clienteDuplicado.isPresent()) {
-            throw new DataIntegrityViolationException("Já existe esse CNPJ para essa empresa.");
-        }
-
-    } else {
-        // Cria nova empresa
-        empresaSalva = empresaRepository.save(cliente.getEmpresa());
-    }
+    // 2) salva ou atualiza a empresa
+    Empresa empresaSalva = empresaRepository
+            .findByIdEmpresa(cliente.getEmpresa().getIdEmpresa())
+            .map(e -> {
+                e.setNomeEmpresa(cliente.getEmpresa().getNomeEmpresa());
+                e.setCnpj(cliente.getEmpresa().getCnpj());
+                return empresaRepository.save(e);
+            })
+            .orElseGet(() -> empresaRepository.save(cliente.getEmpresa()));
 
     cliente.setEmpresa(empresaSalva);
+
+    // 3) verifica duplicado
+    Optional<Cliente> dup = (cliente.getId() == null)
+            ? clienteRepository.findByCnpjAndEmpresa_IdEmpresa(
+            cliente.getCnpj(), empresaSalva.getIdEmpresa())
+            : clienteRepository.findByCnpjAndEmpresa_IdEmpresaAndIdNot(
+            cliente.getCnpj(), empresaSalva.getIdEmpresa(), cliente.getId());
+
+    if (dup.isPresent()) {
+        throw new DataIntegrityViolationException(
+                "Já existe esse CNPJ para essa empresa.");
+    }
+
+    // 4) salva o cliente
     return clienteRepository.save(cliente);
+
 }
 
     @Transactional
