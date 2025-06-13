@@ -44,27 +44,25 @@ public class ClienteController {
     }
 
     @PutMapping("/{clienteId}")
-    public ResponseEntity<ClienteDTO> atualizar(@PathVariable Integer clienteId,
-                                                @RequestBody @Valid ClienteDTO clienteDTO) {
+    public ClienteDTO atualizar(@PathVariable Integer clienteId,
+                                @RequestBody @Valid ClienteDTO clienteDTO) {
+        // se não existir, lança a exceção
         if (!clienteRepository.existsById(clienteId)) {
-            return ResponseEntity.notFound().build();
+            throw new ClienteNotFoundException("Cliente não encontrado para o ID informado.");
         }
-
         Cliente cliente = ClienteMapper.toEntity(clienteDTO);
         cliente.setId(clienteId);
-
-        Cliente clienteAtualizado = registroClienteService.salvar(cliente);
-        ClienteDTO clienteResposta = ClienteMapper.toDTO(clienteAtualizado);
-
-        return ResponseEntity.ok(clienteResposta);
+        Cliente atualizado = registroClienteService.salvar(cliente);
+        return ClienteMapper.toDTO(atualizado);
     }
-
     @DeleteMapping("/{clienteId}")
-    public ResponseEntity<Void> remover(@PathVariable Integer clienteId){
-        if(!clienteRepository.existsById(clienteId)){
-            return ResponseEntity.notFound().build();
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void remover(@PathVariable Integer clienteId) {
+        if (!clienteRepository.existsById(clienteId)) {
+            throw new ClienteNotFoundException("Cliente não encontrado para o ID informado.");
         }
         registroClienteService.excluir(clienteId);
-        return ResponseEntity.noContent().build();
     }
+
+
 }

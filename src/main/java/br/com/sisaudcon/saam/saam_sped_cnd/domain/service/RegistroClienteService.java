@@ -7,6 +7,7 @@ import br.com.sisaudcon.saam.saam_sped_cnd.domain.repository.ClienteRepository;
 import br.com.sisaudcon.saam.saam_sped_cnd.domain.repository.CndResultadoRepository;
 import br.com.sisaudcon.saam.saam_sped_cnd.domain.repository.EmpresaRepository;
 import lombok.AllArgsConstructor;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -25,38 +26,34 @@ public Cliente salvar(Cliente cliente) {
     if (cliente.getEmpresa() == null || cliente.getEmpresa().getIdEmpresa() == null) {
         throw new EmpresaVinculoObrigatorioException("É necessário informar uma empresa válida (fk_empresa).");
     }
-    Optional<Empresa> empresaExistente = empresaRepository.findByIdEmpresa(cliente.getEmpresa().getIdEmpresa());
 
+    // Verifica se a empresa existe ou cadastra nova
+    Optional<Empresa> empresaExistenteOpt = empresaRepository.findByIdEmpresa(cliente.getEmpresa().getIdEmpresa());
     Empresa empresaSalva;
 
-    if (empresaExistente.isPresent()) {
-        Empresa empresa = empresaExistente.get();
-        empresa.setNomeEmpresa(cliente.getEmpresa().getNomeEmpresa());
-        empresa.setCnpj(cliente.getEmpresa().getCnpj());
-        empresaSalva = empresaRepository.save(empresa);
+    if (empresaExistenteOpt.isPresent()) {
+        Empresa empresaExistente = empresaExistenteOpt.get();
+        empresaExistente.setNomeEmpresa(cliente.getEmpresa().getNomeEmpresa());
+        empresaExistente.setCnpj(cliente.getEmpresa().getCnpj());
+        empresaSalva = empresaRepository.save(empresaExistente);
+
+        // Verifica se já existe um cliente com o mesmo CNPJ para essa empresa
+        Optional<Cliente> clienteDuplicado = clienteRepository.findByCnpjAndEmpresa_IdEmpresa(
+                cliente.getCnpj(), cliente.getEmpresa().getIdEmpresa());
+
+        if (clienteDuplicado.isPresent()) {
+            throw new DataIntegrityViolationException("Já existe esse CNPJ para essa empresa.");
+        }
+
     } else {
+        // Cria nova empresa
         empresaSalva = empresaRepository.save(cliente.getEmpresa());
     }
 
     cliente.setEmpresa(empresaSalva);
-
-    // Verifica se o cliente já existe com base no CNPJ
-    Optional<Cliente> clienteExistente = clienteRepository.findByCnpj(cliente.getCnpj());
-
-    if (clienteExistente.isPresent()) {
-        Cliente clienteParaAtualizar = clienteExistente.get();
-        clienteParaAtualizar.setPeriodicidade(cliente.getPeriodicidade());
-        clienteParaAtualizar.setStatusCliente(cliente.getStatusCliente());
-        clienteParaAtualizar.setNacional(cliente.getNacional());
-        clienteParaAtualizar.setMunicipal(cliente.getMunicipal());
-        clienteParaAtualizar.setEstadual(cliente.getEstadual());
-        clienteParaAtualizar.setEmpresa(cliente.getEmpresa());
-
-        return clienteRepository.save(clienteParaAtualizar);
-    }
-
     return clienteRepository.save(cliente);
 }
+
     @Transactional
     public void excluir(Integer clienteId) {
 
