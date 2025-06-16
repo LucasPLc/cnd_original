@@ -47,7 +47,7 @@ public class SituacaoValidationService {
             situacao = Integer.parseInt(sit.toString());
 
         } catch (RestClientException ex) {
-            // 2) em caso de falha, faz fallback para o status armazenado localmente
+            // 2) em caso de falha, busca na cnd_empresa o status_empresa dessa empresa
             Empresa empLocal = empresaRepository.findByIdEmpresa(idEmpresa)
                     .orElseThrow(() ->
                             new ServicoValidacaoIndisponivelException(
@@ -78,7 +78,6 @@ public class SituacaoValidationService {
         return situacao;
     }
 
-    /** Sobrecarga para validar por clienteId diretamente */
     public void validarPorCliente(Integer clienteId, ClienteRepository clienteRepo) {
         Cliente cliente = clienteRepo.findById(clienteId)
                 .orElseThrow(() -> new ClienteNotFoundException(
