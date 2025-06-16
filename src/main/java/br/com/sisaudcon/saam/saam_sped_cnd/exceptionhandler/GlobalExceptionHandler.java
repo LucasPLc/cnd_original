@@ -96,4 +96,17 @@ public class GlobalExceptionHandler {
                 .status(HttpStatus.BAD_REQUEST)
                 .body(Map.of("error", ex.getMessage()));
     }
+    @ExceptionHandler(AcessoNegadoException.class)
+    public ResponseEntity<Map<String,String>> handleAcessoNegado(AcessoNegadoException ex) {
+        return ResponseEntity
+                .status(HttpStatus.FORBIDDEN)
+                .body(Map.of("error", "Acesso negado. Cliente sem autorização ativa."));
+    }
+
+    @ExceptionHandler(ServicoValidacaoIndisponivelException.class)
+    public ResponseEntity<Map<String,String>> handleIndisponivel(ServicoValidacaoIndisponivelException ex) {
+        return ResponseEntity
+                .status(HttpStatus.SERVICE_UNAVAILABLE)
+                .body(Map.of("error", "Serviço de validação indisponível. Tente novamente mais tarde."));
+    }
 }

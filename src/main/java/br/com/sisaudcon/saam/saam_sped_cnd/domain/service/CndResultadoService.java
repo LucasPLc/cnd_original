@@ -17,15 +17,18 @@ import java.time.OffsetDateTime;
 public class CndResultadoService{
     private final ClienteRepository clienteRepo;
     private final CndResultadoRepository resultadoRepository;
+    private final SituacaoValidationService situacaoValidationService;
 
     @Transactional
     public CndResultado criarResultado(CndResultado dto) {
-        // 1) verificar que o cliente existe
+        // busca cliente
         Cliente cliente = clienteRepo.findById(dto.getCliente().getId())
-                .orElseThrow(() -> new ClienteNotFoundException(
-                        "Cliente não encontrado para o ID informado."));
+                .orElseThrow(() -> new ClienteNotFoundException("Cliente não encontrado"));
 
-        // 2) popular data de processamento se vier nulo
+        //  valida situação
+        situacaoValidationService.validar(cliente.getEmpresa().getIdEmpresa());
+
+        //  popular data de processamento se vier nulo
         if (dto.getDataProcessamento() == null) {
             dto.setDataProcessamento(OffsetDateTime.now());
         }
