@@ -1,15 +1,15 @@
 package br.com.sisaudcon.saam.saam_sped_cnd.domain.service;
 
-import br.com.sisaudcon.saam.saam_sped_cnd.domain.exception.AcessoNegadoException;
-import br.com.sisaudcon.saam.saam_sped_cnd.domain.exception.ClienteNotFoundException;
-import br.com.sisaudcon.saam.saam_sped_cnd.domain.exception.ServicoValidacaoIndisponivelException;
+import br.com.sisaudcon.saam.saam_sped_cnd.domain.exception.*;
 import br.com.sisaudcon.saam.saam_sped_cnd.domain.model.Cliente;
 import br.com.sisaudcon.saam.saam_sped_cnd.domain.model.Empresa;
 import br.com.sisaudcon.saam.saam_sped_cnd.domain.repository.ClienteRepository;
 import br.com.sisaudcon.saam.saam_sped_cnd.domain.repository.EmpresaRepository;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
@@ -30,30 +30,44 @@ public class SituacaoValidationService {
     }
 
     public int validarAutorizacaoEmpresa(String idEmpresa) {
-        int situacao;
+        // 0) idEmpresa ausente ou mal formatado
+        if (idEmpresa == null || idEmpresa.isBlank()) {
+            throw new ClienteIdInvalidoException("IDCLIENTE inválido ou não informado.");
+        }
 
-        // 1) tenta chamar o serviço externo
+        int situacao;
         try {
+            // 1) chamada externa
             ResponseEntity<Map> resp = restTemplate.getForEntity(
                     validationUrl, Map.class, idEmpresa
             );
-            if (!resp.getStatusCode().is2xxSuccessful() || resp.getBody() == null) {
+
+            // 2) se 404 ou 400, trata como ID inválido
+            HttpStatus status = HttpStatus.valueOf(resp.getStatusCode().value());
+            if (status == HttpStatus.BAD_REQUEST || status == HttpStatus.NOT_FOUND) {
+                throw new ClienteIdInvalidoException("IDCLIENTE inválido ou não informado.");
+            }
+
+            if (!status.is2xxSuccessful() || resp.getBody() == null) {
                 throw new RestClientException("Resposta inválida");
             }
+
             Object sit = resp.getBody().get("situacao");
             if (sit == null) {
                 throw new RestClientException("Campo 'situacao' ausente");
             }
             situacao = Integer.parseInt(sit.toString());
 
+        } catch (HttpClientErrorException.NotFound | HttpClientErrorException.BadRequest ex) {
+            // Erro 404 / 400 da API externa
+            throw new ClienteIdInvalidoException("IDCLIENTE inválido ou não informado.");
         } catch (RestClientException ex) {
-            // 2) em caso de falha, busca na cnd_empresa o status_empresa dessa empresa
-            Empresa empLocal = empresaRepository.findByIdEmpresa(idEmpresa)
-                    .orElseThrow(() ->
-                            new ServicoValidacaoIndisponivelException(
-                                    "Serviço de validação indisponível. Tente novamente mais tarde."
-                            )
-                    );
+            // Timeout, 5xx ou falha de comunicação → fallback
+            Optional<Empresa> empLocalOpt = empresaRepository.findByIdEmpresa(idEmpresa);
+            Empresa empLocal = empLocalOpt.orElseThrow(() ->
+                    new ClienteIdInvalidoException("IDCLIENTE inválido ou não informado.")
+            );
+
             String statusLocal = empLocal.getStatusEmpresa();
             if (statusLocal == null) {
                 throw new ServicoValidacaoIndisponivelException(
@@ -63,18 +77,19 @@ public class SituacaoValidationService {
             situacao = Integer.parseInt(statusLocal);
         }
 
-        // 3) grava sempre o status mais recente no banco
-        Optional<Empresa> optEmp = empresaRepository.findByIdEmpresa(idEmpresa);
-        if (optEmp.isPresent()) {
-            Empresa emp = optEmp.get();
-            emp.setStatusEmpresa(String.valueOf(situacao));
-            empresaRepository.save(emp);
+        final int situacaoFinal = situacao;
+
+        empresaRepository.findByIdEmpresa(idEmpresa)
+                .ifPresent(emp -> {
+                    emp.setStatusEmpresa(String.valueOf(situacaoFinal));
+                    empresaRepository.save(emp);
+                });
+
+        // 5) se não for “1”, nega o acesso
+        if (situacao != 1) {
+            throw new ClienteNaoAutorizadoException("Acesso negado. Cliente sem autorização ativa.");
         }
 
-        // 4) se não for “1”, nega o acesso
-        if (situacao != 1) {
-            throw new AcessoNegadoException("Acesso negado. Cliente sem autorização ativa.");
-        }
         return situacao;
     }
 

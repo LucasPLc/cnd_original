@@ -59,13 +59,6 @@ public class GlobalExceptionHandler {
 
         return new ResponseEntity<>(body, HttpStatus.CONFLICT); // 409 Conflict
     }
-    @ExceptionHandler(InternalServerErrorException.class)
-    public ResponseEntity<Object> handleInternalServerError(InternalServerErrorException ex) {
-        Map<String, String> body = new HashMap<>();
-        body.put("error", "Erro na comunicação com o SAAM. Verifique o serviço externo.");
-
-        return new ResponseEntity<>(body, HttpStatus.BAD_GATEWAY); // 502 Bad Gateway
-    }
     @ExceptionHandler(HttpMessageNotReadableException.class)
     public ResponseEntity<Map<String,String>> handleInvalidFormat(HttpMessageNotReadableException ex) {
         Map<String,String> body = new HashMap<>();
@@ -102,11 +95,35 @@ public class GlobalExceptionHandler {
                 .status(HttpStatus.FORBIDDEN)
                 .body(Map.of("error", "Acesso negado. Cliente sem autorização ativa."));
     }
+    @ExceptionHandler(ClienteIdInvalidoException.class)
+    public ResponseEntity<Map<String,String>> handleIdInvalido(ClienteIdInvalidoException ex) {
+        return ResponseEntity
+                .badRequest()
+                .body(Map.of("error", ex.getMessage()));
+    }
 
+    // 403 Forbidden — status ≠ 1
+    @ExceptionHandler(ClienteNaoAutorizadoException.class)
+    public ResponseEntity<Map<String,String>> handleNaoAutorizado(ClienteNaoAutorizadoException ex) {
+        return ResponseEntity
+                .status(HttpStatus.FORBIDDEN)
+                .body(Map.of("error", ex.getMessage()));
+    }
+
+    // 503 Service Unavailable — timeout, 5xx ou falha de comunicação
     @ExceptionHandler(ServicoValidacaoIndisponivelException.class)
     public ResponseEntity<Map<String,String>> handleIndisponivel(ServicoValidacaoIndisponivelException ex) {
         return ResponseEntity
                 .status(HttpStatus.SERVICE_UNAVAILABLE)
-                .body(Map.of("error", "Serviço de validação indisponível. Tente novamente mais tarde."));
+                .body(Map.of("error", ex.getMessage()));
     }
+
+    // 500 Internal Server Error — demais falhas
+    @ExceptionHandler(InternalServerErrorException.class)
+    public ResponseEntity<Map<String,String>> handleInternal(InternalServerErrorException ex) {
+        return ResponseEntity
+                .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(Map.of("error", "Erro interno no servidor. Tente novamente mais tarde."));
+    }
+
 }
