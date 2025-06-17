@@ -26,7 +26,7 @@ public class CndResultadoService{
                 .orElseThrow(() -> new ClienteNotFoundException("Cliente não encontrado"));
 
         //  valida situação
-        situacaoValidationService.validar(cliente.getEmpresa().getIdEmpresa());
+        situacaoValidationService.validarAutorizacaoEmpresa(cliente.getEmpresa().getIdEmpresa());
 
         //  popular data de processamento se vier nulo
         if (dto.getDataProcessamento() == null) {

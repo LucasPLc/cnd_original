@@ -22,14 +22,14 @@ public class SituacaoValidationService {
     private final RestTemplate restTemplate = new RestTemplate();
     private final EmpresaRepository empresaRepository;
 
-    @Value("${saam.validation.url:http://saamauditoria-2.com.br:8085/api/empresa/getAttributeById/{idEmpresa}?attribute=situacao}")
+    @Value("${saam.validation.url}")
     private String validationUrl;
 
     public SituacaoValidationService(EmpresaRepository empresaRepository) {
         this.empresaRepository = empresaRepository;
     }
 
-    public int validar(String idEmpresa) {
+    public int validarAutorizacaoEmpresa(String idEmpresa) {
         int situacao;
 
         // 1) tenta chamar o serviço externo
@@ -83,6 +83,6 @@ public class SituacaoValidationService {
                 .orElseThrow(() -> new ClienteNotFoundException(
                         "Cliente não encontrado para o ID informado."
                 ));
-        validar(cliente.getEmpresa().getIdEmpresa());
+        validarAutorizacaoEmpresa(cliente.getEmpresa().getIdEmpresa());
     }
 }

@@ -39,7 +39,7 @@ public class ClienteController {
     @ResponseStatus(HttpStatus.CREATED)
     public ClienteDTO cadastrar(@RequestBody @Valid ClienteDTO clienteDTO) {
         Cliente cliente = ClienteMapper.toEntity(clienteDTO);
-        Cliente clienteSalvo = registroClienteService.salvar(cliente);
+        Cliente clienteSalvo = registroClienteService.salvarClienteComEmpresa(cliente);
         return ClienteMapper.toDTO(clienteSalvo);
     }
 
@@ -52,7 +52,7 @@ public class ClienteController {
         }
         Cliente cliente = ClienteMapper.toEntity(clienteDTO);
         cliente.setId(clienteId);
-        Cliente atualizado = registroClienteService.salvar(cliente);
+        Cliente atualizado = registroClienteService.salvarClienteComEmpresa(cliente);
         return ClienteMapper.toDTO(atualizado);
     }
     @DeleteMapping("/{clienteId}")
