@@ -37,7 +37,7 @@ deploy:
   before_script:
     - apk add --no-cache curl
   script:
-    - 'curl -H "Authorization: Bearer $WATCHTOWER_HTTP_API_TOKEN" http://201.182.97.84:8084/v1/update'
+    - 'curl -H "Authorization: Bearer $WATCHTOWER_HTTP_API_TOKEN" http://201.182.97.84:8086/v1/update'
   only:
     refs:
       - main
