@@ -1,5 +1,5 @@
 CREATE TABLE cnd_empresa (
-    id INT PRIMARY KEY,
+    id SERIAL PRIMARY KEY,
     cnpj VARCHAR(18) NOT NULL,
     nome_empresa VARCHAR(255),
     id_empresa VARCHAR(6),
