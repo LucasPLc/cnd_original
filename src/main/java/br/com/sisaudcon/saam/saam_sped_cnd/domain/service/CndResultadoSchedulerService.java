@@ -41,8 +41,13 @@ public class CndResultadoSchedulerService {
         List<CndResultado> atualizados = new ArrayList<>();
 
         for (CndResultado resultado : pendentes) {
+            String base64 = resultado.getArquivo();
+            if (base64 == null || base64.isBlank()) {
+                log.warn("CND #{} ignorada: campo 'arquivo' vazio ou nulo.", resultado.getId());
+                continue;
+            }
             try {
-                Map<String, String> dados = CndParserUtil.extrairDadosCndBase64(resultado.getArquivo());
+                Map<String, String> dados = CndParserUtil.extrairDadosCndBase64(base64);
 
                 String situacao = dados.get("situacao");
                 if (situacao != null && !situacao.isEmpty()) {
