@@ -26,7 +26,7 @@ public class CndParserUtil {
             texto = texto.replace('\u00A0', ' ')
                     .replaceAll("\\s+", " ");
 
-            // 3) Extrair SITUAÇÃO: entre "CERTIDÃO POSITIVA" e "Nome:"
+            // 3) Extrair SITUAÇÃO: entre "CERTIDÃO POSITIVA" e "DE DÉBITOS:"
             int iSit = texto.indexOf("CERTIDÃO POSITIVA");
             int iNome = texto.indexOf("DE DÉBITOS");
             if (iSit >= 0 && iNome > iSit) {
@@ -35,17 +35,14 @@ public class CndParserUtil {
                 );
             }
 
-            // 4) dataEmissao: entre "Emitida às " e " <"
             dados.put("dataEmissao",
                     extrairEntre(texto, "Emitida às ", " <")
             );
 
-            // 5) dataValidade: entre "Válida até " e o ponto final "."
             dados.put("dataValidade",
                     extrairEntre(texto, "Válida até ", ".")
             );
 
-            // 6) codigoControle: entre "Código de controle da certidão: " e o próximo espaço ou fim
             dados.put("codigoControle",
                     extrairEntre(texto, "Código de controle da certidão: ", " ")
             );
