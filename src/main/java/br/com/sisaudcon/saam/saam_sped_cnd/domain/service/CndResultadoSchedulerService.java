@@ -53,7 +53,7 @@ public class CndResultadoSchedulerService {
 
                 String emissaoRaw = dados.get("dataEmissao");
                 if (emissaoRaw != null) {
-                    String dataPart = extractDateFromString(emissaoRaw); // método separado para extrair data
+                    String dataPart = extractDateFromString(emissaoRaw);
                     if (dataPart != null) {
                         LocalDate dataEmissao = LocalDate.parse(dataPart, dateFormatter);
                         resultado.setDataEmissao(dataEmissao);
