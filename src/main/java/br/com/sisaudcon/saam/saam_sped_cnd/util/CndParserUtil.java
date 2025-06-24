@@ -10,45 +10,39 @@ import java.util.Map;
 
 public class CndParserUtil {
 
-    public static Map<String, String> extrairDadosCndBase64(String base64Arquivo) {
-        Map<String, String> dados = new HashMap<>();
-
+    public static String extrairTextoBase64(String base64Arquivo) {
         try {
             byte[] decodedBytes = Base64.getDecoder().decode(base64Arquivo);
-
-            // 2) Extrai texto e normaliza espaços
             String texto;
             try (PDDocument document = PDDocument.load(new ByteArrayInputStream(decodedBytes))) {
                 texto = new PDFTextStripper().getText(document);
             }
-            // Normaliza NBSP e múltiplos espaços
-            texto = texto.replace('\u00A0', ' ')
+            // Normalize NBSP e múltiplos espaços em branco
+            return texto.replace('\u00A0', ' ')
                     .replaceAll("\\s+", " ");
-
-            // 3) Extrair SITUAÇÃO: entre "CERTIDÃO POSITIVA" e "DE DÉBITOS:"
-            int iSit = texto.indexOf("CERTIDÃO POSITIVA");
-            int iNome = texto.indexOf("DE DÉBITOS");
-            if (iSit >= 0 && iNome > iSit) {
-                dados.put("situacao",
-                        texto.substring(iSit, iNome).trim()
-                );
-            }
-
-            dados.put("dataEmissao",
-                    extrairEntre(texto, "Emitida às ", " <")
-            );
-
-            dados.put("dataValidade",
-                    extrairEntre(texto, "Válida até ", ".")
-            );
-
-            dados.put("codigoControle",
-                    extrairEntre(texto, "Código de controle da certidão: ", " ")
-            );
-
         } catch (Exception e) {
-            throw new RuntimeException("Erro ao extrair dados do PDF da CND", e);
+            throw new RuntimeException("Erro ao extrair texto do PDF da CND", e);
         }
+    }
+
+    public static Map<String, String> extrairDadosCndBase64(String base64Arquivo) {
+        Map<String, String> dados = new HashMap<>();
+        String texto = extrairTextoBase64(base64Arquivo);
+
+        int iSit = texto.indexOf("CERTIDÃO");
+        int iNome = texto.indexOf("DE DÉBITOS");
+        if (iSit >= 0 && iNome > iSit) {
+            dados.put("situacao", texto.substring(iSit, iNome).trim());
+        }
+
+        dados.put("dataEmissao", extrairEntre(texto, "Emitida às ", " <"));
+
+        dados.put("dataValidade", extrairEntre(texto, "Válida até ", "."));
+
+        dados.put(
+                "codigoControle",
+                extrairEntre(texto, "Código de controle da certidão: ", " ")
+        );
 
         return dados;
     }
@@ -58,9 +52,9 @@ public class CndParserUtil {
         if (i0 < 0) return null;
         int start = i0 + inicio.length();
         int i1 = texto.indexOf(fim, start);
-
-        // se não achar o 'fim', retorna até o final do texto
-        if (i1 < 0) return texto.substring(start).trim();
+        if (i1 < 0) {
+            return texto.substring(start).trim();
+        }
         return texto.substring(start, i1).trim();
     }
 }

@@ -11,6 +11,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -21,7 +22,6 @@ public class CndResultadoSchedulerService {
     private final CndResultadoRepository repository;
     private final DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
 
-    // Cron configurável em application.properties
     @Value("${cnd.resultado.scheduled.cron}")
     private String cron;
 
@@ -34,24 +34,32 @@ public class CndResultadoSchedulerService {
     public void processarNovosResultados() {
         log.info("Iniciando extração de dados de CND para resultados pendentes...");
 
-        // 1) Buscar só os registros concluídos e sem situação
-        List<CndResultado> pendentes = repository.findByStatusAndSituacaoIsNull("concluido");
+        final String STATUS_CONCLUIDO = "concluido";
+        List<CndResultado> pendentes = repository.findByStatusAndSituacaoIsNull(STATUS_CONCLUIDO);
         log.info("Encontrados {} registros pendentes", pendentes.size());
+
+        List<CndResultado> atualizados = new ArrayList<>();
 
         for (CndResultado resultado : pendentes) {
             try {
-                // 2) Extrair campos do PDF Base64
                 Map<String, String> dados = CndParserUtil.extrairDadosCndBase64(resultado.getArquivo());
 
-                // 3) Setar situação
-                resultado.setSituacao(dados.get("situacao"));
+                String situacao = dados.get("situacao");
+                if (situacao != null && !situacao.isEmpty()) {
+                    resultado.setSituacao(situacao);
+                } else {
+                    log.warn("Situacao ausente para CND #{}", resultado.getId());
+                }
 
                 String emissaoRaw = dados.get("dataEmissao");
                 if (emissaoRaw != null) {
-                    // extrair parte dd/MM/yyyy após "do dia "
-                    String dataPart = emissaoRaw.substring(emissaoRaw.lastIndexOf(' ') + 1);
-                    LocalDate dataEmissao = LocalDate.parse(dataPart, dateFormatter);
-                    resultado.setDataEmissao(dataEmissao);
+                    String dataPart = extractDateFromString(emissaoRaw); // método separado para extrair data
+                    if (dataPart != null) {
+                        LocalDate dataEmissao = LocalDate.parse(dataPart, dateFormatter);
+                        resultado.setDataEmissao(dataEmissao);
+                    } else {
+                        log.warn("Data de emissão não encontrada no texto '{}' para CND #{}", emissaoRaw, resultado.getId());
+                    }
                 }
 
                 String validadeRaw = dados.get("dataValidade");
@@ -59,16 +67,30 @@ public class CndResultadoSchedulerService {
                     LocalDate dataValidade = LocalDate.parse(validadeRaw, dateFormatter);
                     resultado.setDataValidade(dataValidade);
                 }
+
                 resultado.setCodigoControle(dados.get("codigoControle"));
 
-                repository.save(resultado);
-                log.info("Registro CND #{} atualizado com sucesso", resultado.getId());
+                atualizados.add(resultado);
 
             } catch (Exception ex) {
-                log.error("Falha ao processar CND #{}: {}", resultado.getId(), ex.getMessage());
+                log.error("Falha ao processar CND #{}: ", resultado.getId(), ex);
             }
+        }
+
+        if (!atualizados.isEmpty()) {
+            repository.saveAll(atualizados);
+            log.info("{} registros CND atualizados com sucesso.", atualizados.size());
+        } else {
+            log.info("Nenhum registro CND atualizado.");
         }
 
         log.info("Finalizada extração de dados de CND.");
     }
+    private String extractDateFromString(String raw) {
+        if (raw == null || raw.isEmpty()) return null;
+        String[] parts = raw.trim().split(" ");
+        String possibleDate = parts[parts.length - 1];
+        return possibleDate;
+    }
+
 }
