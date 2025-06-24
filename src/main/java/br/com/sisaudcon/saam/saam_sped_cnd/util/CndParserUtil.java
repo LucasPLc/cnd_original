@@ -17,7 +17,6 @@ public class CndParserUtil {
             try (PDDocument document = PDDocument.load(new ByteArrayInputStream(decodedBytes))) {
                 texto = new PDFTextStripper().getText(document);
             }
-            // Normalize NBSP e múltiplos espaços em branco
             return texto.replace('\u00A0', ' ')
                     .replaceAll("\\s+", " ");
         } catch (Exception e) {
