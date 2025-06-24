@@ -14,7 +14,6 @@ public class CndParserUtil {
         Map<String, String> dados = new HashMap<>();
 
         try {
-            // 1) Decode
             byte[] decodedBytes = Base64.getDecoder().decode(base64Arquivo);
 
             // 2) Extrai texto e normaliza espaços
@@ -59,6 +58,7 @@ public class CndParserUtil {
         if (i0 < 0) return null;
         int start = i0 + inicio.length();
         int i1 = texto.indexOf(fim, start);
+
         // se não achar o 'fim', retorna até o final do texto
         if (i1 < 0) return texto.substring(start).trim();
         return texto.substring(start, i1).trim();

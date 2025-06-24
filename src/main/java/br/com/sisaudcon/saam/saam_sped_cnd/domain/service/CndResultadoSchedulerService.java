@@ -46,7 +46,6 @@ public class CndResultadoSchedulerService {
                 // 3) Setar situação
                 resultado.setSituacao(dados.get("situacao"));
 
-                // 4) Data de emissão (somente data)
                 String emissaoRaw = dados.get("dataEmissao");
                 if (emissaoRaw != null) {
                     // extrair parte dd/MM/yyyy após "do dia "
@@ -55,23 +54,18 @@ public class CndResultadoSchedulerService {
                     resultado.setDataEmissao(dataEmissao);
                 }
 
-                // 5) Data de validade
                 String validadeRaw = dados.get("dataValidade");
                 if (validadeRaw != null) {
                     LocalDate dataValidade = LocalDate.parse(validadeRaw, dateFormatter);
                     resultado.setDataValidade(dataValidade);
                 }
-
-                // 6) Código de controle
                 resultado.setCodigoControle(dados.get("codigoControle"));
 
-                // 7) Salvar alterações
                 repository.save(resultado);
                 log.info("Registro CND #{} atualizado com sucesso", resultado.getId());
 
             } catch (Exception ex) {
                 log.error("Falha ao processar CND #{}: {}", resultado.getId(), ex.getMessage());
-                // continuar para os próximos
             }
         }
 
