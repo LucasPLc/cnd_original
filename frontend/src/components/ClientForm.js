@@ -45,12 +45,13 @@ const ClientForm = ({ clientToEdit, onCreate, onUpdate, onClose, isOpen }) => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (clientToEdit && !clientToEdit.id) {
+    if (clientToEdit && !formData.id) {
         console.error("Tentativa de atualização sem ID de cliente.");
         return; // Salvaguarda para não enviar requisição sem ID
     }
 
     const payload = {
+      id: formData.id,
       cnpj: formData.cnpj,
       periodicidade: formData.periodicidade,
       statusCliente: formData.statusCliente,
@@ -65,7 +66,7 @@ const ClientForm = ({ clientToEdit, onCreate, onUpdate, onClose, isOpen }) => {
     };
 
     if (clientToEdit) {
-      onUpdate(clientToEdit.id, payload);
+      onUpdate(formData.id, payload);
     } else {
       onCreate(payload);
     }

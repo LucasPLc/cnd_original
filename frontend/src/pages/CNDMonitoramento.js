@@ -61,10 +61,9 @@ const CNDMonitoramento = () => {
         try {
             await axios.delete(`/api/clientes/${clientToDelete.id}`);
             fetchClients();
+            setClientToDelete(null); // Fechar o modal de confirmação
         } catch (error) {
             console.error("Erro ao excluir cliente:", error);
-        } finally {
-            setClientToDelete(null);
         }
     };
 
