@@ -36,10 +36,10 @@ const CNDMonitoramento = () => {
         closeModal();
     };
 
-    const handleDelete = async () => {
-        if (!clientToDelete) return;
+    const handleDelete = async (clientId) => {
+        if (!clientId) return;
         try {
-            await axios.delete(`/api/clientes/${clientToDelete.id}`);
+            await axios.delete(`/api/clientes/${clientId}`);
             fetchClients();
         } catch (error) {
             console.error("Erro ao excluir cliente:", error);
@@ -105,6 +105,7 @@ const CNDMonitoramento = () => {
             justifyContent: 'space-between',
             alignItems: 'center',
             gap: theme.spacing.md,
+            flexWrap: 'wrap', // Adicionado para responsividade
         },
         inputGroup: {
             position: 'relative',
@@ -290,7 +291,7 @@ const CNDMonitoramento = () => {
                                     <td style={{...styles.td, textAlign: 'right'}}>
                                         <div style={{display: 'flex', gap: theme.spacing.sm, justifyContent: 'flex-end'}}>
                                             <button onClick={() => openModal(client)} style={styles.actionButton}><Edit size={18} /></button>
-                                            <button onClick={() => setClientToDelete(client)} style={{...styles.actionButton, color: theme.colors.destructive}}><Trash2 size={18} /></button>
+                                            <button onClick={() => handleDelete(client.id)} style={{...styles.actionButton, color: theme.colors.destructive}}><Trash2 size={18} /></button>
                                         </div>
                                     </td>
                                 </tr>
@@ -304,19 +305,7 @@ const CNDMonitoramento = () => {
                 <ClientForm clientToEdit={clientToEdit} onFormSubmit={handleFormSubmit} onClose={closeModal} />
             </Modal>
 
-            <Modal isOpen={!!clientToDelete} onClose={() => setClientToDelete(null)} title="Confirmar Exclusão">
-                <div>
-                    <p style={{marginBottom: theme.spacing.lg}}>Tem certeza de que deseja excluir o cliente com CNPJ: {clientToDelete?.cnpj}?</p>
-                    <div style={{display: 'flex', justifyContent: 'flex-end', gap: theme.spacing.md}}>
-                        <InteractiveButton onClick={() => setClientToDelete(null)} variant="secondary">
-                            Cancelar
-                        </InteractiveButton>
-                        <InteractiveButton onClick={handleDelete} variant="destructive">
-                            Excluir
-                        </InteractiveButton>
-                    </div>
-                </div>
-            </Modal>
+            {/* O modal de exclusão foi removido pois a exclusão agora é direta */}
         </div>
     );
 };
