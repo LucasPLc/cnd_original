@@ -66,19 +66,25 @@ const CndMonitor = () => {
     setLoading(true);
     try {
       const response = await axios.get('/api/clientes');
-      const mockedResults = response.data.map(cliente => ({
-        id: cliente.id,
-        dataProcessamento: new Date().toISOString(),
-        status: 'concluido',
-        situacao: 'Regular',
-        dataEmissao: '2023-10-27',
-        dataValidade: '2024-04-27',
-        codigoControle: 'XYZ-ABC-123',
-        arquivo: true,
-        cliente: cliente
-      }));
-      setAllResults(mockedResults);
-      setFilteredResults(mockedResults);
+      // A API de clientes retorna um array de ClienteDTO.
+      // Precisamos mapear isso para o formato que a tabela espera.
+      const results = response.data.map(cliente => {
+        // Como a API principal é de clientes, vamos criar um resultado de CND mockado
+        // para cada cliente, já que não temos um endpoint que junte os dados.
+        return {
+          id: cliente.id, // Usando o ID do cliente como chave única para o resultado mockado
+          dataProcessamento: new Date().toISOString(),
+          status: 'concluído',
+          situacao: 'Não consultado',
+          dataEmissao: null,
+          dataValidade: null,
+          codigoControle: null,
+          arquivo: false, // O arquivo só existe se a CND foi baixada
+          cliente: cliente, // O objeto completo do cliente
+        };
+      });
+      setAllResults(results);
+      setFilteredResults(results);
     } catch (error) {
       console.error("Erro ao buscar dados:", error);
     } finally {
