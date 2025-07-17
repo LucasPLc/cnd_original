@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import theme from '../theme';
 
 const ClientForm = ({ clientToEdit, onFormSubmit, onClose }) => {
   const [formData, setFormData] = useState({
@@ -37,8 +38,8 @@ const ClientForm = ({ clientToEdit, onFormSubmit, onClose }) => {
       ...formData,
       empresa: {
         idEmpresa: formData.fk_empresa,
-        cnpj: "00.000.000/0000-00", // Mock or fetch real data if needed
-        nomeEmpresa: "Empresa Mock" // Mock or fetch real data if needed
+        cnpj: "00.000.000/0000-00",
+        nomeEmpresa: "Empresa Mock"
       }
     };
     delete payload.fk_empresa;
@@ -55,48 +56,103 @@ const ClientForm = ({ clientToEdit, onFormSubmit, onClose }) => {
     }
   };
 
+  // --- STYLES OBJECT ---
+  const styles = {
+    form: {
+        display: 'flex',
+        flexDirection: 'column',
+        gap: theme.spacing.lg,
+    },
+    label: {
+        display: 'block',
+        fontSize: '0.875rem',
+        fontWeight: 500,
+        color: '#374151', // text-gray-700
+        marginBottom: theme.spacing.xs,
+    },
+    input: {
+        display: 'block',
+        width: '100%',
+        padding: `${theme.spacing.sm} ${theme.spacing.sm}`,
+        border: `1px solid ${theme.colors.border}`,
+        borderRadius: theme.borderRadius.md,
+        boxShadow: theme.shadows.sm,
+    },
+    checkboxContainer: {
+        display: 'flex',
+        alignItems: 'center',
+    },
+    checkboxLabel: {
+        marginLeft: theme.spacing.sm,
+        fontSize: '0.875rem',
+        color: '#111827', // text-gray-900
+    },
+    buttonContainer: {
+        display: 'flex',
+        justifyContent: 'flex-end',
+        gap: theme.spacing.md,
+    },
+    button: {
+        padding: `${theme.spacing.sm} ${theme.spacing.md}`,
+        fontSize: '0.875rem',
+        fontWeight: 500,
+        borderRadius: theme.borderRadius.md,
+        border: '1px solid transparent',
+        cursor: 'pointer',
+    },
+    buttonSecondary: {
+        color: '#374151', // text-gray-700
+        backgroundColor: theme.colors.background,
+        borderColor: theme.colors.border,
+    },
+    buttonPrimary: {
+        color: theme.colors.primaryForeground,
+        backgroundColor: theme.colors.primary,
+    }
+  };
+
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <form onSubmit={handleSubmit} style={styles.form}>
       <div>
-        <label htmlFor="cnpj" className="block text-sm font-medium text-gray-700">CNPJ</label>
-        <input id="cnpj" name="cnpj" value={formData.cnpj} onChange={handleChange} placeholder="XX.XXX.XXX/XXXX-XX" required className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-brand-primary focus:border-brand-primary sm:text-sm" />
+        <label htmlFor="cnpj" style={styles.label}>CNPJ</label>
+        <input id="cnpj" name="cnpj" value={formData.cnpj} onChange={handleChange} placeholder="XX.XXX.XXX/XXXX-XX" required style={styles.input} />
       </div>
       <div>
-        <label htmlFor="fk_empresa" className="block text-sm font-medium text-gray-700">ID da Empresa</label>
-        <input id="fk_empresa" name="fk_empresa" value={formData.fk_empresa} onChange={handleChange} placeholder="ID da Empresa no sistema SAAM" required className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-brand-primary focus:border-brand-primary sm:text-sm" />
+        <label htmlFor="fk_empresa" style={styles.label}>ID da Empresa</label>
+        <input id="fk_empresa" name="fk_empresa" value={formData.fk_empresa} onChange={handleChange} placeholder="ID da Empresa no sistema SAAM" required style={styles.input} />
       </div>
       <div>
-        <label htmlFor="periodicidade" className="block text-sm font-medium text-gray-700">Periodicidade (dias)</label>
-        <input id="periodicidade" name="periodicidade" type="number" value={formData.periodicidade} onChange={handleChange} required className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-brand-primary focus:border-brand-primary sm:text-sm" />
+        <label htmlFor="periodicidade" style={styles.label}>Periodicidade (dias)</label>
+        <input id="periodicidade" name="periodicidade" type="number" value={formData.periodicidade} onChange={handleChange} required style={styles.input} />
       </div>
        <div>
-        <label htmlFor="statusCliente" className="block text-sm font-medium text-gray-700">Status</label>
-        <input id="statusCliente" name="statusCliente" value={formData.statusCliente} onChange={handleChange} required className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-brand-primary focus:border-brand-primary sm:text-sm" />
+        <label htmlFor="statusCliente" style={styles.label}>Status</label>
+        <input id="statusCliente" name="statusCliente" value={formData.statusCliente} onChange={handleChange} required style={styles.input} />
       </div>
 
       <fieldset>
-        <legend className="text-sm font-medium text-gray-700">Escopos</legend>
-        <div className="mt-2 space-y-2">
-          <div className="flex items-center">
-            <input id="nacional" name="nacional" type="checkbox" checked={formData.nacional} onChange={handleChange} className="h-4 w-4 text-brand-primary border-gray-300 rounded focus:ring-brand-primary" />
-            <label htmlFor="nacional" className="ml-2 block text-sm text-gray-900">Nacional</label>
+        <legend style={styles.label}>Escopos</legend>
+        <div style={{display: 'flex', flexDirection: 'column', gap: theme.spacing.sm, marginTop: theme.spacing.xs}}>
+          <div style={styles.checkboxContainer}>
+            <input id="nacional" name="nacional" type="checkbox" checked={formData.nacional} onChange={handleChange} />
+            <label htmlFor="nacional" style={styles.checkboxLabel}>Nacional</label>
           </div>
-           <div className="flex items-center">
-            <input id="municipal" name="municipal" type="checkbox" checked={formData.municipal} onChange={handleChange} className="h-4 w-4 text-brand-primary border-gray-300 rounded focus:ring-brand-primary" />
-            <label htmlFor="municipal" className="ml-2 block text-sm text-gray-900">Municipal</label>
+           <div style={styles.checkboxContainer}>
+            <input id="municipal" name="municipal" type="checkbox" checked={formData.municipal} onChange={handleChange} />
+            <label htmlFor="municipal" style={styles.checkboxLabel}>Municipal</label>
           </div>
-           <div className="flex items-center">
-            <input id="estadual" name="estadual" type="checkbox" checked={formData.estadual} onChange={handleChange} className="h-4 w-4 text-brand-primary border-gray-300 rounded focus:ring-brand-primary" />
-            <label htmlFor="estadual" className="ml-2 block text-sm text-gray-900">Estadual</label>
+           <div style={styles.checkboxContainer}>
+            <input id="estadual" name="estadual" type="checkbox" checked={formData.estadual} onChange={handleChange} />
+            <label htmlFor="estadual" style={styles.checkboxLabel}>Estadual</label>
           </div>
         </div>
       </fieldset>
 
-      <div className="flex justify-end gap-4">
-        <button type="button" onClick={onClose} className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-primary">
+      <div style={styles.buttonContainer}>
+        <button type="button" onClick={onClose} style={{...styles.button, ...styles.buttonSecondary}}>
           Cancelar
         </button>
-        <button type="submit" className="px-4 py-2 text-sm font-medium text-white bg-brand-primary border border-transparent rounded-md shadow-sm hover:bg-brand-primary-variant focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-primary">
+        <button type="submit" style={{...styles.button, ...styles.buttonPrimary}}>
           {clientToEdit ? 'Salvar Alterações' : 'Cadastrar Cliente'}
         </button>
       </div>

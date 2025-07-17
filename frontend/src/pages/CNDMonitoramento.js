@@ -1,20 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Plus, Search, Users, FileText, Checkbox } from 'lucide-react';
-
-// Import UI components that we will create
-// import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/Card';
-// import { Button } from '../components/ui/Button';
-// import { Input } from '../components/ui/Input';
-// import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from '../components/ui/Table';
-// import { Badge } from '../components/ui/Badge';
+import { Plus, Search, Users, FileText, Checkbox, Trash2, Edit } from 'lucide-react';
+import Modal from '../components/ui/Modal';
+import ClientForm from '../components/ClientForm';
+import theme from '../theme';
 
 const CNDMonitoramento = () => {
-    // --- MANTENDO A LÓGICA EXISTENTE ---
     const [clients, setClients] = useState([]);
     const [loading, setLoading] = useState(true);
     const [filteredClients, setFilteredClients] = useState([]);
-    // Add other states for modals, etc. as needed
+    const [isFormModalOpen, setFormModalOpen] = useState(false);
+    const [clientToEdit, setClientToEdit] = useState(null);
+    const [clientToDelete, setClientToDelete] = useState(null);
 
     useEffect(() => {
         fetchClients();
@@ -33,102 +30,266 @@ const CNDMonitoramento = () => {
         }
     };
 
-    // --- LÓGICA DO FORMULÁRIO E CRUD (A SER REUTILIZADA) ---
-    // const [isFormModalOpen, setFormModalOpen] = useState(false);
-    // const [clientToEdit, setClientToEdit] = useState(null);
-    // ... (toda a lógica de abrir/fechar modal, handleFormSubmit, handleDelete)
+    const handleFormSubmit = () => {
+        fetchClients();
+        closeModal();
+    };
+
+    const handleDelete = async () => {
+        if (!clientToDelete) return;
+        try {
+            await axios.delete(`/api/clientes/${clientToDelete.id}`);
+            fetchClients();
+        } catch (error) {
+            console.error("Erro ao excluir cliente:", error);
+        } finally {
+            setClientToDelete(null);
+        }
+    };
+
+    const openModal = (client = null) => {
+        setClientToEdit(client);
+        setFormModalOpen(true);
+    };
+
+    const closeModal = () => {
+        setClientToEdit(null);
+        setFormModalOpen(false);
+    };
+
+    const handleFilterChange = (e) => {
+        const searchTerm = e.target.value.toLowerCase();
+        const filtered = clients.filter(client =>
+            client.cnpj.includes(searchTerm)
+        );
+        setFilteredClients(filtered);
+    };
+
+    // --- STYLES OBJECT ---
+    const styles = {
+        container: {
+            maxWidth: '1280px',
+            margin: '0 auto',
+            padding: theme.spacing.xl,
+        },
+        header: {
+            textAlign: 'center',
+            marginBottom: theme.spacing.xl,
+        },
+        headerTitleContainer: {
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            gap: theme.spacing.md,
+            marginBottom: theme.spacing.sm,
+        },
+        headerTitle: {
+            fontSize: '2.25rem',
+            fontWeight: 'bold',
+            color: theme.colors.primary,
+        },
+        headerSubtitle: {
+            fontSize: '1.125rem',
+            color: theme.colors.mutedForeground,
+        },
+        card: {
+            background: theme.colors.background,
+            padding: theme.spacing.lg,
+            borderRadius: theme.borderRadius.lg,
+            boxShadow: theme.shadows.md,
+            marginBottom: theme.spacing.xl,
+        },
+        filterContainer: {
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            gap: theme.spacing.md,
+        },
+        inputGroup: {
+            position: 'relative',
+            flex: 1,
+        },
+        input: {
+            width: '100%',
+            padding: theme.spacing.sm,
+            paddingLeft: '36px', // space for icon
+            border: `1px solid ${theme.colors.border}`,
+            borderRadius: theme.borderRadius.md,
+        },
+        searchIcon: {
+            position: 'absolute',
+            left: '12px',
+            top: '50%',
+            transform: 'translateY(-50%)',
+            color: theme.colors.mutedForeground,
+        },
+        buttonPrimary: {
+            background: theme.colors.primary,
+            color: theme.colors.primaryForeground,
+            fontWeight: 'bold',
+            padding: `${theme.spacing.sm} ${theme.spacing.md}`,
+            borderRadius: theme.borderRadius.md,
+            border: 'none',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: theme.spacing.sm,
+        },
+        statsGrid: {
+            display: 'grid',
+            gridTemplateColumns: 'repeat(3, 1fr)',
+            gap: theme.spacing.lg,
+            marginBottom: theme.spacing.xl,
+        },
+        statCard: {
+            background: theme.colors.background,
+            padding: theme.spacing.lg,
+            borderRadius: theme.borderRadius.lg,
+            boxShadow: theme.shadows.md,
+            display: 'flex',
+            alignItems: 'center',
+            gap: theme.spacing.md,
+        },
+        tableContainer: {
+            background: theme.colors.background,
+            borderRadius: theme.borderRadius.lg,
+            boxShadow: theme.shadows.md,
+            overflow: 'hidden',
+        },
+        table: {
+            width: '100%',
+            textAlign: 'left',
+            borderCollapse: 'collapse',
+        },
+        th: {
+            padding: theme.spacing.md,
+            fontWeight: '600',
+            color: theme.colors.primary,
+            background: `rgba(53, 81, 138, 0.05)`, // primary/5
+        },
+        td: {
+            padding: theme.spacing.md,
+            borderTop: `1px solid ${theme.colors.border}`,
+        },
+        avatar: {
+            width: '40px',
+            height: '40px',
+            borderRadius: theme.borderRadius.full,
+            background: `rgba(53, 81, 138, 0.1)`, // primary/10
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontWeight: 'bold',
+            color: theme.colors.primary,
+            flexShrink: 0,
+        },
+        actionButton: {
+            background: 'transparent',
+            border: 'none',
+            padding: theme.spacing.xs,
+            cursor: 'pointer',
+            color: theme.colors.mutedForeground,
+        }
+    };
 
     return (
-        <div className="container mx-auto p-4 md:p-8">
-            {/* Header */}
-            <header className="text-center mb-12">
-                {/* A logo virá de um componente de Header separado ou pode ser colocada aqui */}
-                <div className="flex justify-center items-center gap-4 mb-4">
-                    <FileText className="h-8 w-8 text-brand-primary" />
-                    <h1 className="text-3xl md:text-4xl font-bold text-brand-primary">
+        <div style={styles.container}>
+            <header style={styles.header}>
+                <div style={styles.headerTitleContainer}>
+                    <FileText style={{color: theme.colors.primary}} size={32} />
+                    <h1 style={styles.headerTitle}>
                         Monitoramento de Certidões (CND)
                     </h1>
                 </div>
-                <p className="text-lg text-brand-muted-foreground">
+                <p style={styles.headerSubtitle}>
                     Gerencie e monitore os clientes e suas certidões
                 </p>
             </header>
 
-            {/* Filtros e Ações */}
-            <div className="bg-white p-6 rounded-lg shadow-md mb-8">
-                <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-                    <div className="flex-1 w-full md:w-auto">
+            <div style={styles.card}>
+                <div style={styles.filterContainer}>
+                    <div style={styles.inputGroup}>
+                         <Search size={20} style={styles.searchIcon} />
                         <input
                             type="text"
-                            placeholder="Filtrar por nome ou CNPJ..."
-                            className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-brand-primary"
+                            placeholder="Filtrar por CNPJ..."
+                            onChange={handleFilterChange}
+                            style={styles.input}
                         />
                     </div>
-                    <button className="w-full md:w-auto bg-brand-primary text-white font-bold py-2 px-4 rounded-md hover:bg-brand-primary-variant transition-colors flex items-center justify-center gap-2">
+                    <button onClick={() => openModal()} style={styles.buttonPrimary}>
                         <Plus size={20} />
                         Cadastrar Novo Cliente
                     </button>
                 </div>
             </div>
 
-            {/* Cards de Estatísticas */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                <div className="bg-white p-6 rounded-lg shadow-md flex items-center gap-4">
-                    <Users className="h-8 w-8 text-brand-primary" />
+            <div style={styles.statsGrid}>
+               <div style={styles.statCard}>
+                    <Users size={32} style={{color: theme.colors.primary}} />
                     <div>
-                        <p className="text-sm text-brand-muted-foreground">Total de Clientes</p>
-                        <p className="text-2xl font-bold text-brand-primary">{clients.length}</p>
+                        <p style={{fontSize: '0.875rem', color: theme.colors.mutedForeground}}>Total de Clientes</p>
+                        <p style={{fontSize: '1.5rem', fontWeight: 'bold', color: theme.colors.primary}}>{clients.length}</p>
                     </div>
                 </div>
-                 <div className="bg-white p-6 rounded-lg shadow-md flex items-center gap-4">
-                    <Search className="h-8 w-8 text-brand-primary" />
+                 <div style={styles.statCard}>
+                    <Search size={32} style={{color: theme.colors.primary}} />
                     <div>
-                        <p className="text-sm text-brand-muted-foreground">Clientes Filtrados</p>
-                        <p className="text-2xl font-bold text-brand-primary">{filteredClients.length}</p>
+                        <p style={{fontSize: '0.875rem', color: theme.colors.mutedForeground}}>Clientes Filtrados</p>
+                        <p style={{fontSize: '1.5rem', fontWeight: 'bold', color: theme.colors.primary}}>{filteredClients.length}</p>
                     </div>
                 </div>
-                 <div className="bg-white p-6 rounded-lg shadow-md flex items-center gap-4">
-                    <Checkbox className="h-8 w-8 text-brand-primary" />
+                 <div style={styles.statCard}>
+                    <Checkbox size={32} style={{color: theme.colors.primary}} />
                     <div>
-                        <p className="text-sm text-brand-muted-foreground">Selecionados</p>
-                        <p className="text-2xl font-bold text-brand-primary">0</p>
+                        <p style={{fontSize: '0.875rem', color: theme.colors.mutedForeground}}>Selecionados</p>
+                        <p style={{fontSize: '1.5rem', fontWeight: 'bold', color: theme.colors.primary}}>0</p>
                     </div>
                 </div>
             </div>
 
-            {/* Tabela de Clientes */}
-            <div className="bg-white rounded-lg shadow-md overflow-x-auto">
-                <table className="w-full text-left">
-                    <thead className="bg-brand-muted/50">
+            <div style={styles.tableContainer}>
+                <table style={styles.table}>
+                    <thead>
                         <tr>
-                            <th className="p-4 font-semibold text-brand-primary">Nome</th>
-                            <th className="p-4 font-semibold text-brand-primary">CNPJ</th>
-                            <th className="p-4 font-semibold text-brand-primary">Status</th>
-                            <th className="p-4 font-semibold text-brand-primary">Periodicidade</th>
-                            <th className="p-4 font-semibold text-brand-primary">Ações</th>
+                            <th style={styles.th}>Cliente</th>
+                            <th style={styles.th}>Status</th>
+                            <th style={styles.th}>Periodicidade</th>
+                            <th style={{...styles.th, textAlign: 'right'}}>Ações</th>
                         </tr>
                     </thead>
                     <tbody>
                         {loading ? (
-                            <tr><td colSpan="5" className="text-center p-8">Carregando...</td></tr>
+                            <tr><td colSpan="4" style={{textAlign: 'center', padding: theme.spacing.xl}}>Carregando...</td></tr>
                         ) : (
                             filteredClients.map(client => (
-                                <tr key={client.id} className="border-b hover:bg-brand-muted/50">
-                                    <td className="p-4 flex items-center gap-3">
-                                        <div className="w-10 h-10 rounded-full bg-brand-primary/10 flex items-center justify-center font-bold text-brand-primary">
+                                <tr key={client.id}>
+                                    <td style={{...styles.td, display: 'flex', alignItems: 'center', gap: theme.spacing.md}}>
+                                        <div style={styles.avatar}>
                                             {client.cnpj.charAt(0)}
                                         </div>
-                                        <span>{`Cliente ${client.cnpj.substring(0, 2)}`}</span>
+                                        <div>
+                                            <div style={{fontWeight: 500}}>{`Cliente ${client.cnpj.substring(0, 2)}`}</div>
+                                            <div style={{fontSize: '0.875rem', color: theme.colors.mutedForeground}}>{client.cnpj}</div>
+                                        </div>
                                     </td>
-                                    <td className="p-4">
-                                        <span className="border rounded-full px-2 py-1 text-sm">{client.cnpj}</span>
+                                    <td style={styles.td}>
+                                        <span style={{
+                                            padding: '4px 8px',
+                                            fontSize: '0.75rem',
+                                            fontWeight: 500,
+                                            borderRadius: theme.borderRadius.full,
+                                            background: client.statusCliente === 'ATIVO' ? 'hsl(142.1, 76.2%, 80%)' : 'hsl(0, 72.2%, 80%)',
+                                            color: client.statusCliente === 'ATIVO' ? 'hsl(142.1, 70.2%, 25%)' : 'hsl(0, 70.2%, 25%)',
+                                        }}>
+                                            {client.statusCliente}
+                                        </span>
                                     </td>
-                                    <td className="p-4">{client.statusCliente}</td>
-                                    <td className="p-4">{client.periodicidade} dias</td>
-                                    <td className="p-4">
-                                        <div className="flex gap-2">
-                                            <button className="text-brand-primary border border-brand-primary rounded-md px-3 py-1 hover:bg-brand-primary/10 text-sm">Editar</button>
-                                            <button className="text-brand-destructive border border-brand-destructive rounded-md px-3 py-1 hover:bg-brand-destructive/10 text-sm">Excluir</button>
+                                    <td style={styles.td}>{client.periodicidade} dias</td>
+                                    <td style={{...styles.td, textAlign: 'right'}}>
+                                        <div style={{display: 'flex', gap: theme.spacing.sm, justifyContent: 'flex-end'}}>
+                                            <button onClick={() => openModal(client)} style={styles.actionButton}><Edit size={18} /></button>
+                                            <button onClick={() => setClientToDelete(client)} style={{...styles.actionButton, color: theme.colors.destructive}}><Trash2 size={18} /></button>
                                         </div>
                                     </td>
                                 </tr>
@@ -138,11 +299,19 @@ const CNDMonitoramento = () => {
                 </table>
             </div>
 
-             {/* Modal de Formulário (a ser implementado) */}
-             {/* <Modal isOpen={isFormModalOpen} onClose={() => setFormModalOpen(false)}>
-                <ClientForm clientToEdit={clientToEdit} onFormSubmit={handleFormSubmit} />
-            </Modal> */}
+            <Modal isOpen={isFormModalOpen} onClose={closeModal} title={clientToEdit ? 'Editar Cliente' : 'Cadastrar Novo Cliente'}>
+                <ClientForm clientToEdit={clientToEdit} onFormSubmit={handleFormSubmit} onClose={closeModal} />
+            </Modal>
 
+            <Modal isOpen={!!clientToDelete} onClose={() => setClientToDelete(null)} title="Confirmar Exclusão">
+                <div>
+                    <p style={{marginBottom: theme.spacing.lg}}>Tem certeza de que deseja excluir o cliente com CNPJ: {clientToDelete?.cnpj}?</p>
+                    <div style={{display: 'flex', justifyContent: 'flex-end', gap: theme.spacing.md}}>
+                        <button onClick={() => setClientToDelete(null)} style={{...styles.buttonPrimary, background: theme.colors.muted, color: theme.colors.foreground}}>Cancelar</button>
+                        <button onClick={handleDelete} style={{...styles.buttonPrimary, background: theme.colors.destructive}}>Excluir</button>
+                    </div>
+                </div>
+            </Modal>
         </div>
     );
 };

@@ -1,9 +1,18 @@
 import React from 'react';
 import CNDMonitoramento from './pages/CNDMonitoramento';
+import theme from './theme';
+
+const styles = {
+  app: {
+    background: `linear-gradient(180deg, ${theme.colors.background}, ${theme.colors.secondary})`,
+    minHeight: '100vh',
+    fontFamily: 'sans-serif',
+  }
+};
 
 function App() {
   return (
-    <div className="bg-gradient-to-b from-white to-brand-secondary min-h-screen">
+    <div style={styles.app}>
       <CNDMonitoramento />
     </div>
   );
