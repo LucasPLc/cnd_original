@@ -1,5 +1,6 @@
 import React from 'react';
 import CNDMonitoramento from './pages/CNDMonitoramento';
+import Header from './components/Header'; // Importado
 import theme from './theme';
 
 const styles = {
@@ -13,6 +14,7 @@ const styles = {
 function App() {
   return (
     <div style={styles.app}>
+      <Header />
       <CNDMonitoramento />
     </div>
   );

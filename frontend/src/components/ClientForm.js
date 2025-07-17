@@ -16,14 +16,26 @@ const ClientForm = ({ clientToEdit, onFormSubmit, onClose }) => {
   useEffect(() => {
     if (clientToEdit) {
       setFormData({
+        id: clientToEdit.id, // Adicionado para manter o ID
         cnpj: clientToEdit.cnpj,
         periodicidade: clientToEdit.periodicidade,
         statusCliente: clientToEdit.statusCliente,
         nacional: clientToEdit.nacional,
         municipal: clientToEdit.municipal,
         estadual: clientToEdit.estadual,
-        fk_empresa: clientToEdit.empresa.idEmpresa,
+        fk_empresa: clientToEdit.empresa?.idEmpresa || '',
       });
+    } else {
+        // Reset form when opening for a new client
+        setFormData({
+            cnpj: '',
+            periodicidade: 30,
+            statusCliente: 'ATIVO',
+            nacional: true,
+            municipal: true,
+            estadual: false,
+            fk_empresa: '',
+        });
     }
   }, [clientToEdit]);
 
@@ -43,10 +55,11 @@ const ClientForm = ({ clientToEdit, onFormSubmit, onClose }) => {
       }
     };
     delete payload.fk_empresa;
+    delete payload.id; // Remove ID from payload to avoid sending it in the body
 
     try {
-      if (clientToEdit) {
-        await axios.put(`/api/clientes/${clientToEdit.id}`, payload);
+      if (formData.id) { // Check if we are editing
+        await axios.put(`/api/clientes/${formData.id}`, payload);
       } else {
         await axios.post('/api/clientes', payload);
       }

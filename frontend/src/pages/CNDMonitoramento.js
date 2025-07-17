@@ -3,6 +3,7 @@ import axios from 'axios';
 import { Plus, Search, Users, FileText, CheckSquare, Trash2, Edit } from 'lucide-react';
 import Modal from '../components/ui/Modal';
 import ClientForm from '../components/ClientForm';
+import InteractiveButton from '../components/ui/InteractiveButton';
 import theme from '../theme';
 
 const CNDMonitoramento = () => {
@@ -217,10 +218,10 @@ const CNDMonitoramento = () => {
                             style={styles.input}
                         />
                     </div>
-                    <button onClick={() => openModal()} style={styles.buttonPrimary}>
+                    <InteractiveButton onClick={() => openModal()}>
                         <Plus size={20} />
-                        Cadastrar Novo Cliente
-                    </button>
+                        <span>Cadastrar Novo Cliente</span>
+                    </InteractiveButton>
                 </div>
             </div>
 
@@ -307,8 +308,12 @@ const CNDMonitoramento = () => {
                 <div>
                     <p style={{marginBottom: theme.spacing.lg}}>Tem certeza de que deseja excluir o cliente com CNPJ: {clientToDelete?.cnpj}?</p>
                     <div style={{display: 'flex', justifyContent: 'flex-end', gap: theme.spacing.md}}>
-                        <button onClick={() => setClientToDelete(null)} style={{...styles.buttonPrimary, background: theme.colors.muted, color: theme.colors.foreground}}>Cancelar</button>
-                        <button onClick={handleDelete} style={{...styles.buttonPrimary, background: theme.colors.destructive}}>Excluir</button>
+                        <InteractiveButton onClick={() => setClientToDelete(null)} variant="secondary">
+                            Cancelar
+                        </InteractiveButton>
+                        <InteractiveButton onClick={handleDelete} variant="destructive">
+                            Excluir
+                        </InteractiveButton>
                     </div>
                 </div>
             </Modal>
