@@ -64,7 +64,12 @@ const ClientForm = ({ clientToEdit, onFormSubmit }) => {
     e.preventDefault();
     const payload = {
       ...formData,
-      empresa: { idEmpresa: formData.fk_empresa }
+      ...formData,
+      empresa: {
+        idEmpresa: formData.fk_empresa,
+        cnpj: "00.000.000/0000-00", // Mock or fetch real data if needed
+        nomeEmpresa: "Empresa Mock" // Mock or fetch real data if needed
+      }
     };
     delete payload.fk_empresa;
 
