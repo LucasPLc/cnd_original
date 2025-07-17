@@ -1,36 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import styled from 'styled-components';
 import axios from 'axios';
+import theme from '../theme';
 
-const Form = styled.form`
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-`;
-
-const Input = styled.input`
-  padding: 0.8rem;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-`;
-
-const Button = styled.button`
-  padding: 0.8rem 1.5rem;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  background-color: #35518a;
-  color: white;
-  font-weight: bold;
-`;
-
-const CheckboxContainer = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-`;
-
-const ClientForm = ({ clientToEdit, onFormSubmit }) => {
+const ClientForm = ({ clientToEdit, onFormSubmit, onClose }) => {
   const [formData, setFormData] = useState({
     cnpj: '',
     periodicidade: 30,
@@ -64,11 +36,10 @@ const ClientForm = ({ clientToEdit, onFormSubmit }) => {
     e.preventDefault();
     const payload = {
       ...formData,
-      ...formData,
       empresa: {
         idEmpresa: formData.fk_empresa,
-        cnpj: "00.000.000/0000-00", // Mock or fetch real data if needed
-        nomeEmpresa: "Empresa Mock" // Mock or fetch real data if needed
+        cnpj: "00.000.000/0000-00",
+        nomeEmpresa: "Empresa Mock"
       }
     };
     delete payload.fk_empresa;
@@ -85,29 +56,107 @@ const ClientForm = ({ clientToEdit, onFormSubmit }) => {
     }
   };
 
+  // --- STYLES OBJECT ---
+  const styles = {
+    form: {
+        display: 'flex',
+        flexDirection: 'column',
+        gap: theme.spacing.lg,
+    },
+    label: {
+        display: 'block',
+        fontSize: '0.875rem',
+        fontWeight: 500,
+        color: '#374151', // text-gray-700
+        marginBottom: theme.spacing.xs,
+    },
+    input: {
+        display: 'block',
+        width: '100%',
+        padding: `${theme.spacing.sm} ${theme.spacing.sm}`,
+        border: `1px solid ${theme.colors.border}`,
+        borderRadius: theme.borderRadius.md,
+        boxShadow: theme.shadows.sm,
+    },
+    checkboxContainer: {
+        display: 'flex',
+        alignItems: 'center',
+    },
+    checkboxLabel: {
+        marginLeft: theme.spacing.sm,
+        fontSize: '0.875rem',
+        color: '#111827', // text-gray-900
+    },
+    buttonContainer: {
+        display: 'flex',
+        justifyContent: 'flex-end',
+        gap: theme.spacing.md,
+    },
+    button: {
+        padding: `${theme.spacing.sm} ${theme.spacing.md}`,
+        fontSize: '0.875rem',
+        fontWeight: 500,
+        borderRadius: theme.borderRadius.md,
+        border: '1px solid transparent',
+        cursor: 'pointer',
+    },
+    buttonSecondary: {
+        color: '#374151', // text-gray-700
+        backgroundColor: theme.colors.background,
+        borderColor: theme.colors.border,
+    },
+    buttonPrimary: {
+        color: theme.colors.primaryForeground,
+        backgroundColor: theme.colors.primary,
+    }
+  };
+
   return (
-    <Form onSubmit={handleSubmit}>
-      <h2>{clientToEdit ? 'Editar Cliente' : 'Novo Cliente'}</h2>
-      <Input name="cnpj" value={formData.cnpj} onChange={handleChange} placeholder="CNPJ (XX.XXX.XXX/XXXX-XX)" required />
-      <Input name="periodicidade" type="number" value={formData.periodicidade} onChange={handleChange} placeholder="Periodicidade" required />
-      <Input name="statusCliente" value={formData.statusCliente} onChange={handleChange} placeholder="Status" required />
-      <Input name="fk_empresa" value={formData.fk_empresa} onChange={handleChange} placeholder="ID da Empresa" required />
+    <form onSubmit={handleSubmit} style={styles.form}>
+      <div>
+        <label htmlFor="cnpj" style={styles.label}>CNPJ</label>
+        <input id="cnpj" name="cnpj" value={formData.cnpj} onChange={handleChange} placeholder="XX.XXX.XXX/XXXX-XX" required style={styles.input} />
+      </div>
+      <div>
+        <label htmlFor="fk_empresa" style={styles.label}>ID da Empresa</label>
+        <input id="fk_empresa" name="fk_empresa" value={formData.fk_empresa} onChange={handleChange} placeholder="ID da Empresa no sistema SAAM" required style={styles.input} />
+      </div>
+      <div>
+        <label htmlFor="periodicidade" style={styles.label}>Periodicidade (dias)</label>
+        <input id="periodicidade" name="periodicidade" type="number" value={formData.periodicidade} onChange={handleChange} required style={styles.input} />
+      </div>
+       <div>
+        <label htmlFor="statusCliente" style={styles.label}>Status</label>
+        <input id="statusCliente" name="statusCliente" value={formData.statusCliente} onChange={handleChange} required style={styles.input} />
+      </div>
 
-      <CheckboxContainer>
-        <input type="checkbox" name="nacional" checked={formData.nacional} onChange={handleChange} />
-        <label>Nacional</label>
-      </CheckboxContainer>
-      <CheckboxContainer>
-        <input type="checkbox" name="municipal" checked={formData.municipal} onChange={handleChange} />
-        <label>Municipal</label>
-      </CheckboxContainer>
-      <CheckboxContainer>
-        <input type="checkbox" name="estadual" checked={formData.estadual} onChange={handleChange} />
-        <label>Estadual</label>
-      </CheckboxContainer>
+      <fieldset>
+        <legend style={styles.label}>Escopos</legend>
+        <div style={{display: 'flex', flexDirection: 'column', gap: theme.spacing.sm, marginTop: theme.spacing.xs}}>
+          <div style={styles.checkboxContainer}>
+            <input id="nacional" name="nacional" type="checkbox" checked={formData.nacional} onChange={handleChange} />
+            <label htmlFor="nacional" style={styles.checkboxLabel}>Nacional</label>
+          </div>
+           <div style={styles.checkboxContainer}>
+            <input id="municipal" name="municipal" type="checkbox" checked={formData.municipal} onChange={handleChange} />
+            <label htmlFor="municipal" style={styles.checkboxLabel}>Municipal</label>
+          </div>
+           <div style={styles.checkboxContainer}>
+            <input id="estadual" name="estadual" type="checkbox" checked={formData.estadual} onChange={handleChange} />
+            <label htmlFor="estadual" style={styles.checkboxLabel}>Estadual</label>
+          </div>
+        </div>
+      </fieldset>
 
-      <Button type="submit">{clientToEdit ? 'Salvar Alterações' : 'Cadastrar'}</Button>
-    </Form>
+      <div style={styles.buttonContainer}>
+        <button type="button" onClick={onClose} style={{...styles.button, ...styles.buttonSecondary}}>
+          Cancelar
+        </button>
+        <button type="submit" style={{...styles.button, ...styles.buttonPrimary}}>
+          {clientToEdit ? 'Salvar Alterações' : 'Cadastrar Cliente'}
+        </button>
+      </div>
+    </form>
   );
 };
 

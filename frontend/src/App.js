@@ -1,15 +1,20 @@
 import React from 'react';
-import GlobalStyles from './components/GlobalStyles';
-import Header from './components/Header';
-import CndMonitor from './components/CndMonitor';
+import CNDMonitoramento from './pages/CNDMonitoramento';
+import theme from './theme';
+
+const styles = {
+  app: {
+    background: `linear-gradient(180deg, ${theme.colors.background}, ${theme.colors.secondary})`,
+    minHeight: '100vh',
+    fontFamily: 'sans-serif',
+  }
+};
 
 function App() {
   return (
-    <>
-      <GlobalStyles />
-      <Header />
-      <CndMonitor />
-    </>
+    <div style={styles.app}>
+      <CNDMonitoramento />
+    </div>
   );
 }
 
