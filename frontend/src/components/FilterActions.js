@@ -17,6 +17,7 @@ const FilterActions = ({ onFilterChange, onAddClient }) => {
             gap: theme.spacing.md,
             alignItems: 'center',
             flexWrap: 'wrap',
+            justifyContent: 'space-between',
         },
         inputGroup: {
             position: 'relative',
