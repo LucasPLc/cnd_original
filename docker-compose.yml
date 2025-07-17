@@ -44,5 +44,15 @@ services:
     labels:
       - "com.centurylinklabs.watchtower.scope=cnd"
 
+  frontend:
+    build:
+      context: frontend
+      dockerfile: Dockerfile
+    container_name: cnd-frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      - cnd
+
 volumes:
   postgres_cnd_data:
