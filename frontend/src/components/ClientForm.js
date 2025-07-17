@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import theme from '../theme';
 
-const ClientForm = ({ clientToEdit, onFormSubmit, onClose }) => {
+const ClientForm = ({ clientToEdit, onCreate, onUpdate, onClose, isOpen }) => {
   const [formData, setFormData] = useState({
     cnpj: '',
     periodicidade: 30,
@@ -16,7 +16,7 @@ const ClientForm = ({ clientToEdit, onFormSubmit, onClose }) => {
   useEffect(() => {
     if (clientToEdit) {
       setFormData({
-        id: clientToEdit.id, // Adicionado para manter o ID
+        id: clientToEdit.id,
         cnpj: clientToEdit.cnpj,
         periodicidade: clientToEdit.periodicidade,
         statusCliente: clientToEdit.statusCliente,
@@ -26,25 +26,24 @@ const ClientForm = ({ clientToEdit, onFormSubmit, onClose }) => {
         fk_empresa: clientToEdit.empresa?.idEmpresa || '',
       });
     } else {
-        // Reset form when opening for a new client
-        setFormData({
-            cnpj: '',
-            periodicidade: 30,
-            statusCliente: 'ATIVO',
-            nacional: true,
-            municipal: true,
-            estadual: false,
-            fk_empresa: '',
-        });
+      setFormData({
+        cnpj: '',
+        periodicidade: 30,
+        statusCliente: 'ATIVO',
+        nacional: true,
+        municipal: true,
+        estadual: false,
+        fk_empresa: '',
+      });
     }
-  }, [clientToEdit]);
+  }, [clientToEdit, isOpen]); // Adicionado isOpen para resetar o form
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
     setFormData(prev => ({ ...prev, [name]: type === 'checkbox' ? checked : value }));
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault();
     const payload = {
       ...formData,
@@ -55,17 +54,12 @@ const ClientForm = ({ clientToEdit, onFormSubmit, onClose }) => {
       }
     };
     delete payload.fk_empresa;
-    delete payload.id; // Remove ID from payload to avoid sending it in the body
+    delete payload.id;
 
-    try {
-      if (formData.id) { // Check if we are editing
-        await axios.put(`/api/clientes/${formData.id}`, payload);
-      } else {
-        await axios.post('/api/clientes', payload);
-      }
-      onFormSubmit();
-    } catch (error) {
-      console.error("Erro ao salvar cliente:", error);
+    if (clientToEdit) {
+      onUpdate(clientToEdit.id, payload);
+    } else {
+      onCreate(payload);
     }
   };
 
