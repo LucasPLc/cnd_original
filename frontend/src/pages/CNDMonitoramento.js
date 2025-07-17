@@ -138,8 +138,8 @@ const CNDMonitoramento = () => {
             <ClientsTable
                 clients={filteredClients}
                 loading={loading}
-                onEdit={openModal}
-                onDelete={setClientToDelete}
+                onEdit={(client) => openModal(client)}
+                onDelete={(client) => setClientToDelete(client)}
             />
 
             <Modal isOpen={isFormModalOpen} onClose={closeModal} title={clientToEdit ? 'Editar Cliente' : 'Cadastrar Novo Cliente'}>

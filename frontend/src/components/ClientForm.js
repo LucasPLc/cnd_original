@@ -45,16 +45,24 @@ const ClientForm = ({ clientToEdit, onCreate, onUpdate, onClose, isOpen }) => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    if (clientToEdit && !clientToEdit.id) {
+        console.error("Tentativa de atualização sem ID de cliente.");
+        return; // Salvaguarda para não enviar requisição sem ID
+    }
+
     const payload = {
-      ...formData,
+      cnpj: formData.cnpj,
+      periodicidade: formData.periodicidade,
+      statusCliente: formData.statusCliente,
+      nacional: formData.nacional,
+      municipal: formData.municipal,
+      estadual: formData.estadual,
       empresa: {
         idEmpresa: formData.fk_empresa,
         cnpj: "00.000.000/0000-00",
         nomeEmpresa: "Empresa Mock"
       }
     };
-    delete payload.fk_empresa;
-    delete payload.id;
 
     if (clientToEdit) {
       onUpdate(clientToEdit.id, payload);

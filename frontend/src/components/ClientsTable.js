@@ -88,8 +88,8 @@ const ClientsTable = ({ clients, onEdit, onDelete, loading }) => {
                                 <td style={styles.td}>{client.periodicidade} dias</td>
                                 <td style={{...styles.td, textAlign: 'right'}}>
                                     <div style={{display: 'flex', gap: theme.spacing.sm, justifyContent: 'flex-end'}}>
-                                        <button onClick={() => onEdit(client)} style={styles.actionButton}><Edit size={18} /></button>
-                                        <button onClick={() => onDelete(client)} style={{...styles.actionButton, color: theme.colors.destructive}}><Trash2 size={18} /></button>
+                                            <button onClick={() => onEdit(client)} style={styles.actionButton} title={`Editar ${client.cnpj}`}><Edit size={18} /></button>
+                                            <button onClick={() => onDelete(client)} style={{...styles.actionButton, color: theme.colors.destructive}} title={`Excluir ${client.cnpj}`}><Trash2 size={18} /></button>
                                     </div>
                                 </td>
                             </tr>
