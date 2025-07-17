@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Plus, Search, Users, FileText, Checkbox, Trash2, Edit } from 'lucide-react';
+import { Plus, Search, Users, FileText, CheckSquare, Trash2, Edit } from 'lucide-react';
 import Modal from '../components/ui/Modal';
 import ClientForm from '../components/ClientForm';
 import theme from '../theme';
@@ -240,7 +240,7 @@ const CNDMonitoramento = () => {
                     </div>
                 </div>
                  <div style={styles.statCard}>
-                    <Checkbox size={32} style={{color: theme.colors.primary}} />
+                    <CheckSquare size={32} style={{color: theme.colors.primary}} />
                     <div>
                         <p style={{fontSize: '0.875rem', color: theme.colors.mutedForeground}}>Selecionados</p>
                         <p style={{fontSize: '1.5rem', fontWeight: 'bold', color: theme.colors.primary}}>0</p>
