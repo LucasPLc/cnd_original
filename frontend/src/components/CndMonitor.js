@@ -65,7 +65,7 @@ const CndMonitor = () => {
   const fetchResults = async () => {
     setLoading(true);
     try {
-      const response = await axios.get('/api/clientes');
+      const response = await axios.get('http://localhost:8080/clientes', { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
       const mockedResults = response.data.map(cliente => ({
         id: cliente.id,
         dataProcessamento: new Date().toISOString(),
@@ -134,7 +134,7 @@ const CndMonitor = () => {
   const confirmDelete = async () => {
     if (!selectedResult) return;
     try {
-      await axios.delete(`/api/clientes/${selectedResult.cliente.id}`);
+      await axios.delete(`http://localhost:8080/clientes/${selectedResult.cliente.id}`, { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
       fetchResults();
     } catch (error) {
       console.error('Erro ao excluir:', error);
