@@ -75,9 +75,9 @@ const ClientForm = ({ clientToEdit, onFormSubmit }) => {
 
     try {
       if (clientToEdit) {
-        await axios.put(`http://localhost:8080/clientes/${clientToEdit.id}`, payload, { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
+        await axios.put(`/api/clientes/${clientToEdit.id}`, payload);
       } else {
-        await axios.post('http://localhost:8080/clientes', payload, { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
+        await axios.post('/api/clientes', payload);
       }
       onFormSubmit();
     } catch (error) {
