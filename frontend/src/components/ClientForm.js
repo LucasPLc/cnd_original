@@ -1,36 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import styled from 'styled-components';
 import axios from 'axios';
 
-const Form = styled.form`
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-`;
-
-const Input = styled.input`
-  padding: 0.8rem;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-`;
-
-const Button = styled.button`
-  padding: 0.8rem 1.5rem;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  background-color: #35518a;
-  color: white;
-  font-weight: bold;
-`;
-
-const CheckboxContainer = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-`;
-
-const ClientForm = ({ clientToEdit, onFormSubmit }) => {
+const ClientForm = ({ clientToEdit, onFormSubmit, onClose }) => {
   const [formData, setFormData] = useState({
     cnpj: '',
     periodicidade: 30,
@@ -64,7 +35,6 @@ const ClientForm = ({ clientToEdit, onFormSubmit }) => {
     e.preventDefault();
     const payload = {
       ...formData,
-      ...formData,
       empresa: {
         idEmpresa: formData.fk_empresa,
         cnpj: "00.000.000/0000-00", // Mock or fetch real data if needed
@@ -86,28 +56,51 @@ const ClientForm = ({ clientToEdit, onFormSubmit }) => {
   };
 
   return (
-    <Form onSubmit={handleSubmit}>
-      <h2>{clientToEdit ? 'Editar Cliente' : 'Novo Cliente'}</h2>
-      <Input name="cnpj" value={formData.cnpj} onChange={handleChange} placeholder="CNPJ (XX.XXX.XXX/XXXX-XX)" required />
-      <Input name="periodicidade" type="number" value={formData.periodicidade} onChange={handleChange} placeholder="Periodicidade" required />
-      <Input name="statusCliente" value={formData.statusCliente} onChange={handleChange} placeholder="Status" required />
-      <Input name="fk_empresa" value={formData.fk_empresa} onChange={handleChange} placeholder="ID da Empresa" required />
+    <form onSubmit={handleSubmit} className="space-y-6">
+      <div>
+        <label htmlFor="cnpj" className="block text-sm font-medium text-gray-700">CNPJ</label>
+        <input id="cnpj" name="cnpj" value={formData.cnpj} onChange={handleChange} placeholder="XX.XXX.XXX/XXXX-XX" required className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-brand-primary focus:border-brand-primary sm:text-sm" />
+      </div>
+      <div>
+        <label htmlFor="fk_empresa" className="block text-sm font-medium text-gray-700">ID da Empresa</label>
+        <input id="fk_empresa" name="fk_empresa" value={formData.fk_empresa} onChange={handleChange} placeholder="ID da Empresa no sistema SAAM" required className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-brand-primary focus:border-brand-primary sm:text-sm" />
+      </div>
+      <div>
+        <label htmlFor="periodicidade" className="block text-sm font-medium text-gray-700">Periodicidade (dias)</label>
+        <input id="periodicidade" name="periodicidade" type="number" value={formData.periodicidade} onChange={handleChange} required className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-brand-primary focus:border-brand-primary sm:text-sm" />
+      </div>
+       <div>
+        <label htmlFor="statusCliente" className="block text-sm font-medium text-gray-700">Status</label>
+        <input id="statusCliente" name="statusCliente" value={formData.statusCliente} onChange={handleChange} required className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-brand-primary focus:border-brand-primary sm:text-sm" />
+      </div>
 
-      <CheckboxContainer>
-        <input type="checkbox" name="nacional" checked={formData.nacional} onChange={handleChange} />
-        <label>Nacional</label>
-      </CheckboxContainer>
-      <CheckboxContainer>
-        <input type="checkbox" name="municipal" checked={formData.municipal} onChange={handleChange} />
-        <label>Municipal</label>
-      </CheckboxContainer>
-      <CheckboxContainer>
-        <input type="checkbox" name="estadual" checked={formData.estadual} onChange={handleChange} />
-        <label>Estadual</label>
-      </CheckboxContainer>
+      <fieldset>
+        <legend className="text-sm font-medium text-gray-700">Escopos</legend>
+        <div className="mt-2 space-y-2">
+          <div className="flex items-center">
+            <input id="nacional" name="nacional" type="checkbox" checked={formData.nacional} onChange={handleChange} className="h-4 w-4 text-brand-primary border-gray-300 rounded focus:ring-brand-primary" />
+            <label htmlFor="nacional" className="ml-2 block text-sm text-gray-900">Nacional</label>
+          </div>
+           <div className="flex items-center">
+            <input id="municipal" name="municipal" type="checkbox" checked={formData.municipal} onChange={handleChange} className="h-4 w-4 text-brand-primary border-gray-300 rounded focus:ring-brand-primary" />
+            <label htmlFor="municipal" className="ml-2 block text-sm text-gray-900">Municipal</label>
+          </div>
+           <div className="flex items-center">
+            <input id="estadual" name="estadual" type="checkbox" checked={formData.estadual} onChange={handleChange} className="h-4 w-4 text-brand-primary border-gray-300 rounded focus:ring-brand-primary" />
+            <label htmlFor="estadual" className="ml-2 block text-sm text-gray-900">Estadual</label>
+          </div>
+        </div>
+      </fieldset>
 
-      <Button type="submit">{clientToEdit ? 'Salvar Alterações' : 'Cadastrar'}</Button>
-    </Form>
+      <div className="flex justify-end gap-4">
+        <button type="button" onClick={onClose} className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-primary">
+          Cancelar
+        </button>
+        <button type="submit" className="px-4 py-2 text-sm font-medium text-white bg-brand-primary border border-transparent rounded-md shadow-sm hover:bg-brand-primary-variant focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-primary">
+          {clientToEdit ? 'Salvar Alterações' : 'Cadastrar Cliente'}
+        </button>
+      </div>
+    </form>
   );
 };
 

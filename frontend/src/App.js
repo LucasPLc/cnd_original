@@ -1,15 +1,11 @@
 import React from 'react';
-import GlobalStyles from './components/GlobalStyles';
-import Header from './components/Header';
-import CndMonitor from './components/CndMonitor';
+import CNDMonitoramento from './pages/CNDMonitoramento';
 
 function App() {
   return (
-    <>
-      <GlobalStyles />
-      <Header />
-      <CndMonitor />
-    </>
+    <div className="bg-gradient-to-b from-white to-brand-secondary min-h-screen">
+      <CNDMonitoramento />
+    </div>
   );
 }
 
