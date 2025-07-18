@@ -3,7 +3,7 @@ version: '3.7'
 services:
   cnd:
     container_name: cnd-app
-    image: registry.gitlab.com/sisaudcon/saam-api-cndt:latest
+    build: .
     restart: always
     ports:
       - 8080:8080

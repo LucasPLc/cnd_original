@@ -13,7 +13,7 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath; // O método é importado aqui
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(ClienteController.class)
@@ -55,7 +55,7 @@ public class ClienteControllerTest {
                 .andExpect(jsonPath("$.statusCliente").value("ATIVO"))
                 .andExpect(jsonPath("$.nacional").value(true))
                 .andExpect(jsonPath("$.municipal").value(true))
-                .andExpect(json.Path("$.estadual").value(false))
+                .andExpect(jsonPath("$.estadual").value(false)) // <-- CORREÇÃO APLICADA AQUI
                 .andExpect(jsonPath("$.empresa.idEmpresa").value("GLSAAM"))
                 .andExpect(jsonPath("$.empresa.nomeEmpresa").value("Empresa Mock"))
                 .andExpect(jsonPath("$.empresa.cnpj").value("00.000.000/0000-00"));
