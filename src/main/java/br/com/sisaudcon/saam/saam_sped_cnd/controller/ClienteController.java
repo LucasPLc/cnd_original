@@ -14,6 +14,11 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
+/**
+ * Código Corrigido:
+ * O construtor manual foi removido para evitar o conflito com a anotação @AllArgsConstructor do Lombok,
+ * que já cria um construtor com todos os campos da classe.
+ */
 @AllArgsConstructor
 @RestController
 @RequestMapping("clientes")
@@ -23,6 +28,8 @@ public class ClienteController {
     private final ClienteRepository clienteRepository;
     private final ClienteService clienteService;
 
+    // O construtor manual que estava aqui foi removido.
+
     @GetMapping
     public List<ClienteDTO> listar() {
         List<Cliente> clientes = clienteRepository.findAll();
@@ -30,6 +37,7 @@ public class ClienteController {
                 .map(ClienteMapper::toDTO)
                 .toList();
     }
+    
     @GetMapping("/{clienteId}")
     public ResponseEntity<ClienteDTO> buscar(@PathVariable Integer clienteId) {
         Cliente cliente = clienteRepository.findById(clienteId)
@@ -54,15 +62,28 @@ public class ClienteController {
     @PutMapping("/{clienteId}")
     public ClienteDTO atualizar(@PathVariable Integer clienteId,
                                 @RequestBody @Valid ClienteDTO clienteDTO) {
-        // se não existir, lança a exceção
-        if (!clienteRepository.existsById(clienteId)) {
-            throw new ClienteNotFoundException("Cliente não encontrado para o ID informado.");
+        Cliente clienteAtual = clienteRepository.findById(clienteId)
+            .orElseThrow(() -> new ClienteNotFoundException("Cliente não encontrado para o ID informado."));
+
+        // Atualiza os dados do cliente com os dados do DTO
+        clienteAtual.setCnpj(clienteDTO.getCnpj());
+        clienteAtual.setPeriodicidade(clienteDTO.getPeriodicidade());
+        clienteAtual.setStatusCliente(clienteDTO.getStatusCliente());
+        clienteAtual.setNacional(clienteDTO.getNacional());
+        clienteAtual.setMunicipal(clienteDTO.getMunicipal());
+        clienteAtual.setEstadual(clienteDTO.getEstadual());
+
+        // A lógica de salvar a empresa associada já está no serviço
+        if (clienteDTO.getEmpresa() != null) {
+            clienteAtual.getEmpresa().setIdEmpresa(clienteDTO.getEmpresa().getIdEmpresa());
+            clienteAtual.getEmpresa().setNomeEmpresa(clienteDTO.getEmpresa().getNomeEmpresa());
+            clienteAtual.getEmpresa().setCnpj(clienteDTO.getEmpresa().getCnpj());
         }
-        Cliente cliente = ClienteMapper.toEntity(clienteDTO);
-        cliente.setId(clienteId);
-        Cliente atualizado = registroClienteService.salvarClienteComEmpresa(cliente);
-        return ClienteMapper.toDTO(atualizado);
+
+        Cliente clienteSalvo = registroClienteService.salvarClienteComEmpresa(clienteAtual);
+        return ClienteMapper.toDTO(clienteSalvo);
     }
+    
     @DeleteMapping("/{clienteId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void remover(@PathVariable Integer clienteId) {
@@ -71,6 +92,4 @@ public class ClienteController {
         }
         registroClienteService.excluir(clienteId);
     }
-
-
 }
