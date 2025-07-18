@@ -23,6 +23,12 @@ public class ClienteController {
     private final ClienteRepository clienteRepository;
     private final ClienteService clienteService;
 
+    public ClienteController(RegistroClienteService registroClienteService, ClienteRepository clienteRepository, ClienteService clienteService) {
+        this.registroClienteService = registroClienteService;
+        this.clienteRepository = clienteRepository;
+        this.clienteService = clienteService;
+    }
+
     @GetMapping
     public List<ClienteDTO> listar() {
         List<Cliente> clientes = clienteRepository.findAll();
