@@ -47,7 +47,7 @@ public class ClienteControllerTest {
 
         when(clienteService.getClienteByCnpj("06.988.594/0001-77")).thenReturn(clienteDTO);
 
-        mockMvc.perform(get("/clientes/buscar/06.988.594/0001-77"))
+        mockMvc.perform(get("/clientes/buscar").param("cnpj", "06.988.594/0001-77"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(1))
                 .andExpect(jsonPath("$.cnpj").value("06.988.594/0001-77"))

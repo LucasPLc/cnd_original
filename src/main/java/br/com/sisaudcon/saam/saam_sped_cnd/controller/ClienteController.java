@@ -37,8 +37,8 @@ public class ClienteController {
         return ResponseEntity.ok(ClienteMapper.toDTO(cliente));
     }
 
-    @GetMapping("/buscar/{cnpj}")
-    public ResponseEntity<ClienteDTO> buscarClientePorCnpj(@PathVariable String cnpj) {
+    @GetMapping("/buscar")
+    public ResponseEntity<ClienteDTO> buscarClientePorCnpj(@RequestParam String cnpj) {
         ClienteDTO clienteDTO = clienteService.getClienteByCnpj(cnpj);
         return ResponseEntity.ok(clienteDTO);
     }
