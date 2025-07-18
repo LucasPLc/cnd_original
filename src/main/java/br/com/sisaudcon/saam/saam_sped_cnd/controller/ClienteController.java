@@ -3,6 +3,7 @@ package br.com.sisaudcon.saam.saam_sped_cnd.controller;
 import br.com.sisaudcon.saam.saam_sped_cnd.domain.exception.ClienteNotFoundException;
 import br.com.sisaudcon.saam.saam_sped_cnd.domain.model.Cliente;
 import br.com.sisaudcon.saam.saam_sped_cnd.domain.repository.ClienteRepository;
+import br.com.sisaudcon.saam.saam_sped_cnd.domain.service.ClienteService;
 import br.com.sisaudcon.saam.saam_sped_cnd.domain.service.RegistroClienteService;
 import br.com.sisaudcon.saam.saam_sped_cnd.dto.ClienteDTO;
 import br.com.sisaudcon.saam.saam_sped_cnd.mapper.ClienteMapper;
@@ -20,6 +21,7 @@ public class ClienteController {
 
     private final RegistroClienteService registroClienteService;
     private final ClienteRepository clienteRepository;
+    private final ClienteService clienteService;
 
     @GetMapping
     public List<ClienteDTO> listar() {
@@ -33,6 +35,12 @@ public class ClienteController {
         Cliente cliente = clienteRepository.findById(clienteId)
                 .orElseThrow(() -> new ClienteNotFoundException("Cliente não encontrado para o ID informado."));
         return ResponseEntity.ok(ClienteMapper.toDTO(cliente));
+    }
+
+    @GetMapping("/buscar/{cnpj}")
+    public ResponseEntity<ClienteDTO> buscarClientePorCnpj(@PathVariable String cnpj) {
+        ClienteDTO clienteDTO = clienteService.getClienteByCnpj(cnpj);
+        return ResponseEntity.ok(clienteDTO);
     }
 
     @PostMapping
