@@ -1,16 +1,79 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import styled from 'styled-components';
 import { FileText } from 'lucide-react';
+
 import Modal from '../components/ui/Modal';
 import ClientForm from '../components/ClientForm';
 import InteractiveButton from '../components/ui/InteractiveButton';
 import StatsCards from '../components/StatsCards';
 import FilterActions from '../components/FilterActions';
 import ClientsTable from '../components/ClientsTable';
-import theme from '../theme';
+
+// --- STYLED COMPONENTS ---
+
+const PageContainer = styled.div`
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: ${({ theme }) => theme.spacing.xxl} ${({ theme }) => theme.spacing.xl};
+
+  @media (max-width: ${({ theme }) => theme.breakpoints.tablet}) {
+    padding: ${({ theme }) => theme.spacing.xl} ${({ theme }) => theme.spacing.md};
+  }
+`;
+
+const PageHeader = styled.header`
+  text-align: center;
+  margin-bottom: ${({ theme }) => theme.spacing.xxl};
+`;
+
+const HeaderTitleContainer = styled.div`
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: ${({ theme }) => theme.spacing.md};
+  margin-bottom: ${({ theme }) => theme.spacing.sm};
+`;
+
+const HeaderTitle = styled.h1`
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: ${({ theme }) => theme.colors.primary};
+
+  @media (max-width: ${({ theme }) => theme.breakpoints.tablet}) {
+    font-size: 1.75rem;
+  }
+`;
+
+const HeaderSubtitle = styled.p`
+  font-size: 1.125rem;
+  color: ${({ theme }) => theme.colors.mutedForeground};
+  max-width: 600px;
+  margin: 0 auto;
+`;
+
+const ModalContentWrapper = styled.div`
+  padding: ${({ theme }) => theme.spacing.lg};
+`;
+
+const ConfirmationDialog = styled.div`
+  p {
+    margin-bottom: ${({ theme }) => theme.spacing.lg};
+    color: ${({ theme }) => theme.colors.foreground};
+  }
+
+  div {
+    display: flex;
+    justify-content: flex-end;
+    gap: ${({ theme }) => theme.spacing.md};
+  }
+`;
+
+
+// --- COMPONENT ---
 
 const CNDMonitoramento = () => {
-    // --- ESTADO CENTRALIZADO ---
+    // --- STATE ---
     const [clients, setClients] = useState([]);
     const [loading, setLoading] = useState(true);
     const [filteredClients, setFilteredClients] = useState([]);
@@ -18,7 +81,7 @@ const CNDMonitoramento = () => {
     const [clientToEdit, setClientToEdit] = useState(null);
     const [clientToDelete, setClientToDelete] = useState(null);
 
-    // --- LÓGICA DE DADOS (CRUD) ---
+    // --- DATA LOGIC ---
     useEffect(() => {
         fetchClients();
     }, []);
@@ -61,13 +124,13 @@ const CNDMonitoramento = () => {
         try {
             await axios.delete(`/api/clientes/${clientToDelete.id}`);
             fetchClients();
-            setClientToDelete(null); // Fechar o modal de confirmação
+            setClientToDelete(null);
         } catch (error) {
             console.error("Erro ao excluir cliente:", error);
         }
     };
 
-    // --- FUNÇÕES DE UI (MODALS, FILTROS) ---
+    // --- UI LOGIC ---
     const openModal = (client = null) => {
         setClientToEdit(client);
         setFormModalOpen(true);
@@ -86,49 +149,18 @@ const CNDMonitoramento = () => {
         setFilteredClients(filtered);
     };
 
-    // --- ESTILOS DO LAYOUT ---
-    const styles = {
-        container: {
-            maxWidth: '1280px',
-            margin: '0 auto',
-            padding: theme.spacing.xl,
-        },
-        header: {
-            textAlign: 'center',
-            marginBottom: theme.spacing.xl,
-        },
-        headerTitleContainer: {
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-            gap: theme.spacing.md,
-            marginBottom: theme.spacing.sm,
-        },
-        headerTitle: {
-            fontSize: '2.25rem',
-            fontWeight: 'bold',
-            color: theme.colors.primary,
-        },
-        headerSubtitle: {
-            fontSize: '1.125rem',
-            color: theme.colors.mutedForeground,
-        },
-    };
-
-    // --- RENDERIZAÇÃO ---
+    // --- RENDER ---
     return (
-        <div style={styles.container}>
-            <header style={styles.header}>
-                <div style={styles.headerTitleContainer}>
-                    <FileText style={{color: theme.colors.primary}} size={32} />
-                    <h1 style={styles.headerTitle}>
-                        Monitoramento de Certidões (CND)
-                    </h1>
-                </div>
-                <p style={styles.headerSubtitle}>
-                    Gerencie e monitore os clientes e suas certidões
-                </p>
-            </header>
+        <PageContainer>
+            <PageHeader>
+                <HeaderTitleContainer>
+                    <FileText color={theme.colors.primary} size={36} />
+                    <HeaderTitle>Monitoramento de Certidões (CND)</HeaderTitle>
+                </HeaderTitleContainer>
+                <HeaderSubtitle>
+                    Gerencie e monitore os clientes e suas certidões de forma simples e eficiente.
+                </HeaderSubtitle>
+            </PageHeader>
 
             <FilterActions onFilterChange={handleFilterChange} onAddClient={() => openModal()} />
 
@@ -142,29 +174,33 @@ const CNDMonitoramento = () => {
             />
 
             <Modal isOpen={isFormModalOpen} onClose={closeModal} title={clientToEdit ? 'Editar Cliente' : 'Cadastrar Novo Cliente'}>
-                <ClientForm
-                    clientToEdit={clientToEdit}
-                    onCreate={handleCreate}
-                    onUpdate={handleUpdate}
-                    onClose={closeModal}
-                    isOpen={isFormModalOpen}
-                />
+                <ModalContentWrapper>
+                    <ClientForm
+                        clientToEdit={clientToEdit}
+                        onCreate={handleCreate}
+                        onUpdate={handleUpdate}
+                        onClose={closeModal}
+                        isOpen={isFormModalOpen}
+                    />
+                </ModalContentWrapper>
             </Modal>
 
             <Modal isOpen={!!clientToDelete} onClose={() => setClientToDelete(null)} title="Confirmar Exclusão">
-                <div>
-                    <p style={{marginBottom: theme.spacing.lg}}>Tem certeza de que deseja excluir o cliente com CNPJ: {clientToDelete?.cnpj}?</p>
-                    <div style={{display: 'flex', justifyContent: 'flex-end', gap: theme.spacing.md}}>
-                        <InteractiveButton onClick={() => setClientToDelete(null)} variant="secondary">
-                            Cancelar
-                        </InteractiveButton>
-                        <InteractiveButton onClick={handleDelete} variant="destructive">
-                            Excluir
-                        </InteractiveButton>
-                    </div>
-                </div>
+                 <ModalContentWrapper>
+                    <ConfirmationDialog>
+                        <p>Tem certeza de que deseja excluir o cliente com CNPJ: <strong>{clientToDelete?.cnpj}</strong>?</p>
+                        <div>
+                            <InteractiveButton onClick={() => setClientToDelete(null)} variant="secondary">
+                                Cancelar
+                            </InteractiveButton>
+                            <InteractiveButton onClick={handleDelete} variant="destructive">
+                                Excluir
+                            </InteractiveButton>
+                        </div>
+                    </ConfirmationDialog>
+                </ModalContentWrapper>
             </Modal>
-        </div>
+        </PageContainer>
     );
 };
 

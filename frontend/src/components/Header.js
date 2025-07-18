@@ -1,40 +1,59 @@
 import React from 'react';
-import theme from '../theme';
+import styled from 'styled-components';
+import { ShieldCheck } from 'lucide-react';
+
+const HeaderContainer = styled.header`
+  background-color: ${({ theme }) => theme.colors.primary};
+  color: ${({ theme }) => theme.colors.primaryForeground};
+  padding: ${({ theme }) => theme.spacing.md} ${({ theme }) => theme.spacing.xl};
+  display: flex;
+  justify-content: center; /* Centraliza o conteúdo */
+  align-items: center;
+  box-shadow: ${({ theme }) => theme.shadows.md};
+  position: relative;
+  z-index: 10;
+
+  @media (max-width: ${({ theme }) => theme.breakpoints.tablet}) {
+    padding: ${({ theme }) => theme.spacing.md};
+  }
+`;
+
+const LogoContainer = styled.div`
+  display: flex;
+  align-items: center;
+  gap: ${({ theme }) => theme.spacing.md};
+`;
+
+const LogoIcon = styled(ShieldCheck)`
+  width: 40px;
+  height: 40px;
+
+  @media (max-width: ${({ theme }) => theme.breakpoints.tablet}) {
+    width: 32px;
+    height: 32px;
+  }
+`;
+
+const Title = styled.h1`
+  font-size: 1.75rem;
+  font-weight: 600;
+  color: ${({ theme }) => theme.colors.primaryForeground}; /* Garante que o h1 no header seja branco */
+  margin: 0;
+
+  @media (max-width: ${({ theme }) => theme.breakpoints.tablet}) {
+    font-size: 1.25rem;
+  }
+`;
 
 const Header = () => {
-    const styles = {
-        header: {
-            padding: `${theme.spacing.md} ${theme.spacing.xl}`,
-            backgroundColor: theme.colors.background,
-            boxShadow: theme.shadows.sm,
-        },
-        logoPlaceholder: {
-            height: '40px',
-            width: '120px',
-            backgroundColor: theme.colors.muted,
-            borderRadius: theme.borderRadius.md,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            color: theme.colors.mutedForeground,
-            fontSize: '0.875rem',
-            fontWeight: 600,
-        }
-    };
-
-    return (
-        <header style={styles.header}>
-            {/*
-              Para usar sua logo:
-              1. Crie a pasta `src/assets` e coloque sua imagem (ex: logo.png) lá.
-              2. Importe a logo: `import logo from './assets/logo.png';`
-              3. Substitua a div abaixo por: `<img src={logo} alt="Logo da Empresa" style={{ height: '40px' }} />`
-            */}
-            <div style={styles.logoPlaceholder}>
-                Sua Logo Aqui
-            </div>
-        </header>
-    );
+  return (
+    <HeaderContainer>
+      <LogoContainer>
+        <LogoIcon />
+        <Title>CND Control</Title>
+      </LogoContainer>
+    </HeaderContainer>
+  );
 };
 
 export default Header;

@@ -1,71 +1,59 @@
-import React, { useState } from 'react';
-import theme from '../../theme';
+import styled, { css } from 'styled-components';
 
-const InteractiveButton = ({ onClick, children, style, variant = 'primary' }) => {
-    const [isHovered, setIsHovered] = useState(false);
-    const [isActive, setIsActive] = useState(false);
+const variants = {
+  primary: css`
+    background-color: ${({ theme }) => theme.colors.primary};
+    color: ${({ theme }) => theme.colors.primaryForeground};
+    border: 1px solid ${({ theme }) => theme.colors.primary};
 
-    const baseStyle = {
-        padding: `${theme.spacing.sm} ${theme.spacing.md}`,
-        borderRadius: theme.borderRadius.md,
-        border: 'none',
-        cursor: 'pointer',
-        display: 'flex',
-        alignItems: 'center',
-        gap: theme.spacing.sm,
-        fontWeight: 'bold',
-        transition: 'transform 0.1s ease, box-shadow 0.2s ease',
-        ...style,
-    };
-
-    const variantStyles = {
-        primary: {
-            background: theme.colors.primary,
-            color: theme.colors.primaryForeground,
-        },
-        destructive: {
-            background: theme.colors.destructive,
-            color: theme.colors.destructiveForeground,
-        },
-        secondary: {
-            background: theme.colors.muted,
-            color: theme.colors.foreground,
-        }
-    };
-
-    const hoverStyles = {
-        transform: 'translateY(-2px)',
-        boxShadow: theme.shadows.md,
-    };
-
-    const activeStyles = {
-        transform: 'translateY(-1px)',
-        boxShadow: theme.shadows.sm,
-    };
-
-    let currentStyle = { ...baseStyle, ...variantStyles[variant] };
-    if (isHovered) {
-        currentStyle = { ...currentStyle, ...hoverStyles };
+    &:hover:not(:disabled) {
+      background-color: ${({ theme }) => theme.colors.primaryVariant};
+      border-color: ${({ theme }) => theme.colors.primaryVariant};
     }
-    if (isActive) {
-        currentStyle = { ...currentStyle, ...activeStyles };
-    }
+  `,
+  secondary: css`
+    background-color: ${({ theme }) => theme.colors.secondary};
+    color: ${({ theme }) => theme.colors.secondaryForeground};
+    border: 1px solid ${({ theme }) => theme.colors.border};
 
-    return (
-        <button
-            style={currentStyle}
-            onClick={onClick}
-            onMouseEnter={() => setIsHovered(true)}
-            onMouseLeave={() => {
-                setIsHovered(false);
-                setIsActive(false);
-            }}
-            onMouseDown={() => setIsActive(true)}
-            onMouseUp={() => setIsActive(false)}
-        >
-            {children}
-        </button>
-    );
+    &:hover:not(:disabled) {
+      background-color: ${({ theme }) => theme.colors.border};
+    }
+  `,
+  destructive: css`
+    background-color: ${({ theme }) => theme.colors.destructive};
+    color: ${({ theme }) => theme.colors.destructiveForeground};
+    border: 1px solid ${({ theme }) => theme.colors.destructive};
+
+    &:hover:not(:disabled) {
+      opacity: 0.9;
+    }
+  `,
 };
+
+const InteractiveButton = styled.button`
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: ${({ theme }) => theme.spacing.sm};
+  font-size: 1rem;
+  font-weight: 500;
+  padding: ${({ theme }) => theme.spacing.sm} ${({ theme }) => theme.spacing.md};
+  border-radius: ${({ theme }) => theme.borderRadius.md};
+  cursor: pointer;
+  transition: background-color 0.2s ease-in-out, border-color 0.2s ease-in-out, opacity 0.2s ease-in-out, transform 0.1s ease;
+  white-space: nowrap;
+
+  ${({ variant = 'primary' }) => variants[variant]}
+
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+  }
+
+  &:active:not(:disabled) {
+    transform: scale(0.98);
+  }
+`;
 
 export default InteractiveButton;

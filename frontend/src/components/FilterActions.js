@@ -1,68 +1,70 @@
 import React from 'react';
+import styled from 'styled-components';
 import { Plus, Search } from 'lucide-react';
 import InteractiveButton from './ui/InteractiveButton';
-import theme from '../theme';
+
+const FilterContainer = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: ${({ theme }) => theme.spacing.xl};
+  gap: ${({ theme }) => theme.spacing.md};
+
+  @media (max-width: ${({ theme }) => theme.breakpoints.tablet}) {
+    flex-direction: column;
+    align-items: stretch;
+  }
+`;
+
+const SearchWrapper = styled.div`
+  position: relative;
+  display: flex;
+  align-items: center;
+  flex-grow: 1;
+`;
+
+const SearchIcon = styled(Search)`
+  position: absolute;
+  left: 12px;
+  color: ${({ theme }) => theme.colors.mutedForeground};
+  width: 20px;
+  height: 20px;
+`;
+
+const SearchInput = styled.input`
+  width: 100%;
+  padding: ${({ theme }) => theme.spacing.sm} ${({ theme }) => theme.spacing.md};
+  padding-left: 40px; /* Space for the icon */
+  border: 1px solid ${({ theme }) => theme.colors.border};
+  border-radius: ${({ theme }) => theme.borderRadius.md};
+  font-size: 1rem;
+  background-color: ${({ theme }) => theme.colors.background};
+  transition: border-color 0.2s, box-shadow 0.2s;
+
+  &:focus {
+    outline: none;
+    border-color: ${({ theme }) => theme.colors.primary};
+    box-shadow: 0 0 0 2px ${({ theme }) => theme.colors.primary}33;
+  }
+`;
 
 const FilterActions = ({ onFilterChange, onAddClient }) => {
-    const styles = {
-        card: {
-            background: theme.colors.background,
-            padding: theme.spacing.lg,
-            borderRadius: theme.borderRadius.lg,
-            boxShadow: theme.shadows.md,
-            marginBottom: theme.spacing.xl,
-        },
-        container: {
-            display: 'flex',
-            gap: theme.spacing.md,
-            alignItems: 'center',
-            flexWrap: 'wrap',
-            justifyContent: 'space-between',
-        },
-        inputGroup: {
-            position: 'relative',
-            flexGrow: 1, // Ocupa o espaço disponível
-            minWidth: '250px', // Largura mínima antes de quebrar a linha
-        },
-        input: {
-            width: '100%',
-            padding: `12px ${theme.spacing.sm} 12px 40px`, // Padding ajustado para o botão
-            border: `1px solid ${theme.colors.border}`,
-            borderRadius: theme.borderRadius.md,
-        },
-        searchIcon: {
-            position: 'absolute',
-            left: '12px',
-            top: '50%',
-            transform: 'translateY(-50%)',
-            color: theme.colors.mutedForeground,
-        },
-        buttonContainer: {
-            flexShrink: 0, // Impede que o botão seja espremido
-        }
-    };
-
-    return (
-        <div style={styles.card}>
-            <div style={styles.container}>
-                <div style={styles.inputGroup}>
-                    <Search size={20} style={styles.searchIcon} />
-                    <input
-                        type="text"
-                        placeholder="Filtrar por CNPJ..."
-                        onChange={onFilterChange}
-                        style={styles.input}
-                    />
-                </div>
-                <div style={styles.buttonContainer}>
-                    <InteractiveButton onClick={onAddClient}>
-                        <Plus size={20} />
-                        <span>Cadastrar Novo Cliente</span>
-                    </InteractiveButton>
-                </div>
-            </div>
-        </div>
-    );
+  return (
+    <FilterContainer>
+      <SearchWrapper>
+        <SearchIcon />
+        <SearchInput
+          type="text"
+          placeholder="Filtrar por CNPJ..."
+          onChange={onFilterChange}
+        />
+      </SearchWrapper>
+      <InteractiveButton onClick={onAddClient}>
+        <Plus size={20} />
+        Adicionar Cliente
+      </InteractiveButton>
+    </FilterContainer>
+  );
 };
 
 export default FilterActions;

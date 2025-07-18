@@ -1,104 +1,128 @@
 import React from 'react';
-import { Edit, Trash2 } from 'lucide-react';
-import theme from '../theme';
+import styled from 'styled-components';
+import { Edit, Trash2, AlertCircle } from 'lucide-react';
+import InteractiveButton from './ui/InteractiveButton';
 
-const ClientsTable = ({ clients, onEdit, onDelete, loading }) => {
-    const styles = {
-        tableContainer: {
-            background: theme.colors.background,
-            borderRadius: theme.borderRadius.lg,
-            boxShadow: theme.shadows.md,
-            overflow: 'hidden',
-        },
-        table: {
-            width: '100%',
-            textAlign: 'left',
-            borderCollapse: 'collapse',
-        },
-        th: {
-            padding: theme.spacing.md,
-            fontWeight: '600',
-            color: theme.colors.primary,
-            background: `rgba(53, 81, 138, 0.05)`,
-        },
-        td: {
-            padding: theme.spacing.md,
-            borderTop: `1px solid ${theme.colors.border}`,
-        },
-        avatar: {
-            width: '40px',
-            height: '40px',
-            borderRadius: theme.borderRadius.full,
-            background: `rgba(53, 81, 138, 0.1)`,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontWeight: 'bold',
-            color: theme.colors.primary,
-            flexShrink: 0,
-        },
-        actionButton: {
-            background: 'transparent',
-            border: 'none',
-            padding: theme.spacing.xs,
-            cursor: 'pointer',
-            color: theme.colors.mutedForeground,
-            transition: 'color 0.2s',
-        }
-    };
+const TableWrapper = styled.div`
+  overflow-x: auto;
+  background-color: ${({ theme }) => theme.colors.background};
+  border-radius: ${({ theme }) => theme.borderRadius.lg};
+  border: 1px solid ${({ theme }) => theme.colors.border};
+  box-shadow: ${({ theme }) => theme.shadows.md};
+`;
 
+const StyledTable = styled.table`
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+`;
+
+const TableHead = styled.thead`
+  background-color: ${({ theme }) => theme.colors.secondary};
+
+  th {
+    padding: ${({ theme }) => theme.spacing.md} ${({ theme }) => theme.spacing.lg};
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: ${({ theme }) => theme.colors.mutedForeground};
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+`;
+
+const TableBody = styled.tbody`
+  tr {
+    border-bottom: 1px solid ${({ theme }) => theme.colors.border};
+
+    &:last-child {
+      border-bottom: none;
+    }
+
+    &:hover {
+      background-color: ${({ theme }) => theme.colors.muted};
+    }
+  }
+
+  td {
+    padding: ${({ theme }) => theme.spacing.md} ${({ theme }) => theme.spacing.lg};
+    color: ${({ theme }) => theme.colors.foreground};
+    vertical-align: middle;
+  }
+`;
+
+const ActionsCell = styled.td`
+  display: flex;
+  justify-content: flex-end;
+  gap: ${({ theme }) => theme.spacing.sm};
+`;
+
+const EmptyState = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: ${({ theme }) => theme.spacing.xxl};
+  text-align: center;
+  color: ${({ theme }) => theme.colors.mutedForeground};
+
+  svg {
+    margin-bottom: ${({ theme }) => theme.spacing.md};
+  }
+
+  p {
+    font-size: 1.125rem;
+  }
+`;
+
+
+const ClientsTable = ({ clients, loading, onEdit, onDelete }) => {
+  if (loading) {
+    return <p>Carregando clientes...</p>;
+  }
+
+  if (clients.length === 0) {
     return (
-        <div style={styles.tableContainer}>
-            <table style={styles.table}>
-                <thead>
-                    <tr>
-                        <th style={styles.th}>Cliente</th>
-                        <th style={styles.th}>Status</th>
-                        <th style={styles.th}>Periodicidade</th>
-                        <th style={{...styles.th, textAlign: 'right'}}>Ações</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {loading ? (
-                        <tr><td colSpan="4" style={{textAlign: 'center', padding: theme.spacing.xl}}>Carregando...</td></tr>
-                    ) : (
-                        clients.map(client => (
-                            <tr key={client.id} className="hover-row">
-                                <td style={{...styles.td, display: 'flex', alignItems: 'center', gap: theme.spacing.md}}>
-                                    <div style={styles.avatar}>
-                                        {client.cnpj.charAt(0)}
-                                    </div>
-                                    <div>
-                                        <div style={{fontWeight: 500}}>{`Cliente ${client.cnpj.substring(0, 2)}`}</div>
-                                        <div style={{fontSize: '0.875rem', color: theme.colors.mutedForeground}}>{client.cnpj}</div>
-                                    </div>
-                                </td>
-                                <td style={styles.td}>
-                                    <span style={{
-                                        padding: '4px 8px',
-                                        fontSize: '0.75rem',
-                                        fontWeight: 500,
-                                        borderRadius: theme.borderRadius.full,
-                                        background: client.statusCliente === 'ATIVO' ? 'hsl(142.1, 76.2%, 80%)' : 'hsl(0, 72.2%, 80%)',
-                                        color: client.statusCliente === 'ATIVO' ? 'hsl(142.1, 70.2%, 25%)' : 'hsl(0, 70.2%, 25%)',
-                                    }}>
-                                        {client.statusCliente}
-                                    </span>
-                                </td>
-                                <td style={styles.td}>{client.periodicidade} dias</td>
-                                <td style={{...styles.td, textAlign: 'right'}}>
-                                    <div style={{display: 'flex', gap: theme.spacing.sm, justifyContent: 'flex-end'}}>
-                                            <button onClick={() => onEdit(client)} style={styles.actionButton} title={`Editar ${client.cnpj}`}><Edit size={18} /></button>
-                                            <button onClick={() => onDelete(client)} style={{...styles.actionButton, color: theme.colors.destructive}} title={`Excluir ${client.cnpj}`}><Trash2 size={18} /></button>
-                                    </div>
-                                </td>
-                            </tr>
-                        ))
-                    )}
-                </tbody>
-            </table>
-        </div>
-    );
+      <TableWrapper>
+        <EmptyState>
+          <AlertCircle size={48} />
+          <p>Nenhum cliente encontrado.</p>
+          <span>Tente ajustar seus filtros ou adicione um novo cliente.</span>
+        </EmptyState>
+      </TableWrapper>
+    )
+  }
+
+  return (
+    <TableWrapper>
+      <StyledTable>
+        <TableHead>
+          <tr>
+            <th>CNPJ</th>
+            <th>Razão Social</th>
+            <th>Status</th>
+            <th style={{ textAlign: 'right' }}>Ações</th>
+          </tr>
+        </TableHead>
+        <TableBody>
+          {clients.map((client) => (
+            <tr key={client.id}>
+              <td>{client.cnpj}</td>
+              <td>{client.razaoSocial}</td>
+              <td>{client.status}</td>
+              <ActionsCell>
+                <InteractiveButton variant="secondary" onClick={() => onEdit(client)}>
+                  <Edit size={16} />
+                </InteractiveButton>
+                <InteractiveButton variant="destructive" onClick={() => onDelete(client)}>
+                  <Trash2 size={16} />
+                </InteractiveButton>
+              </ActionsCell>
+            </tr>
+          ))}
+        </TableBody>
+      </StyledTable>
+    </TableWrapper>
+  );
 };
 
 export default ClientsTable;

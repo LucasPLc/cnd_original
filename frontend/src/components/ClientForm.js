@@ -1,178 +1,132 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
-import theme from '../theme';
+import styled from 'styled-components';
+import InteractiveButton from './ui/InteractiveButton';
+
+const Form = styled.form`
+  display: flex;
+  flex-direction: column;
+  gap: ${({ theme }) => theme.spacing.lg};
+`;
+
+const FormGroup = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: ${({ theme }) => theme.spacing.sm};
+`;
+
+const Label = styled.label`
+  font-weight: 500;
+  color: ${({ theme }) => theme.colors.foreground};
+`;
+
+const Input = styled.input`
+  width: 100%;
+  padding: ${({ theme }) => theme.spacing.sm} ${({ theme }) => theme.spacing.md};
+  border: 1px solid ${({ theme }) => theme.colors.border};
+  border-radius: ${({ theme }) => theme.borderRadius.md};
+  font-size: 1rem;
+  background-color: ${({ theme }) => theme.colors.background};
+  transition: border-color 0.2s, box-shadow 0.2s;
+
+  &:focus {
+    outline: none;
+    border-color: ${({ theme }) => theme.colors.primary};
+    box-shadow: 0 0 0 2px ${({ theme }) => theme.colors.primary}33;
+  }
+
+  &:disabled {
+      background-color: ${({ theme }) => theme.colors.muted};
+      cursor: not-allowed;
+  }
+`;
+
+const ButtonContainer = styled.div`
+  display: flex;
+  justify-content: flex-end;
+  gap: ${({ theme }) => theme.spacing.md};
+  margin-top: ${({ theme }) => theme.spacing.lg};
+`;
 
 const ClientForm = ({ clientToEdit, onCreate, onUpdate, onClose, isOpen }) => {
   const [formData, setFormData] = useState({
     cnpj: '',
-    periodicidade: 30,
-    statusCliente: 'ATIVO',
-    nacional: true,
-    municipal: true,
-    estadual: false,
-    fk_empresa: '',
+    razaoSocial: '',
+    email: '',
   });
 
   useEffect(() => {
-    if (clientToEdit) {
-      setFormData({
-        id: clientToEdit.id,
-        cnpj: clientToEdit.cnpj,
-        periodicidade: clientToEdit.periodicidade,
-        statusCliente: clientToEdit.statusCliente,
-        nacional: clientToEdit.nacional,
-        municipal: clientToEdit.municipal,
-        estadual: clientToEdit.estadual,
-        fk_empresa: clientToEdit.empresa?.idEmpresa || '',
-      });
-    } else {
-      setFormData({
-        cnpj: '',
-        periodicidade: 30,
-        statusCliente: 'ATIVO',
-        nacional: true,
-        municipal: true,
-        estadual: false,
-        fk_empresa: '',
-      });
+    if (isOpen) {
+      if (clientToEdit) {
+        setFormData({
+          cnpj: clientToEdit.cnpj || '',
+          razaoSocial: clientToEdit.razaoSocial || '',
+          email: clientToEdit.email || '',
+        });
+      } else {
+        setFormData({ cnpj: '', razaoSocial: '', email: '' });
+      }
     }
-  }, [clientToEdit, isOpen]); // Adicionado isOpen para resetar o form
+  }, [clientToEdit, isOpen]);
 
   const handleChange = (e) => {
-    const { name, value, type, checked } = e.target;
-    setFormData(prev => ({ ...prev, [name]: type === 'checkbox' ? checked : value }));
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (clientToEdit && !formData.id) {
-        console.error("Tentativa de atualização sem ID de cliente.");
-        return; // Salvaguarda para não enviar requisição sem ID
-    }
-
-    const payload = {
-      id: formData.id,
-      cnpj: formData.cnpj,
-      periodicidade: formData.periodicidade,
-      statusCliente: formData.statusCliente,
-      nacional: formData.nacional,
-      municipal: formData.municipal,
-      estadual: formData.estadual,
-      empresa: {
-        idEmpresa: formData.fk_empresa,
-        cnpj: "00.000.000/0000-00",
-        nomeEmpresa: "Empresa Mock"
-      }
-    };
-
     if (clientToEdit) {
-      onUpdate(formData.id, payload);
+      onUpdate(clientToEdit.id, formData);
     } else {
-      onCreate(payload);
-    }
-  };
-
-  // --- STYLES OBJECT ---
-  const styles = {
-    form: {
-        display: 'flex',
-        flexDirection: 'column',
-        gap: theme.spacing.lg,
-    },
-    label: {
-        display: 'block',
-        fontSize: '0.875rem',
-        fontWeight: 500,
-        color: '#374151', // text-gray-700
-        marginBottom: theme.spacing.xs,
-    },
-    input: {
-        display: 'block',
-        width: '100%',
-        padding: `${theme.spacing.sm} ${theme.spacing.sm}`,
-        border: `1px solid ${theme.colors.border}`,
-        borderRadius: theme.borderRadius.md,
-        boxShadow: theme.shadows.sm,
-    },
-    checkboxContainer: {
-        display: 'flex',
-        alignItems: 'center',
-    },
-    checkboxLabel: {
-        marginLeft: theme.spacing.sm,
-        fontSize: '0.875rem',
-        color: '#111827', // text-gray-900
-    },
-    buttonContainer: {
-        display: 'flex',
-        justifyContent: 'flex-end',
-        gap: theme.spacing.md,
-    },
-    button: {
-        padding: `${theme.spacing.sm} ${theme.spacing.md}`,
-        fontSize: '0.875rem',
-        fontWeight: 500,
-        borderRadius: theme.borderRadius.md,
-        border: '1px solid transparent',
-        cursor: 'pointer',
-    },
-    buttonSecondary: {
-        color: '#374151', // text-gray-700
-        backgroundColor: theme.colors.background,
-        borderColor: theme.colors.border,
-    },
-    buttonPrimary: {
-        color: theme.colors.primaryForeground,
-        backgroundColor: theme.colors.primary,
+      onCreate(formData);
     }
   };
 
   return (
-    <form onSubmit={handleSubmit} style={styles.form}>
-      <div>
-        <label htmlFor="cnpj" style={styles.label}>CNPJ</label>
-        <input id="cnpj" name="cnpj" value={formData.cnpj} onChange={handleChange} placeholder="XX.XXX.XXX/XXXX-XX" required style={styles.input} />
-      </div>
-      <div>
-        <label htmlFor="fk_empresa" style={styles.label}>ID da Empresa</label>
-        <input id="fk_empresa" name="fk_empresa" value={formData.fk_empresa} onChange={handleChange} placeholder="ID da Empresa no sistema SAAM" required style={styles.input} />
-      </div>
-      <div>
-        <label htmlFor="periodicidade" style={styles.label}>Periodicidade (dias)</label>
-        <input id="periodicidade" name="periodicidade" type="number" value={formData.periodicidade} onChange={handleChange} required style={styles.input} />
-      </div>
-       <div>
-        <label htmlFor="statusCliente" style={styles.label}>Status</label>
-        <input id="statusCliente" name="statusCliente" value={formData.statusCliente} onChange={handleChange} required style={styles.input} />
-      </div>
-
-      <fieldset>
-        <legend style={styles.label}>Escopos</legend>
-        <div style={{display: 'flex', flexDirection: 'column', gap: theme.spacing.sm, marginTop: theme.spacing.xs}}>
-          <div style={styles.checkboxContainer}>
-            <input id="nacional" name="nacional" type="checkbox" checked={formData.nacional} onChange={handleChange} />
-            <label htmlFor="nacional" style={styles.checkboxLabel}>Nacional</label>
-          </div>
-           <div style={styles.checkboxContainer}>
-            <input id="municipal" name="municipal" type="checkbox" checked={formData.municipal} onChange={handleChange} />
-            <label htmlFor="municipal" style={styles.checkboxLabel}>Municipal</label>
-          </div>
-           <div style={styles.checkboxContainer}>
-            <input id="estadual" name="estadual" type="checkbox" checked={formData.estadual} onChange={handleChange} />
-            <label htmlFor="estadual" style={styles.checkboxLabel}>Estadual</label>
-          </div>
-        </div>
-      </fieldset>
-
-      <div style={styles.buttonContainer}>
-        <button type="button" onClick={onClose} style={{...styles.button, ...styles.buttonSecondary}}>
+    <Form onSubmit={handleSubmit}>
+      <FormGroup>
+        <Label htmlFor="cnpj">CNPJ</Label>
+        <Input
+          type="text"
+          id="cnpj"
+          name="cnpj"
+          value={formData.cnpj}
+          onChange={handleChange}
+          required
+          disabled={!!clientToEdit} // Desabilita edição de CNPJ
+        />
+      </FormGroup>
+      <FormGroup>
+        <Label htmlFor="razaoSocial">Razão Social</Label>
+        <Input
+          type="text"
+          id="razaoSocial"
+          name="razaoSocial"
+          value={formData.razaoSocial}
+          onChange={handleChange}
+          required
+        />
+      </FormGroup>
+      <FormGroup>
+        <Label htmlFor="email">Email</Label>
+        <Input
+          type="email"
+          id="email"
+          name="email"
+          value={formData.email}
+          onChange={handleChange}
+          required
+        />
+      </FormGroup>
+      <ButtonContainer>
+        <InteractiveButton type="button" variant="secondary" onClick={onClose}>
           Cancelar
-        </button>
-        <button type="submit" style={{...styles.button, ...styles.buttonPrimary}}>
+        </InteractiveButton>
+        <InteractiveButton type="submit">
           {clientToEdit ? 'Salvar Alterações' : 'Cadastrar Cliente'}
-        </button>
-      </div>
-    </form>
+        </InteractiveButton>
+      </ButtonContainer>
+    </Form>
   );
 };
 
