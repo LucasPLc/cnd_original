@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import axios from 'axios';
 import { FileText } from 'lucide-react';
 import Modal from '../components/ui/Modal';
@@ -7,18 +7,21 @@ import InteractiveButton from '../components/ui/InteractiveButton';
 import StatsCards from '../components/StatsCards';
 import FilterActions from '../components/FilterActions';
 import ClientsTable from '../components/ClientsTable';
+import Pagination from '../components/ui/Pagination';
 import theme from '../theme';
 
+const PAGE_SIZE = 10;
+
 const CNDMonitoramento = () => {
-    // --- ESTADO CENTRALIZADO ---
     const [clients, setClients] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [filteredClients, setFilteredClients] = useState([]);
+    const [filters, setFilters] = useState({ text: '', status: '', startDate: '', endDate: '' });
+    const [currentPage, setCurrentPage] = useState(1);
     const [isFormModalOpen, setFormModalOpen] = useState(false);
     const [clientToEdit, setClientToEdit] = useState(null);
-    const [clientToDelete, setClientToDelete] = useState(null);
+    const [clientsToDelete, setClientsToDelete] = useState([]);
+    const [selectedClients, setSelectedClients] = useState([]);
 
-    // --- LÓGICA DE DADOS (CRUD) ---
     useEffect(() => {
         fetchClients();
     }, []);
@@ -28,7 +31,6 @@ const CNDMonitoramento = () => {
         try {
             const response = await axios.get('/api/clientes');
             setClients(response.data);
-            setFilteredClients(response.data);
         } catch (error) {
             console.error("Erro ao buscar clientes:", error);
         } finally {
@@ -57,13 +59,16 @@ const CNDMonitoramento = () => {
     };
 
     const handleDelete = async () => {
-        if (!clientToDelete) return;
+        if (clientsToDelete.length === 0) return;
         try {
-            await axios.delete(`/api/clientes/${clientToDelete.id}`);
+            await Promise.all(
+                clientsToDelete.map(id => axios.delete(`/api/clientes/${id}`))
+            );
             fetchClients();
-            setClientToDelete(null); // Fechar o modal de confirmação
+            setClientsToDelete([]);
+            setSelectedClients([]);
         } catch (error) {
-            console.error("Erro ao excluir cliente:", error);
+            console.error("Erro ao excluir cliente(s):", error);
         }
     };
 
@@ -78,12 +83,37 @@ const CNDMonitoramento = () => {
         setFormModalOpen(false);
     };
 
-    const handleFilterChange = (e) => {
-        const searchTerm = e.target.value.toLowerCase();
-        const filtered = clients.filter(client =>
-            client.cnpj.includes(searchTerm)
-        );
-        setFilteredClients(filtered);
+    const filteredClients = useMemo(() => {
+        const { text, status, startDate, endDate } = filters;
+        const searchTerm = text.toLowerCase();
+
+        return clients.filter(client => {
+            const clientDate = client.dataProcessamento ? new Date(client.dataProcessamento) : null;
+            const start = startDate ? new Date(startDate) : null;
+            const end = endDate ? new Date(endDate) : null;
+
+            if (start && (!clientDate || clientDate < start)) return false;
+            if (end && (!clientDate || clientDate > end)) return false;
+
+            const matchesSearch = client.cnpj.toLowerCase().includes(searchTerm) ||
+                                  (client.nomeContribuinte && client.nomeContribuinte.toLowerCase().includes(searchTerm));
+
+            const matchesStatus = !status || client.statusProcessamento === status;
+
+            return matchesSearch && matchesStatus;
+        });
+    }, [clients, filters]);
+
+    const paginatedClients = useMemo(() => {
+        const startIndex = (currentPage - 1) * PAGE_SIZE;
+        return filteredClients.slice(startIndex, startIndex + PAGE_SIZE);
+    }, [filteredClients, currentPage]);
+
+    const totalPages = Math.ceil(filteredClients.length / PAGE_SIZE);
+
+    const handleFilterChange = (newFilters) => {
+        setFilters(newFilters);
+        setCurrentPage(1);
     };
 
     // --- ESTILOS DO LAYOUT ---
@@ -130,15 +160,31 @@ const CNDMonitoramento = () => {
                 </p>
             </header>
 
-            <FilterActions onFilterChange={handleFilterChange} onAddClient={() => openModal()} />
+            <FilterActions onFilterChange={handleFilterChange} onAddClient={() => openModal()} filteredClients={filteredClients} />
 
             <StatsCards total={clients.length} filtered={filteredClients.length} selected={0} />
 
+            {selectedClients.length > 0 && (
+                <div style={{ marginBottom: theme.spacing.md, display: 'flex', justifyContent: 'flex-end' }}>
+                    <InteractiveButton onClick={() => setClientsToDelete(selectedClients)} variant="destructive">
+                        Excluir Selecionados ({selectedClients.length})
+                    </InteractiveButton>
+                </div>
+            )}
+
             <ClientsTable
-                clients={filteredClients}
+                clients={paginatedClients}
                 loading={loading}
                 onEdit={(client) => openModal(client)}
-                onDelete={(client) => setClientToDelete(client)}
+                onDelete={(ids) => setClientsToDelete(ids)}
+                selectedClients={selectedClients}
+                onSelectionChange={setSelectedClients}
+            />
+
+            <Pagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={setCurrentPage}
             />
 
             <Modal isOpen={isFormModalOpen} onClose={closeModal} title={clientToEdit ? 'Editar Cliente' : 'Cadastrar Novo Cliente'}>
@@ -151,11 +197,13 @@ const CNDMonitoramento = () => {
                 />
             </Modal>
 
-            <Modal isOpen={!!clientToDelete} onClose={() => setClientToDelete(null)} title="Confirmar Exclusão">
+            <Modal isOpen={clientsToDelete.length > 0} onClose={() => setClientsToDelete([])} title="Confirmar Exclusão">
                 <div>
-                    <p style={{marginBottom: theme.spacing.lg}}>Tem certeza de que deseja excluir o cliente com CNPJ: {clientToDelete?.cnpj}?</p>
+                    <p style={{marginBottom: theme.spacing.lg}}>
+                        {`Tem certeza de que deseja excluir ${clientsToDelete.length} cliente(s)?`}
+                    </p>
                     <div style={{display: 'flex', justifyContent: 'flex-end', gap: theme.spacing.md}}>
-                        <InteractiveButton onClick={() => setClientToDelete(null)} variant="secondary">
+                        <InteractiveButton onClick={() => setClientsToDelete([])} variant="secondary">
                             Cancelar
                         </InteractiveButton>
                         <InteractiveButton onClick={handleDelete} variant="destructive">
