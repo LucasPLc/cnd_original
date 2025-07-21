@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
 import theme from '../theme';
 
 const ClientForm = ({ clientToEdit, onCreate, onUpdate, onClose, isOpen }) => {
