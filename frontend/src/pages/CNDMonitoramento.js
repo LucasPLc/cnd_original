@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import axios from 'axios';
+import apiClient from '../api';
 import { FileText } from 'lucide-react';
 import Modal from '../components/ui/Modal';
 import ClientForm from '../components/ClientForm';
@@ -29,7 +29,7 @@ const CNDMonitoramento = () => {
     const fetchClients = async () => {
         setLoading(true);
         try {
-            const response = await axios.get('/api/clientes');
+            const response = await apiClient.get('/clientes');
             setClients(response.data);
         } catch (error) {
             console.error("Erro ao buscar clientes:", error);
@@ -40,7 +40,7 @@ const CNDMonitoramento = () => {
 
     const handleCreate = async (payload) => {
         try {
-            await axios.post('/api/clientes', payload);
+            await apiClient.post('/clientes', payload);
             fetchClients();
             closeModal();
         } catch (error) {
@@ -50,7 +50,7 @@ const CNDMonitoramento = () => {
 
     const handleUpdate = async (clientId, payload) => {
         try {
-            await axios.put(`/api/clientes/${clientId}`, payload);
+            await apiClient.put(`/clientes/${clientId}`, payload);
             fetchClients();
             closeModal();
         } catch (error) {
@@ -62,7 +62,7 @@ const CNDMonitoramento = () => {
         if (clientsToDelete.length === 0) return;
         try {
             await Promise.all(
-                clientsToDelete.map(id => axios.delete(`/api/clientes/${id}`))
+                clientsToDelete.map(id => apiClient.delete(`/clientes/${id}`))
             );
             fetchClients();
             setClientsToDelete([]);

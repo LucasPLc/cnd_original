@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
-import axios from 'axios';
+import apiClient from '../api';
 import { Edit, Trash2, Download } from 'lucide-react';
 import theme from '../theme';
 
 const ClientsTable = ({ clients, onEdit, onDelete, loading, selectedClients, onSelectionChange }) => {
     const handleDownload = async (clientId, client) => {
         try {
-            const response = await axios.get(`/api/cnd/resultado/${clientId}/pdf`, {
+            const response = await apiClient.get(`/cnd/resultado/${clientId}/pdf`, {
                 responseType: 'blob',
             });
             const url = window.URL.createObjectURL(new Blob([response.data]));
