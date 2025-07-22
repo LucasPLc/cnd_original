@@ -1,5 +1,6 @@
 package br.com.sisaudcon.saam.saam_sped_cnd.controller;
 
+import br.com.sisaudcon.saam.saam_sped_cnd.domain.exception.ClienteNaoAutorizadoException;
 import br.com.sisaudcon.saam.saam_sped_cnd.domain.exception.ClienteNotFoundException;
 import br.com.sisaudcon.saam.saam_sped_cnd.domain.model.Cliente;
 import br.com.sisaudcon.saam.saam_sped_cnd.domain.repository.ClienteRepository;
@@ -7,16 +8,16 @@ import br.com.sisaudcon.saam.saam_sped_cnd.domain.service.ClienteService;
 import br.com.sisaudcon.saam.saam_sped_cnd.domain.service.RegistroClienteService;
 import br.com.sisaudcon.saam.saam_sped_cnd.dto.ClienteDTO;
 import br.com.sisaudcon.saam.saam_sped_cnd.mapper.ClienteMapper;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
-import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
 import java.util.List;
 
-@AllArgsConstructor
 @RestController
-@RequestMapping("clientes")
+@RequestMapping("/api/clientes")
 public class ClienteController {
 
     private final RegistroClienteService registroClienteService;
@@ -29,29 +30,44 @@ public class ClienteController {
         this.clienteService = clienteService;
     }
 
+    private String getClientIdFromRequest(HttpServletRequest request) {
+        String clientId = (String) request.getAttribute("clientId");
+        if (clientId == null) {
+            // Isso não deve acontecer se o filtro estiver configurado corretamente
+            throw new ClienteNaoAutorizadoException("ClientId não encontrado no token.");
+        }
+        return clientId;
+    }
+
     @GetMapping
-    public List<ClienteDTO> listar() {
+    public List<ClienteDTO> listar(HttpServletRequest request) {
+        String clientId = getClientIdFromRequest(request);
+        // No futuro, o ideal é que o repository suporte a busca por clientId
+        // List<Cliente> clientes = clienteRepository.findByClientId(clientId);
         List<Cliente> clientes = clienteRepository.findAll();
         return clientes.stream()
                 .map(ClienteMapper::toDTO)
                 .toList();
     }
+
     @GetMapping("/{clienteId}")
-    public ResponseEntity<ClienteDTO> buscar(@PathVariable Integer clienteId) {
+    public ResponseEntity<ClienteDTO> buscar(@PathVariable Integer clienteId, HttpServletRequest request) {
+        String tokenClientId = getClientIdFromRequest(request);
+        if (!tokenClientId.equals(String.valueOf(clienteId))) {
+            throw new ClienteNaoAutorizadoException("Acesso negado: o ID solicitado não corresponde ao do token.");
+        }
         Cliente cliente = clienteRepository.findById(clienteId)
                 .orElseThrow(() -> new ClienteNotFoundException("Cliente não encontrado para o ID informado."));
         return ResponseEntity.ok(ClienteMapper.toDTO(cliente));
     }
 
-    @GetMapping("/buscar")
-    public ResponseEntity<ClienteDTO> buscarClientePorCnpj(@RequestParam String cnpj) {
-        ClienteDTO clienteDTO = clienteService.getClienteByCnpj(cnpj);
-        return ResponseEntity.ok(clienteDTO);
-    }
-
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public ClienteDTO cadastrar(@RequestBody @Valid ClienteDTO clienteDTO) {
+    public ClienteDTO cadastrar(@RequestBody @Valid ClienteDTO clienteDTO, HttpServletRequest request) {
+        String tokenClientId = getClientIdFromRequest(request);
+        if (!tokenClientId.equals(String.valueOf(clienteDTO.getId()))) {
+            throw new ClienteNaoAutorizadoException("O ID do cliente no corpo da requisição não corresponde ao do token.");
+        }
         Cliente cliente = ClienteMapper.toEntity(clienteDTO);
         Cliente clienteSalvo = registroClienteService.salvarClienteComEmpresa(cliente);
         return ClienteMapper.toDTO(clienteSalvo);
@@ -59,8 +75,11 @@ public class ClienteController {
 
     @PutMapping("/{clienteId}")
     public ClienteDTO atualizar(@PathVariable Integer clienteId,
-                                @RequestBody @Valid ClienteDTO clienteDTO) {
-        // se não existir, lança a exceção
+                                @RequestBody @Valid ClienteDTO clienteDTO, HttpServletRequest request) {
+        String tokenClientId = getClientIdFromRequest(request);
+        if (!tokenClientId.equals(String.valueOf(clienteId))) {
+            throw new ClienteNaoAutorizadoException("O ID na URL não corresponde ao do token.");
+        }
         if (!clienteRepository.existsById(clienteId)) {
             throw new ClienteNotFoundException("Cliente não encontrado para o ID informado.");
         }
@@ -69,14 +88,17 @@ public class ClienteController {
         Cliente atualizado = registroClienteService.salvarClienteComEmpresa(cliente);
         return ClienteMapper.toDTO(atualizado);
     }
+
     @DeleteMapping("/{clienteId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void remover(@PathVariable Integer clienteId) {
+    public void remover(@PathVariable Integer clienteId, HttpServletRequest request) {
+        String tokenClientId = getClientIdFromRequest(request);
+        if (!tokenClientId.equals(String.valueOf(clienteId))) {
+            throw new ClienteNaoAutorizadoException("O ID na URL não corresponde ao do token.");
+        }
         if (!clienteRepository.existsById(clienteId)) {
             throw new ClienteNotFoundException("Cliente não encontrado para o ID informado.");
         }
         registroClienteService.excluir(clienteId);
     }
-
-
 }
