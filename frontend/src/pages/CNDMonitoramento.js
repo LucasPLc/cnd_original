@@ -20,6 +20,24 @@ const CNDMonitoramento = () => {
 
     // --- LÓGICA DE DADOS (CRUD) ---
     useEffect(() => {
+        // 1. Extrair e configurar o token JWT
+        const urlParams = new URLSearchParams(window.location.search);
+        const token = urlParams.get('token');
+
+        if (token) {
+            // Armazena o token para persistência (recarregar a página não vai te deslogar)
+            localStorage.setItem('jwtToken', token);
+            // Limpa a URL para que o token não fique exposto
+            window.history.replaceState({}, document.title, window.location.pathname);
+        }
+
+        const storedToken = localStorage.getItem('jwtToken');
+        if (storedToken) {
+            // Configura o cabeçalho de autorização para todas as futuras requisições do axios
+            axios.defaults.headers.common['Authorization'] = `Bearer ${storedToken}`;
+        }
+
+        // 2. Agora, busca os clientes
         fetchClients();
     }, []);
 
