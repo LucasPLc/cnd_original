@@ -41,14 +41,11 @@
 			<scope>test</scope>
 		</dependency>
 		<dependency>
-<<<<<<< HEAD
 			<groupId>com.h2database</groupId>
 			<artifactId>h2</artifactId>
 			<scope>test</scope>
 		</dependency>
 		<dependency>
-=======
->>>>>>> gitlab/featura/busca-empresas-saam
 			<groupId>org.projectlombok</groupId>
 			<artifactId>lombok</artifactId>
 		</dependency>
@@ -87,8 +84,6 @@
 			<version>2.0.29</version>
 		</dependency>
 
-<<<<<<< HEAD
-=======
 		<dependency>
 			<groupId>com.google.code.gson</groupId>
 			<artifactId>gson</artifactId>
@@ -101,7 +96,6 @@
 			<artifactId>java-jwt</artifactId>
 			<version>4.5.0</version>
 		</dependency>
->>>>>>> gitlab/featura/busca-empresas-saam
 	</dependencies>
 
 	<build>

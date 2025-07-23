@@ -3,10 +3,7 @@ package br.com.sisaudcon.saam.saam_sped_cnd.controller;
 import br.com.sisaudcon.saam.saam_sped_cnd.domain.exception.ClienteNotFoundException;
 import br.com.sisaudcon.saam.saam_sped_cnd.domain.model.Cliente;
 import br.com.sisaudcon.saam.saam_sped_cnd.domain.repository.ClienteRepository;
-<<<<<<< HEAD
 import br.com.sisaudcon.saam.saam_sped_cnd.domain.service.ClienteService;
-=======
->>>>>>> gitlab/featura/busca-empresas-saam
 import br.com.sisaudcon.saam.saam_sped_cnd.domain.service.RegistroClienteService;
 import br.com.sisaudcon.saam.saam_sped_cnd.dto.ClienteDTO;
 import br.com.sisaudcon.saam.saam_sped_cnd.mapper.ClienteMapper;
@@ -24,10 +21,7 @@ public class ClienteController {
 
     private final RegistroClienteService registroClienteService;
     private final ClienteRepository clienteRepository;
-<<<<<<< HEAD
     private final ClienteService clienteService;
-=======
->>>>>>> gitlab/featura/busca-empresas-saam
 
     @GetMapping
     public List<ClienteDTO> listar() {
@@ -36,10 +30,7 @@ public class ClienteController {
                 .map(ClienteMapper::toDTO)
                 .toList();
     }
-<<<<<<< HEAD
-=======
 
->>>>>>> gitlab/featura/busca-empresas-saam
     @GetMapping("/{clienteId}")
     public ResponseEntity<ClienteDTO> buscar(@PathVariable Integer clienteId) {
         Cliente cliente = clienteRepository.findById(clienteId)
@@ -47,15 +38,12 @@ public class ClienteController {
         return ResponseEntity.ok(ClienteMapper.toDTO(cliente));
     }
 
-<<<<<<< HEAD
     @GetMapping("/buscar")
     public ResponseEntity<ClienteDTO> buscarClientePorCnpj(@RequestParam String cnpj) {
         ClienteDTO clienteDTO = clienteService.getClienteByCnpj(cnpj);
         return ResponseEntity.ok(clienteDTO);
     }
 
-=======
->>>>>>> gitlab/featura/busca-empresas-saam
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public ClienteDTO cadastrar(@RequestBody @Valid ClienteDTO clienteDTO) {
@@ -84,6 +72,4 @@ public class ClienteController {
         }
         registroClienteService.excluir(clienteId);
     }
-
-
 }

@@ -21,17 +21,11 @@ public class CndResultadoService{
 
     @Transactional
     public CndResultado criarResultado(CndResultado dto) {
-<<<<<<< HEAD
         // busca cliente
         Cliente cliente = clienteRepo.findById(dto.getCliente().getId())
                 .orElseThrow(() -> new ClienteNotFoundException("Cliente não encontrado"));
 
         //  valida situação
-=======
-        Cliente cliente = clienteRepo.findById(dto.getCliente().getId())
-                .orElseThrow(() -> new ClienteNotFoundException("Cliente não encontrado"));
-
->>>>>>> gitlab/featura/busca-empresas-saam
         situacaoValidationService.validarAutorizacaoEmpresa(cliente.getEmpresa().getIdEmpresa());
 
         //  popular data de processamento se vier nulo
