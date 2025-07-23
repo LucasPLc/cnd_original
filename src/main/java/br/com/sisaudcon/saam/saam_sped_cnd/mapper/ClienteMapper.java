@@ -32,7 +32,10 @@ public class ClienteMapper {
     // Converte Entidade → DTO
     public static ClienteDTO toDTO(Cliente cliente) {
         ClienteDTO dto = new ClienteDTO();
+<<<<<<< HEAD
         dto.setId(cliente.getId());
+=======
+>>>>>>> gitlab/featura/busca-empresas-saam
         dto.setCnpj(cliente.getCnpj());
         dto.setPeriodicidade(cliente.getPeriodicidade());
         dto.setStatusCliente(cliente.getStatusCliente());

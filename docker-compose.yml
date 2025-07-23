@@ -3,10 +3,17 @@ version: '3.7'
 services:
   cnd:
     container_name: cnd-app
+<<<<<<< HEAD
     build: .
     restart: always
     ports:
       - 8082:8080
+=======
+    image: registry.gitlab.com/sisaudcon/SAAM-API-CNDt:latest
+    restart: always
+    ports:
+      - 8080:8080
+>>>>>>> gitlab/featura/busca-empresas-saam
     labels:
       - "com.centurylinklabs.watchtower.enable=true"
       - "com.centurylinklabs.watchtower.scope=cnd"
@@ -44,6 +51,7 @@ services:
     labels:
       - "com.centurylinklabs.watchtower.scope=cnd"
 
+<<<<<<< HEAD
   frontend:
     build:
       context: frontend
@@ -56,3 +64,7 @@ services:
 
 volumes:
   postgres_cnd_data:
+=======
+volumes:
+  postgres_cnd_data:
+>>>>>>> gitlab/featura/busca-empresas-saam

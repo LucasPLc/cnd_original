@@ -2,6 +2,7 @@ package br.com.sisaudcon.saam.saam_sped_cnd.dto;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.*;
+<<<<<<< HEAD
 import lombok.Getter;
 import lombok.Setter;
 
@@ -11,6 +12,13 @@ public class ClienteDTO {
 
     private Integer id;
 
+=======
+import lombok.Data;
+
+@Data
+public class ClienteDTO {
+
+>>>>>>> gitlab/featura/busca-empresas-saam
     @NotBlank(message = "Campo 'cnpj' é obrigatório.")
     @Size(max = 18, message = "Campo 'cnpj' deve ter no máximo 18 caracteres.")
     @Pattern(regexp = "^[0-9]{2}\\.[0-9]{3}\\.[0-9]{3}/[0-9]{4}-[0-9]{2}$", message = "Campo 'cnpj' deve estar no formato XX.XXX.XXX/XXXX-XX.")
