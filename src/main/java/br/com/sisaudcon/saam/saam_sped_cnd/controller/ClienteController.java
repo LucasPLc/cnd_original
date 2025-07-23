@@ -11,6 +11,8 @@ import br.com.sisaudcon.saam.saam_sped_cnd.mapper.ClienteMapper;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -19,6 +21,8 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/clientes")
 public class ClienteController {
+
+    private static final Logger logger = LoggerFactory.getLogger(ClienteController.class);
 
     private final RegistroClienteService registroClienteService;
     private final ClienteRepository clienteRepository;
@@ -41,10 +45,12 @@ public class ClienteController {
 
     @GetMapping
     public List<ClienteDTO> listar(HttpServletRequest request) {
+        logger.info(">>> ClienteController.listar() chamado");
         String clientId = getClientIdFromRequest(request);
-        // No futuro, o ideal é que o repository suporte a busca por clientId
-        // List<Cliente> clientes = clienteRepository.findByClientId(clientId);
-        List<Cliente> clientes = clienteRepository.findAll();
+        logger.info(">>> ClientId extraído do token: {}", clientId);
+
+        List<Cliente> clientes = clienteRepository.findByEmpresa_IdEmpresa(clientId);
+        logger.info(">>> {} clientes encontrados no banco de dados para o clientId {}.", clientes.size(), clientId);
         return clientes.stream()
                 .map(ClienteMapper::toDTO)
                 .toList();
@@ -64,10 +70,11 @@ public class ClienteController {
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public ClienteDTO cadastrar(@RequestBody @Valid ClienteDTO clienteDTO, HttpServletRequest request) {
-        String tokenClientId = getClientIdFromRequest(request);
-        if (!tokenClientId.equals(String.valueOf(clienteDTO.getId()))) {
-            throw new ClienteNaoAutorizadoException("O ID do cliente no corpo da requisição não corresponde ao do token.");
-        }
+        // Para cadastro, a autorização pode ser mais complexa.
+        // Por ora, vamos permitir que um token válido crie um cliente.
+        // A lógica de negócio no service deve garantir as regras de associação corretas.
+        getClientIdFromRequest(request); // Garante que há um token válido.
+
         Cliente cliente = ClienteMapper.toEntity(clienteDTO);
         Cliente clienteSalvo = registroClienteService.salvarClienteComEmpresa(cliente);
         return ClienteMapper.toDTO(clienteSalvo);

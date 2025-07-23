@@ -35,6 +35,6 @@ public class Cliente {
     private Boolean estadual;
 
     @ManyToOne
-    @JoinColumn(name = "fk_empresa", referencedColumnName = "id")
+    @JoinColumn(name = "fk_empresa", referencedColumnName = "id_empresa")
     private Empresa empresa;
 }

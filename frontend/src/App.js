@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import CNDMonitoramento from './pages/CNDMonitoramento';
-import Header from './components/Header'; // Importado
+import Header from './components/Header';
 import theme from './theme';
 
 const styles = {
@@ -12,6 +12,16 @@ const styles = {
 };
 
 function App() {
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const token = urlParams.get('token');
+
+    if (token) {
+      localStorage.setItem('authToken', token);
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+  }, []);
+
   return (
     <div style={styles.app}>
       <Header />

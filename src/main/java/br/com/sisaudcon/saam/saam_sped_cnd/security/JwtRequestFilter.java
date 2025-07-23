@@ -6,6 +6,8 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
@@ -19,6 +21,8 @@ import java.util.ArrayList;
 @Component
 public class JwtRequestFilter extends OncePerRequestFilter {
 
+    private static final Logger logger = LoggerFactory.getLogger(JwtRequestFilter.class);
+
     @Autowired
     private JwtUtil jwtUtil;
 
@@ -27,15 +31,23 @@ public class JwtRequestFilter extends OncePerRequestFilter {
             throws ServletException, IOException {
 
         final String authorizationHeader = request.getHeader("Authorization");
+        logger.info(">>> JwtRequestFilter: Recebido header 'Authorization': {}", authorizationHeader);
+
 
         String jwt = null;
         String clientId = null;
 
         if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
             jwt = authorizationHeader.substring(7);
+            logger.info(">>> Token extraído: {}", jwt);
             if (jwtUtil.validateToken(jwt)) {
                 clientId = jwtUtil.extractClientId(jwt);
+                logger.info(">>> Token validado com sucesso para clientId: {}", clientId);
+            } else {
+                logger.warn(">>> Falha na validação do token.");
             }
+        } else {
+            logger.warn(">>> Header 'Authorization' não encontrado ou não começa com 'Bearer '.");
         }
 
         if (clientId != null && SecurityContextHolder.getContext().getAuthentication() == null) {
