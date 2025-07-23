@@ -21,11 +21,9 @@ public class CndResultadoService{
 
     @Transactional
     public CndResultado criarResultado(CndResultado dto) {
-        // busca cliente
         Cliente cliente = clienteRepo.findById(dto.getCliente().getId())
                 .orElseThrow(() -> new ClienteNotFoundException("Cliente não encontrado"));
 
-        //  valida situação
         situacaoValidationService.validarAutorizacaoEmpresa(cliente.getEmpresa().getIdEmpresa());
 
         //  popular data de processamento se vier nulo

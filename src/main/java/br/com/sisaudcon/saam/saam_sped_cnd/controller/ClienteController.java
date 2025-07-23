@@ -28,6 +28,7 @@ public class ClienteController {
                 .map(ClienteMapper::toDTO)
                 .toList();
     }
+
     @GetMapping("/{clienteId}")
     public ResponseEntity<ClienteDTO> buscar(@PathVariable Integer clienteId) {
         Cliente cliente = clienteRepository.findById(clienteId)
