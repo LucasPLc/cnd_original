@@ -58,9 +58,9 @@ const ClientsTable = ({ clients, onEdit, onDelete, loading, onClientSelect, sele
             <table style={styles.table}>
                 <thead>
                     <tr>
-                        <th style={styles.th}>Cliente</th>
-                        <th style={styles.th}>Status</th>
-                        <th style={styles.th}>Periodicidade</th>
+                        <th style={styles.th} title="Nome e CNPJ do cliente">Cliente</th>
+                        <th style={styles.th} title="Status do cliente no sistema">Status</th>
+                        <th style={styles.th} title="Frequência de consulta da CND">Periodicidade</th>
                         <th style={{...styles.th, textAlign: 'right'}}>Ações</th>
                     </tr>
                 </thead>
@@ -80,10 +80,10 @@ const ClientsTable = ({ clients, onEdit, onDelete, loading, onClientSelect, sele
                             >
                                 <td style={{...styles.td, display: 'flex', alignItems: 'center', gap: theme.spacing.md}}>
                                     <div style={styles.avatar}>
-                                        {client.cnpj.charAt(0)}
+                                        {client.empresa.nomeEmpresa.charAt(0)}
                                     </div>
                                     <div>
-                                        <div style={{fontWeight: 500}}>{`Cliente ${client.cnpj.substring(0, 2)}`}</div>
+                                        <div style={{fontWeight: 500}}>{client.empresa.nomeEmpresa}</div>
                                         <div style={{fontSize: '0.875rem', color: theme.colors.mutedForeground}}>{client.cnpj}</div>
                                     </div>
                                 </td>

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import theme from '../theme';
 import axios from 'axios';
 
-const ClientForm = ({ clientToEdit, onCreate, onUpdate, onClose, isOpen }) => {
+const ClientForm = ({ clientToEdit, onCreate, onUpdate, onClose, isOpen, error }) => {
   const [formData, setFormData] = useState({
     cnpj: '',
     periodicidade: 30,
@@ -12,6 +12,8 @@ const ClientForm = ({ clientToEdit, onCreate, onUpdate, onClose, isOpen }) => {
     estadual: false,
     fk_empresa: '',
     nomeEmpresa: '',
+    municipio: '',
+    observacoes: '',
   });
   const [loadingEmpresa, setLoadingEmpresa] = useState(false);
 
@@ -27,6 +29,8 @@ const ClientForm = ({ clientToEdit, onCreate, onUpdate, onClose, isOpen }) => {
         estadual: clientToEdit.estadual,
         fk_empresa: clientToEdit.empresa?.idEmpresa || '',
         nomeEmpresa: clientToEdit.empresa?.nomeEmpresa || '',
+        municipio: clientToEdit.municipio || '',
+        observacoes: clientToEdit.observacoes || '',
       });
     } else {
       setFormData({
@@ -38,6 +42,8 @@ const ClientForm = ({ clientToEdit, onCreate, onUpdate, onClose, isOpen }) => {
         estadual: false,
         fk_empresa: '',
         nomeEmpresa: '',
+        municipio: '',
+        observacoes: '',
       });
     }
   }, [clientToEdit, isOpen]);
@@ -81,6 +87,8 @@ const ClientForm = ({ clientToEdit, onCreate, onUpdate, onClose, isOpen }) => {
       nacional: formData.nacional,
       municipal: formData.municipal,
       estadual: formData.estadual,
+      municipio: formData.municipio,
+      observacoes: formData.observacoes,
       empresa: {
         idEmpresa: formData.fk_empresa,
       }
@@ -150,6 +158,14 @@ const ClientForm = ({ clientToEdit, onCreate, onUpdate, onClose, isOpen }) => {
 
   return (
     <form onSubmit={handleSubmit} style={styles.form}>
+        {error && <div style={{color: 'red', marginBottom: '10px'}}>{error}</div>}
+      <div>
+        <label htmlFor="statusCliente" style={styles.label}>Status da Consulta</label>
+        <select id="statusCliente" name="statusCliente" value={formData.statusCliente} onChange={handleChange} required style={styles.input}>
+            <option value="ATIVO">Ativo</option>
+            <option value="INATIVO">Inativo</option>
+        </select>
+      </div>
       <div>
         <label htmlFor="cnpj" style={styles.label}>CNPJ</label>
         <input id="cnpj" name="cnpj" value={formData.cnpj} onChange={handleChange} placeholder="XX.XXX.XXX/XXXX-XX" required style={styles.input} disabled={!!clientToEdit} />
@@ -163,15 +179,6 @@ const ClientForm = ({ clientToEdit, onCreate, onUpdate, onClose, isOpen }) => {
         <input id="nomeEmpresa" name="nomeEmpresa" value={formData.nomeEmpresa} readOnly style={{...styles.input, backgroundColor: '#f3f4f6'}} />
         {loadingEmpresa && <p>Buscando...</p>}
       </div>
-      <div>
-        <label htmlFor="periodicidade" style={styles.label}>Periodicidade (dias)</label>
-        <input id="periodicidade" name="periodicidade" type="number" value={formData.periodicidade} onChange={handleChange} required style={styles.input} />
-      </div>
-       <div>
-        <label htmlFor="statusCliente" style={styles.label}>Status</label>
-        <input id="statusCliente" name="statusCliente" value={formData.statusCliente} onChange={handleChange} required style={styles.input} />
-      </div>
-
       <fieldset>
         <legend style={styles.label}>Escopos</legend>
         <div style={{display: 'flex', flexDirection: 'column', gap: theme.spacing.sm, marginTop: theme.spacing.xs}}>
@@ -189,6 +196,20 @@ const ClientForm = ({ clientToEdit, onCreate, onUpdate, onClose, isOpen }) => {
           </div>
         </div>
       </fieldset>
+        {formData.municipal && (
+            <div>
+                <label htmlFor="municipio" style={styles.label}>Município</label>
+                <input id="municipio" name="municipio" value={formData.municipio} onChange={handleChange} placeholder="Município" required style={styles.input} disabled={!!clientToEdit} />
+            </div>
+        )}
+      <div>
+        <label htmlFor="periodicidade" style={styles.label}>Periodicidade (dias)</label>
+        <input id="periodicidade" name="periodicidade" type="number" value={formData.periodicidade} onChange={handleChange} required style={styles.input} />
+      </div>
+      <div>
+        <label htmlFor="observacoes" style={styles.label}>Observações</label>
+        <textarea id="observacoes" name="observacoes" value={formData.observacoes} onChange={handleChange} style={styles.input} />
+      </div>
 
       <div style={styles.buttonContainer}>
         <button type="button" onClick={onClose} style={{...styles.button, ...styles.buttonSecondary}}>
