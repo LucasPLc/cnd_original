@@ -1,9 +1,9 @@
 import React from 'react';
-import { Plus, Search } from 'lucide-react';
+import { Plus, Search, FileDown } from 'lucide-react';
 import InteractiveButton from './ui/InteractiveButton';
 import theme from '../theme';
 
-const FilterActions = ({ onFilterChange, onAddClient }) => {
+const FilterActions = ({ onFilterChange, onAddClient, onExportExcel, onExportPdf }) => {
     const styles = {
         card: {
             background: theme.colors.background,
@@ -21,12 +21,12 @@ const FilterActions = ({ onFilterChange, onAddClient }) => {
         },
         inputGroup: {
             position: 'relative',
-            flexGrow: 1, // Ocupa o espaço disponível
-            minWidth: '250px', // Largura mínima antes de quebrar a linha
+            flexGrow: 1,
+            minWidth: '250px',
         },
         input: {
             width: '100%',
-            padding: `12px ${theme.spacing.sm} 12px 40px`, // Padding ajustado para o botão
+            padding: `12px ${theme.spacing.sm} 12px 40px`,
             border: `1px solid ${theme.colors.border}`,
             borderRadius: theme.borderRadius.md,
         },
@@ -38,7 +38,9 @@ const FilterActions = ({ onFilterChange, onAddClient }) => {
             color: theme.colors.mutedForeground,
         },
         buttonContainer: {
-            flexShrink: 0, // Impede que o botão seja espremido
+            display: 'flex',
+            gap: theme.spacing.md,
+            flexShrink: 0,
         }
     };
 
@@ -57,7 +59,15 @@ const FilterActions = ({ onFilterChange, onAddClient }) => {
                 <div style={styles.buttonContainer}>
                     <InteractiveButton onClick={onAddClient}>
                         <Plus size={20} />
-                        <span>Cadastrar Novo Cliente</span>
+                        <span>Cadastrar</span>
+                    </InteractiveButton>
+                    <InteractiveButton onClick={onExportExcel} variant="secondary">
+                        <FileDown size={20} />
+                        <span>Excel</span>
+                    </InteractiveButton>
+                    <InteractiveButton onClick={onExportPdf} variant="secondary">
+                        <FileDown size={20} />
+                        <span>PDF</span>
                     </InteractiveButton>
                 </div>
             </div>

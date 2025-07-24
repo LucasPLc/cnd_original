@@ -7,7 +7,11 @@ import InteractiveButton from '../components/ui/InteractiveButton';
 import StatsCards from '../components/StatsCards';
 import FilterActions from '../components/FilterActions';
 import ClientsTable from '../components/ClientsTable';
+import CndResultadosTable from '../components/CndResultadosTable';
 import theme from '../theme';
+import jsPDF from 'jspdf';
+import 'jspdf-autotable';
+import * as XLSX from 'xlsx';
 
 const CNDMonitoramento = () => {
     // --- ESTADO CENTRALIZADO ---
@@ -17,6 +21,10 @@ const CNDMonitoramento = () => {
     const [isFormModalOpen, setFormModalOpen] = useState(false);
     const [clientToEdit, setClientToEdit] = useState(null);
     const [clientToDelete, setClientToDelete] = useState(null);
+    const [selectedClient, setSelectedClient] = useState(null);
+    const [cndResultados, setCndResultados] = useState([]);
+    const [loadingResultados, setLoadingResultados] = useState(false);
+    const [error, setError] = useState(null);
 
     // --- LÓGICA DE DADOS (CRUD) ---
     useEffect(() => {
@@ -43,45 +51,67 @@ const CNDMonitoramento = () => {
 
     const fetchClients = async () => {
         setLoading(true);
+        setError(null);
         try {
             const response = await axios.get('/api/clientes');
             setClients(response.data);
             setFilteredClients(response.data);
         } catch (error) {
             console.error("Erro ao buscar clientes:", error);
+            setError("Falha ao buscar clientes. Tente novamente mais tarde.");
         } finally {
             setLoading(false);
         }
     };
 
+    const fetchCndResultados = async (clientId) => {
+        setLoadingResultados(true);
+        setError(null);
+        try {
+            const response = await axios.get(`/api/clientes/${clientId}/resultados`);
+            setCndResultados(response.data);
+        } catch (error) {
+            console.error("Erro ao buscar resultados de CND:", error);
+            setError("Falha ao buscar resultados de CND. Tente novamente mais tarde.");
+        } finally {
+            setLoadingResultados(false);
+        }
+    };
+
     const handleCreate = async (payload) => {
+        setError(null);
         try {
             await axios.post('/api/clientes', payload);
             fetchClients();
             closeModal();
         } catch (error) {
             console.error("Erro ao criar cliente:", error);
+            setError(error.response?.data?.error || "Erro ao criar cliente.");
         }
     };
 
     const handleUpdate = async (clientId, payload) => {
+        setError(null);
         try {
             await axios.put(`/api/clientes/${clientId}`, payload);
             fetchClients();
             closeModal();
         } catch (error) {
             console.error("Erro ao atualizar cliente:", error);
+            setError(error.response?.data?.error || "Erro ao atualizar cliente.");
         }
     };
 
     const handleDelete = async () => {
         if (!clientToDelete) return;
+        setError(null);
         try {
             await axios.delete(`/api/clientes/${clientToDelete.id}`);
             fetchClients();
             setClientToDelete(null); // Fechar o modal de confirmação
         } catch (error) {
             console.error("Erro ao excluir cliente:", error);
+            setError(error.response?.data?.error || "Erro ao excluir cliente.");
         }
     };
 
@@ -94,6 +124,7 @@ const CNDMonitoramento = () => {
     const closeModal = () => {
         setClientToEdit(null);
         setFormModalOpen(false);
+        setError(null);
     };
 
     const handleFilterChange = (e) => {
@@ -102,6 +133,33 @@ const CNDMonitoramento = () => {
             client.cnpj.includes(searchTerm)
         );
         setFilteredClients(filtered);
+    };
+
+    const handleClientSelect = (client) => {
+        setSelectedClient(client);
+        fetchCndResultados(client.id);
+    };
+
+    const handleExportExcel = () => {
+        const ws = XLSX.utils.json_to_sheet(cndResultados);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Resultados");
+        XLSX.writeFile(wb, "resultados_cnd.xlsx");
+    };
+
+    const handleExportPdf = () => {
+        const doc = new jsPDF();
+        doc.autoTable({
+            head: [['Órgão Emissor', 'Situação', 'Data de Emissão', 'Data de Validade', 'Status']],
+            body: cndResultados.map(r => [
+                r.cliente.nacional ? 'Nacional' : (r.cliente.estadual ? 'Estadual' : 'Municipal'),
+                r.situacao,
+                r.dataEmissao,
+                r.dataValidade,
+                r.status
+            ]),
+        });
+        doc.save('resultados_cnd.pdf');
     };
 
     // --- ESTILOS DO LAYOUT ---
@@ -131,6 +189,14 @@ const CNDMonitoramento = () => {
             fontSize: '1.125rem',
             color: theme.colors.mutedForeground,
         },
+        error: {
+            backgroundColor: theme.colors.destructive,
+            color: theme.colors.destructiveForeground,
+            padding: theme.spacing.md,
+            borderRadius: theme.borderRadius.md,
+            marginBottom: theme.spacing.lg,
+            textAlign: 'center',
+        }
     };
 
     // --- RENDERIZAÇÃO ---
@@ -148,16 +214,27 @@ const CNDMonitoramento = () => {
                 </p>
             </header>
 
-            <FilterActions onFilterChange={handleFilterChange} onAddClient={() => openModal()} />
+            {error && <div style={styles.error}>{error}</div>}
 
-            <StatsCards total={clients.length} filtered={filteredClients.length} selected={0} />
+            <FilterActions onFilterChange={handleFilterChange} onAddClient={() => openModal()} onExportExcel={handleExportExcel} onExportPdf={handleExportPdf} />
+
+            <StatsCards total={clients.length} filtered={filteredClients.length} selected={selectedClient ? 1 : 0} />
 
             <ClientsTable
                 clients={filteredClients}
                 loading={loading}
                 onEdit={(client) => openModal(client)}
                 onDelete={(client) => setClientToDelete(client)}
+                onClientSelect={handleClientSelect}
+                selectedClientId={selectedClient?.id}
             />
+
+            {selectedClient && (
+                <CndResultadosTable
+                    resultados={cndResultados}
+                    loading={loadingResultados}
+                />
+            )}
 
             <Modal isOpen={isFormModalOpen} onClose={closeModal} title={clientToEdit ? 'Editar Cliente' : 'Cadastrar Novo Cliente'}>
                 <ClientForm

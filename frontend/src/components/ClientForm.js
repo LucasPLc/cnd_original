@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import theme from '../theme';
+import axios from 'axios';
 
 const ClientForm = ({ clientToEdit, onCreate, onUpdate, onClose, isOpen }) => {
   const [formData, setFormData] = useState({
@@ -10,7 +11,9 @@ const ClientForm = ({ clientToEdit, onCreate, onUpdate, onClose, isOpen }) => {
     municipal: true,
     estadual: false,
     fk_empresa: '',
+    nomeEmpresa: '',
   });
+  const [loadingEmpresa, setLoadingEmpresa] = useState(false);
 
   useEffect(() => {
     if (clientToEdit) {
@@ -23,6 +26,7 @@ const ClientForm = ({ clientToEdit, onCreate, onUpdate, onClose, isOpen }) => {
         municipal: clientToEdit.municipal,
         estadual: clientToEdit.estadual,
         fk_empresa: clientToEdit.empresa?.idEmpresa || '',
+        nomeEmpresa: clientToEdit.empresa?.nomeEmpresa || '',
       });
     } else {
       setFormData({
@@ -33,9 +37,29 @@ const ClientForm = ({ clientToEdit, onCreate, onUpdate, onClose, isOpen }) => {
         municipal: true,
         estadual: false,
         fk_empresa: '',
+        nomeEmpresa: '',
       });
     }
-  }, [clientToEdit, isOpen]); // Adicionado isOpen para resetar o form
+  }, [clientToEdit, isOpen]);
+
+  const handleFkEmpresaChange = async (e) => {
+    const idEmpresa = e.target.value;
+    setFormData(prev => ({ ...prev, fk_empresa: idEmpresa, nomeEmpresa: '' }));
+    if (idEmpresa) {
+      setLoadingEmpresa(true);
+      try {
+        const response = await axios.get(`/api/empresas?saamClientId=${idEmpresa}`);
+        const empresa = response.data.find(emp => emp.id === idEmpresa);
+        if (empresa) {
+          setFormData(prev => ({ ...prev, nomeEmpresa: empresa.nomeFantasia }));
+        }
+      } catch (error) {
+        console.error("Erro ao buscar empresa:", error);
+      } finally {
+        setLoadingEmpresa(false);
+      }
+    }
+  };
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -46,7 +70,7 @@ const ClientForm = ({ clientToEdit, onCreate, onUpdate, onClose, isOpen }) => {
     e.preventDefault();
     if (clientToEdit && !formData.id) {
         console.error("Tentativa de atualização sem ID de cliente.");
-        return; // Salvaguarda para não enviar requisição sem ID
+        return;
     }
 
     const payload = {
@@ -59,8 +83,6 @@ const ClientForm = ({ clientToEdit, onCreate, onUpdate, onClose, isOpen }) => {
       estadual: formData.estadual,
       empresa: {
         idEmpresa: formData.fk_empresa,
-        cnpj: "00.000.000/0000-00",
-        nomeEmpresa: "Empresa Mock"
       }
     };
 
@@ -82,7 +104,7 @@ const ClientForm = ({ clientToEdit, onCreate, onUpdate, onClose, isOpen }) => {
         display: 'block',
         fontSize: '0.875rem',
         fontWeight: 500,
-        color: '#374151', // text-gray-700
+        color: '#374151',
         marginBottom: theme.spacing.xs,
     },
     input: {
@@ -100,7 +122,7 @@ const ClientForm = ({ clientToEdit, onCreate, onUpdate, onClose, isOpen }) => {
     checkboxLabel: {
         marginLeft: theme.spacing.sm,
         fontSize: '0.875rem',
-        color: '#111827', // text-gray-900
+        color: '#111827',
     },
     buttonContainer: {
         display: 'flex',
@@ -116,7 +138,7 @@ const ClientForm = ({ clientToEdit, onCreate, onUpdate, onClose, isOpen }) => {
         cursor: 'pointer',
     },
     buttonSecondary: {
-        color: '#374151', // text-gray-700
+        color: '#374151',
         backgroundColor: theme.colors.background,
         borderColor: theme.colors.border,
     },
@@ -130,11 +152,16 @@ const ClientForm = ({ clientToEdit, onCreate, onUpdate, onClose, isOpen }) => {
     <form onSubmit={handleSubmit} style={styles.form}>
       <div>
         <label htmlFor="cnpj" style={styles.label}>CNPJ</label>
-        <input id="cnpj" name="cnpj" value={formData.cnpj} onChange={handleChange} placeholder="XX.XXX.XXX/XXXX-XX" required style={styles.input} />
+        <input id="cnpj" name="cnpj" value={formData.cnpj} onChange={handleChange} placeholder="XX.XXX.XXX/XXXX-XX" required style={styles.input} disabled={!!clientToEdit} />
       </div>
       <div>
         <label htmlFor="fk_empresa" style={styles.label}>ID da Empresa</label>
-        <input id="fk_empresa" name="fk_empresa" value={formData.fk_empresa} onChange={handleChange} placeholder="ID da Empresa no sistema SAAM" required style={styles.input} />
+        <input id="fk_empresa" name="fk_empresa" value={formData.fk_empresa} onChange={handleFkEmpresaChange} placeholder="ID da Empresa no sistema SAAM" required style={styles.input} disabled={!!clientToEdit} />
+      </div>
+      <div>
+        <label htmlFor="nomeEmpresa" style={styles.label}>Nome da Empresa</label>
+        <input id="nomeEmpresa" name="nomeEmpresa" value={formData.nomeEmpresa} readOnly style={{...styles.input, backgroundColor: '#f3f4f6'}} />
+        {loadingEmpresa && <p>Buscando...</p>}
       </div>
       <div>
         <label htmlFor="periodicidade" style={styles.label}>Periodicidade (dias)</label>

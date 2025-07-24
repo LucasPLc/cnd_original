@@ -72,4 +72,26 @@ public class ClienteController {
         }
         registroClienteService.excluir(clienteId);
     }
+
+    @GetMapping("/{clienteId}/resultados")
+    public ResponseEntity<List<CndResultado>> listarResultados(@PathVariable Integer clienteId) {
+        if (!clienteRepository.existsById(clienteId)) {
+            throw new ClienteNotFoundException("Cliente não encontrado para o ID informado.");
+        }
+        List<CndResultado> resultados = cndResultadoRepository.findByClienteId(clienteId);
+        return ResponseEntity.ok(resultados);
+    }
+
+    @GetMapping("/resultados/{resultadoId}/pdf")
+    public ResponseEntity<byte[]> baixarPdf(@PathVariable Long resultadoId) {
+        CndResultado resultado = cndResultadoRepository.findById(resultadoId)
+            .orElseThrow(() -> new ResultadoNotFoundException("Resultado não encontrado."));
+
+        byte[] pdf = java.util.Base64.getDecoder().decode(resultado.getArquivo());
+
+        return ResponseEntity.ok()
+            .header("Content-Disposition", "attachment; filename=cnd.pdf")
+            .contentType(org.springframework.http.MediaType.APPLICATION_PDF)
+            .body(pdf);
+    }
 }
