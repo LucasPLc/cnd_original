@@ -2,7 +2,7 @@ import React from 'react';
 import { Edit, Trash2 } from 'lucide-react';
 import theme from '../theme';
 
-const ClientsTable = ({ clients, onEdit, onDelete, loading }) => {
+const ClientsTable = ({ clients, onEdit, onDelete, loading, onClientSelect, selectedClientId }) => {
     const styles = {
         tableContainer: {
             background: theme.colors.background,
@@ -44,6 +44,12 @@ const ClientsTable = ({ clients, onEdit, onDelete, loading }) => {
             cursor: 'pointer',
             color: theme.colors.mutedForeground,
             transition: 'color 0.2s',
+        },
+        tr: {
+            cursor: 'pointer',
+        },
+        selectedTr: {
+            backgroundColor: 'hsl(210, 40%, 98%)',
         }
     };
 
@@ -63,7 +69,15 @@ const ClientsTable = ({ clients, onEdit, onDelete, loading }) => {
                         <tr><td colSpan="4" style={{textAlign: 'center', padding: theme.spacing.xl}}>Carregando...</td></tr>
                     ) : (
                         clients.map(client => (
-                            <tr key={client.id} className="hover-row">
+                            <tr
+                                key={client.id}
+                                className="hover-row"
+                                style={{
+                                    ...styles.tr,
+                                    ...(selectedClientId === client.id ? styles.selectedTr : {})
+                                }}
+                                onClick={() => onClientSelect(client)}
+                            >
                                 <td style={{...styles.td, display: 'flex', alignItems: 'center', gap: theme.spacing.md}}>
                                     <div style={styles.avatar}>
                                         {client.cnpj.charAt(0)}
@@ -88,8 +102,8 @@ const ClientsTable = ({ clients, onEdit, onDelete, loading }) => {
                                 <td style={styles.td}>{client.periodicidade} dias</td>
                                 <td style={{...styles.td, textAlign: 'right'}}>
                                     <div style={{display: 'flex', gap: theme.spacing.sm, justifyContent: 'flex-end'}}>
-                                            <button onClick={() => onEdit(client)} style={styles.actionButton} title={`Editar ${client.cnpj}`}><Edit size={18} /></button>
-                                            <button onClick={() => onDelete(client)} style={{...styles.actionButton, color: theme.colors.destructive}} title={`Excluir ${client.cnpj}`}><Trash2 size={18} /></button>
+                                            <button onClick={(e) => { e.stopPropagation(); onEdit(client); }} style={styles.actionButton} title={`Editar ${client.cnpj}`}><Edit size={18} /></button>
+                                            <button onClick={(e) => { e.stopPropagation(); onDelete(client); }} style={{...styles.actionButton, color: theme.colors.destructive}} title={`Excluir ${client.cnpj}`}><Trash2 size={18} /></button>
                                     </div>
                                 </td>
                             </tr>

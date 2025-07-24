@@ -1,5 +1,6 @@
 package br.com.sisaudcon.saam.saam_sped_cnd.dto;
 
+import com.google.gson.annotations.SerializedName;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -7,9 +8,24 @@ import lombok.Setter;
 @Setter
 public class IntegracaoEmpresa {
 
-    private String cnpj = null;
-    private String ie = null;
-    private String nome = null;
-    private String banco = null;
-    private String controlePorIE = null;
+    @SerializedName("CGC")
+    private String cgc;
+
+    @SerializedName("IE")
+    private String ie;
+
+    @SerializedName("NOME")
+    private String nome;
+
+    @SerializedName("NOME_FANTASIA")
+    private String nomeFantasia;
+
+    @SerializedName("BANCO")
+    private String banco;
+
+    @SerializedName("CONTROLE_IE")
+    private String controlePorIE;
+
+    @SerializedName("ID")
+    private String id;
 }

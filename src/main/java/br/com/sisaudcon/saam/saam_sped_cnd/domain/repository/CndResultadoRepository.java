@@ -11,4 +11,5 @@ public interface CndResultadoRepository extends JpaRepository<CndResultado, Long
 
     boolean existsByCliente_Id(Integer clienteId);
     List<CndResultado> findByStatusAndSituacaoIsNull(String status);
+    List<CndResultado> findByClienteId(Integer clienteId);
 }
