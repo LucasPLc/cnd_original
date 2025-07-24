@@ -17,38 +17,43 @@ const CNDMonitoramento = () => {
     const [isFormModalOpen, setFormModalOpen] = useState(false);
     const [clientToEdit, setClientToEdit] = useState(null);
     const [clientToDelete, setClientToDelete] = useState(null);
+    const [filters, setFilters] = useState({
+        searchTerm: '',
+        situacao: '',
+        statusProcesso: '',
+        dataInicio: '',
+        dataFim: '',
+    });
 
     // --- LÓGICA DE DADOS (CRUD) ---
     useEffect(() => {
-        // 1. Extrair e configurar o token JWT
         const urlParams = new URLSearchParams(window.location.search);
         const token = urlParams.get('token');
-
         if (token) {
-            // Armazena o token para persistência (recarregar a página não vai te deslogar)
             localStorage.setItem('jwtToken', token);
-            // Limpa a URL para que o token não fique exposto
             window.history.replaceState({}, document.title, window.location.pathname);
         }
-
         const storedToken = localStorage.getItem('jwtToken');
         if (storedToken) {
-            // Configura o cabeçalho de autorização para todas as futuras requisições do axios
             axios.defaults.headers.common['Authorization'] = `Bearer ${storedToken}`;
         }
-
-        // 2. Agora, busca os clientes
         fetchClients();
     }, []);
+
+    useEffect(() => {
+        applyFilters();
+    }, [filters, clients]);
 
     const fetchClients = async () => {
         setLoading(true);
         try {
-            const response = await axios.get('/api/clientes');
+            const response = await axios.get('/api/clientes/resultados'); // Endpoint que traz clientes com seus últimos resultados
             setClients(response.data);
             setFilteredClients(response.data);
         } catch (error) {
             console.error("Erro ao buscar clientes:", error);
+            setClients([]); // Em caso de erro, usa o mock da tabela
+            setFilteredClients([]);
         } finally {
             setLoading(false);
         }
@@ -61,6 +66,7 @@ const CNDMonitoramento = () => {
             closeModal();
         } catch (error) {
             console.error("Erro ao criar cliente:", error);
+            alert("Erro ao criar cliente. Verifique o console para mais detalhes.");
         }
     };
 
@@ -71,6 +77,7 @@ const CNDMonitoramento = () => {
             closeModal();
         } catch (error) {
             console.error("Erro ao atualizar cliente:", error);
+            alert("Erro ao atualizar cliente. Verifique o console para mais detalhes.");
         }
     };
 
@@ -79,13 +86,39 @@ const CNDMonitoramento = () => {
         try {
             await axios.delete(`/api/clientes/${clientToDelete.id}`);
             fetchClients();
-            setClientToDelete(null); // Fechar o modal de confirmação
+            alert("Consulta excluída com sucesso.");
+            setClientToDelete(null);
         } catch (error) {
             console.error("Erro ao excluir cliente:", error);
+            if (error.response && error.response.status === 400) {
+                alert("Não é possível excluir. Existem resultados de consulta vinculados a este cliente.");
+            } else {
+                alert("Ocorreu um erro ao tentar excluir a consulta.");
+            }
         }
     };
 
-    // --- FUNÇÕES DE UI (MODALS, FILTROS) ---
+    const applyFilters = () => {
+        let tempClients = [...clients];
+
+        if (filters.searchTerm) {
+            const term = filters.searchTerm.toLowerCase();
+            tempClients = tempClients.filter(c =>
+                c.cnpj.toLowerCase().includes(term) ||
+                c.nomeCliente.toLowerCase().includes(term)
+            );
+        }
+        if (filters.situacao) {
+            tempClients = tempClients.filter(c => c.situacaoCertidao === filters.situacao);
+        }
+        if (filters.statusProcesso) {
+            tempClients = tempClients.filter(c => c.statusProcesso === filters.statusProcesso);
+        }
+        // Lógica de data a ser implementada
+        setFilteredClients(tempClients);
+    };
+
+    // --- FUNÇÕES DE UI ---
     const openModal = (client = null) => {
         setClientToEdit(client);
         setFormModalOpen(true);
@@ -96,41 +129,17 @@ const CNDMonitoramento = () => {
         setFormModalOpen(false);
     };
 
-    const handleFilterChange = (e) => {
-        const searchTerm = e.target.value.toLowerCase();
-        const filtered = clients.filter(client =>
-            client.cnpj.includes(searchTerm)
-        );
-        setFilteredClients(filtered);
+    const handleFilterChange = (filterName, value) => {
+        setFilters(prev => ({ ...prev, [filterName]: value }));
     };
 
-    // --- ESTILOS DO LAYOUT ---
+    // --- ESTILOS ---
     const styles = {
-        container: {
-            maxWidth: '1280px',
-            margin: '0 auto',
-            padding: theme.spacing.xl,
-        },
-        header: {
-            textAlign: 'center',
-            marginBottom: theme.spacing.xl,
-        },
-        headerTitleContainer: {
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-            gap: theme.spacing.md,
-            marginBottom: theme.spacing.sm,
-        },
-        headerTitle: {
-            fontSize: '2.25rem',
-            fontWeight: 'bold',
-            color: theme.colors.primary,
-        },
-        headerSubtitle: {
-            fontSize: '1.125rem',
-            color: theme.colors.mutedForeground,
-        },
+        container: { maxWidth: '1280px', margin: '0 auto', padding: theme.spacing.xl },
+        header: { textAlign: 'center', marginBottom: theme.spacing.xl },
+        headerTitleContainer: { display: 'flex', justifyContent: 'center', alignItems: 'center', gap: theme.spacing.md, marginBottom: theme.spacing.sm },
+        headerTitle: { fontSize: '2.25rem', fontWeight: 'bold', color: theme.colors.primary },
+        headerSubtitle: { fontSize: '1.125rem', color: theme.colors.mutedForeground },
     };
 
     // --- RENDERIZAÇÃO ---
@@ -139,13 +148,9 @@ const CNDMonitoramento = () => {
             <header style={styles.header}>
                 <div style={styles.headerTitleContainer}>
                     <FileText style={{color: theme.colors.primary}} size={32} />
-                    <h1 style={styles.headerTitle}>
-                        Monitoramento de Certidões (CND)
-                    </h1>
+                    <h1 style={styles.headerTitle}>Monitoramento de Certidões (CND)</h1>
                 </div>
-                <p style={styles.headerSubtitle}>
-                    Gerencie e monitore os clientes e suas certidões
-                </p>
+                <p style={styles.headerSubtitle}>Gerencie e monitore os clientes e suas certidões</p>
             </header>
 
             <FilterActions onFilterChange={handleFilterChange} onAddClient={() => openModal()} />
@@ -159,7 +164,7 @@ const CNDMonitoramento = () => {
                 onDelete={(client) => setClientToDelete(client)}
             />
 
-            <Modal isOpen={isFormModalOpen} onClose={closeModal} title={clientToEdit ? 'Editar Cliente' : 'Cadastrar Novo Cliente'}>
+            <Modal isOpen={isFormModalOpen} onClose={closeModal} title={clientToEdit ? 'Editar Cliente' : 'Cadastrar Nova Consulta'}>
                 <ClientForm
                     clientToEdit={clientToEdit}
                     onCreate={handleCreate}
@@ -171,14 +176,12 @@ const CNDMonitoramento = () => {
 
             <Modal isOpen={!!clientToDelete} onClose={() => setClientToDelete(null)} title="Confirmar Exclusão">
                 <div>
-                    <p style={{marginBottom: theme.spacing.lg}}>Tem certeza de que deseja excluir o cliente com CNPJ: {clientToDelete?.cnpj}?</p>
+                    <p style={{marginBottom: theme.spacing.lg}}>
+                        Tem certeza que deseja excluir a configuração de consulta para o CNPJ <strong>{clientToDelete?.cnpj}</strong>? Esta ação removerá o monitoramento.
+                    </p>
                     <div style={{display: 'flex', justifyContent: 'flex-end', gap: theme.spacing.md}}>
-                        <InteractiveButton onClick={() => setClientToDelete(null)} variant="secondary">
-                            Cancelar
-                        </InteractiveButton>
-                        <InteractiveButton onClick={handleDelete} variant="destructive">
-                            Excluir
-                        </InteractiveButton>
+                        <InteractiveButton onClick={() => setClientToDelete(null)} variant="secondary">Cancelar</InteractiveButton>
+                        <InteractiveButton onClick={handleDelete} variant="destructive">Confirmar</InteractiveButton>
                     </div>
                 </div>
             </Modal>
