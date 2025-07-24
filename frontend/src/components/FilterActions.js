@@ -13,16 +13,13 @@ const FilterActions = ({ onFilterChange, onAddClient, onExportExcel, onExportPdf
             marginBottom: theme.spacing.xl,
         },
         container: {
-            display: 'flex',
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
             gap: theme.spacing.md,
             alignItems: 'center',
-            flexWrap: 'wrap',
-            justifyContent: 'space-between',
         },
         inputGroup: {
             position: 'relative',
-            flexGrow: 1,
-            minWidth: '250px',
         },
         input: {
             width: '100%',
@@ -40,7 +37,15 @@ const FilterActions = ({ onFilterChange, onAddClient, onExportExcel, onExportPdf
         buttonContainer: {
             display: 'flex',
             gap: theme.spacing.md,
-            flexShrink: 0,
+            justifyContent: 'flex-end',
+        },
+        '@media (max-width: 768px)': {
+            container: {
+                gridTemplateColumns: '1fr',
+            },
+            buttonContainer: {
+                justifyContent: 'center',
+            }
         }
     };
 
@@ -51,12 +56,42 @@ const FilterActions = ({ onFilterChange, onAddClient, onExportExcel, onExportPdf
                     <Search size={20} style={styles.searchIcon} />
                     <input
                         type="text"
+                        name="cnpj"
                         placeholder="Filtrar por CNPJ..."
                         onChange={onFilterChange}
                         style={styles.input}
                     />
                 </div>
-                <div style={styles.buttonContainer}>
+                <div style={styles.inputGroup}>
+                    <input
+                        type="text"
+                        name="nome"
+                        placeholder="Filtrar por Nome..."
+                        onChange={onFilterChange}
+                        style={{...styles.input, paddingLeft: theme.spacing.sm}}
+                    />
+                </div>
+                <div style={styles.inputGroup}>
+                    <select name="situacao" onChange={onFilterChange} style={styles.input}>
+                        <option value="">Situação da Certidão</option>
+                        <option value="Negativa">Negativa</option>
+                        <option value="Positiva com Efeitos de Negativa">Positiva com Efeitos de Negativa</option>
+                        <option value="Regular">Regular</option>
+                    </select>
+                </div>
+                <div style={styles.inputGroup}>
+                    <select name="status" onChange={onFilterChange} style={styles.input}>
+                        <option value="">Status do Processamento</option>
+                        <option value="concluido">Concluído</option>
+                        <option value="pendente">Pendente</option>
+                        <option value="erro">Erro</option>
+                    </select>
+                </div>
+                <div style={{...styles.inputGroup, gridColumn: 'span 2'}}>
+                    <input type="date" name="dataInicio" onChange={onFilterChange} style={styles.input} />
+                    <input type="date" name="dataFim" onChange={onFilterChange} style={styles.input} />
+                </div>
+                <div style={{...styles.buttonContainer, gridColumn: 'span 2'}}>
                     <InteractiveButton onClick={onAddClient}>
                         <Plus size={20} />
                         <span>Cadastrar</span>

@@ -25,6 +25,14 @@ const CNDMonitoramento = () => {
     const [cndResultados, setCndResultados] = useState([]);
     const [loadingResultados, setLoadingResultados] = useState(false);
     const [error, setError] = useState(null);
+    const [filters, setFilters] = useState({
+        cnpj: '',
+        nome: '',
+        situacao: '',
+        status: '',
+        dataInicio: '',
+        dataFim: '',
+    });
 
     // --- LÓGICA DE DADOS (CRUD) ---
     useEffect(() => {
@@ -49,13 +57,25 @@ const CNDMonitoramento = () => {
         fetchClients();
     }, []);
 
+    useEffect(() => {
+        let filtered = clients;
+
+        if (filters.cnpj) {
+            filtered = filtered.filter(client => client.cnpj.includes(filters.cnpj));
+        }
+        if (filters.nome) {
+            filtered = filtered.filter(client => client.empresa.nomeEmpresa.toLowerCase().includes(filters.nome.toLowerCase()));
+        }
+
+        setFilteredClients(filtered);
+    }, [clients, filters]);
+
     const fetchClients = async () => {
         setLoading(true);
         setError(null);
         try {
             const response = await axios.get('/api/clientes');
             setClients(response.data);
-            setFilteredClients(response.data);
         } catch (error) {
             console.error("Erro ao buscar clientes:", error);
             setError("Falha ao buscar clientes. Tente novamente mais tarde.");
@@ -69,7 +89,20 @@ const CNDMonitoramento = () => {
         setError(null);
         try {
             const response = await axios.get(`/api/clientes/${clientId}/resultados`);
-            setCndResultados(response.data);
+            let resultados = response.data;
+            if (filters.situacao) {
+                resultados = resultados.filter(r => r.situacao === filters.situacao);
+            }
+            if (filters.status) {
+                resultados = resultados.filter(r => r.status === filters.status);
+            }
+            if (filters.dataInicio) {
+                resultados = resultados.filter(r => new Date(r.dataEmissao) >= new Date(filters.dataInicio));
+            }
+            if (filters.dataFim) {
+                resultados = resultados.filter(r => new Date(r.dataEmissao) <= new Date(filters.dataFim));
+            }
+            setCndResultados(resultados);
         } catch (error) {
             console.error("Erro ao buscar resultados de CND:", error);
             setError("Falha ao buscar resultados de CND. Tente novamente mais tarde.");
@@ -86,7 +119,11 @@ const CNDMonitoramento = () => {
             closeModal();
         } catch (error) {
             console.error("Erro ao criar cliente:", error);
-            setError(error.response?.data?.error || "Erro ao criar cliente.");
+            if (error.response?.status === 409) {
+                setError("Já existe um cliente com este CNPJ para esta empresa.");
+            } else {
+                setError(error.response?.data?.error || "Erro ao criar cliente.");
+            }
         }
     };
 
@@ -111,7 +148,11 @@ const CNDMonitoramento = () => {
             setClientToDelete(null); // Fechar o modal de confirmação
         } catch (error) {
             console.error("Erro ao excluir cliente:", error);
-            setError(error.response?.data?.error || "Erro ao excluir cliente.");
+            if (error.response?.status === 400) {
+                setError("Não é possível excluir o cliente. Existem resultados vinculados.");
+            } else {
+                setError(error.response?.data?.error || "Erro ao excluir cliente.");
+            }
         }
     };
 
@@ -128,11 +169,8 @@ const CNDMonitoramento = () => {
     };
 
     const handleFilterChange = (e) => {
-        const searchTerm = e.target.value.toLowerCase();
-        const filtered = clients.filter(client =>
-            client.cnpj.includes(searchTerm)
-        );
-        setFilteredClients(filtered);
+        const { name, value } = e.target;
+        setFilters(prev => ({ ...prev, [name]: value }));
     };
 
     const handleClientSelect = (client) => {
@@ -196,6 +234,17 @@ const CNDMonitoramento = () => {
             borderRadius: theme.borderRadius.md,
             marginBottom: theme.spacing.lg,
             textAlign: 'center',
+        },
+        '@media (max-width: 768px)': {
+            container: {
+                padding: theme.spacing.md,
+            },
+            headerTitle: {
+                fontSize: '1.75rem',
+            },
+            headerSubtitle: {
+                fontSize: '1rem',
+            }
         }
     };
 
@@ -229,12 +278,14 @@ const CNDMonitoramento = () => {
                 selectedClientId={selectedClient?.id}
             />
 
-            {selectedClient && (
+            {loading && <p>Carregando clientes...</p>}
+            {!loading && selectedClient && (
                 <CndResultadosTable
                     resultados={cndResultados}
                     loading={loadingResultados}
                 />
             )}
+            {loadingResultados && <p>Carregando resultados...</p>}
 
             <Modal isOpen={isFormModalOpen} onClose={closeModal} title={clientToEdit ? 'Editar Cliente' : 'Cadastrar Novo Cliente'}>
                 <ClientForm
@@ -243,6 +294,7 @@ const CNDMonitoramento = () => {
                     onUpdate={handleUpdate}
                     onClose={closeModal}
                     isOpen={isFormModalOpen}
+                    error={error}
                 />
             </Modal>
 
