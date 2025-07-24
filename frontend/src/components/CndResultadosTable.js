@@ -56,12 +56,17 @@ const CndResultadosTable = ({ resultados, loading }) => {
 
     const getStatusStyle = (status) => {
         switch (status) {
-            case 'concluido':
-                return { background: 'hsl(142.1, 76.2%, 80%)', color: 'hsl(142.1, 70.2%, 25%)' };
-            case 'pendente':
-                return { background: 'hsl(48, 100%, 80%)', color: 'hsl(48, 100%, 25%)' };
-            case 'erro':
-                return { background: 'hsl(0, 72.2%, 80%)', color: 'hsl(0, 70.2%, 25%)' };
+            case 'Concluído':
+                return { background: '#e3fcef', color: '#006400' };
+            case 'Pendente':
+            case 'Processando':
+                return { background: '#fffae6', color: '#b8860b' };
+            case 'Erro na Consulta':
+            case 'Site Emissor Indisponível':
+            case 'Falha na Extração':
+                return { background: '#ffebe6', color: '#dc143c' };
+            case 'Agendado':
+                return { background: '#deebff', color: '#0000cd' };
             default:
                 return { background: 'hsl(210, 40%, 96.1%)', color: 'hsl(215.4, 16.3%, 46.9%)' };
         }
@@ -102,9 +107,31 @@ const CndResultadosTable = ({ resultados, loading }) => {
                                             {resultado.status}
                                         </span>
                                     </td>
+                                    <td style={styles.td}>{resultado.cliente.nacional ? 'Nacional' : (resultado.cliente.estadual ? 'Estadual' : 'Municipal')}</td>
+                                    <td style={styles.td}>{resultado.situacao}</td>
+                                    <td style={styles.td}>{resultado.dataEmissao}</td>
+                                    <td style={styles.td}>{resultado.dataValidade}</td>
+                                    <td style={styles.td}>
+                                        <span style={{
+                                            padding: '4px 8px',
+                                            fontSize: '0.75rem',
+                                            fontWeight: 500,
+                                            borderRadius: theme.borderRadius.full,
+                                            ...getStatusStyle(resultado.status)
+                                        }}>
+                                            {resultado.status}
+                                        </span>
+                                    </td>
                                     <td style={{...styles.td, textAlign: 'right'}}>
                                         <div style={{display: 'flex', gap: theme.spacing.sm, justifyContent: 'flex-end'}}>
-                                                <button onClick={() => handleDownload(resultado.id, resultado.cliente, resultado.dataEmissao)} style={styles.actionButton} title={`Baixar PDF`} disabled={resultado.status !== 'concluido'}><Download size={18} /></button>
+                                                <button
+                                                    onClick={() => handleDownload(resultado.id, resultado.cliente, resultado.dataEmissao)}
+                                                    style={{...styles.actionButton, ...(resultado.status !== 'Concluído' && { cursor: 'not-allowed', opacity: 0.5 })}}
+                                                    title={resultado.status !== 'Concluído' ? `Download indisponível: ${resultado.status}` : 'Baixar PDF'}
+                                                    disabled={resultado.status !== 'Concluído'}
+                                                >
+                                                    <Download size={18} />
+                                                </button>
                                         </div>
                                     </td>
                                 </tr>

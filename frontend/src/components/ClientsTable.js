@@ -59,8 +59,6 @@ const ClientsTable = ({ clients, onEdit, onDelete, loading, onClientSelect, sele
                 <thead>
                     <tr>
                         <th style={styles.th} title="Nome e CNPJ do cliente">Cliente</th>
-                        <th style={styles.th} title="Status do cliente no sistema">Status</th>
-                        <th style={styles.th} title="Frequência de consulta da CND">Periodicidade</th>
                         <th style={{...styles.th, textAlign: 'right'}}>Ações</th>
                     </tr>
                 </thead>
@@ -87,19 +85,6 @@ const ClientsTable = ({ clients, onEdit, onDelete, loading, onClientSelect, sele
                                         <div style={{fontSize: '0.875rem', color: theme.colors.mutedForeground}}>{client.cnpj}</div>
                                     </div>
                                 </td>
-                                <td style={styles.td}>
-                                    <span style={{
-                                        padding: '4px 8px',
-                                        fontSize: '0.75rem',
-                                        fontWeight: 500,
-                                        borderRadius: theme.borderRadius.full,
-                                        background: client.statusCliente === 'ATIVO' ? 'hsl(142.1, 76.2%, 80%)' : 'hsl(0, 72.2%, 80%)',
-                                        color: client.statusCliente === 'ATIVO' ? 'hsl(142.1, 70.2%, 25%)' : 'hsl(0, 70.2%, 25%)',
-                                    }}>
-                                        {client.statusCliente}
-                                    </span>
-                                </td>
-                                <td style={styles.td}>{client.periodicidade} dias</td>
                                 <td style={{...styles.td, textAlign: 'right'}}>
                                     <div style={{display: 'flex', gap: theme.spacing.sm, justifyContent: 'flex-end'}}>
                                             <button onClick={(e) => { e.stopPropagation(); onEdit(client); }} style={styles.actionButton} title={`Editar ${client.cnpj}`}><Edit size={18} /></button>

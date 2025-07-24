@@ -300,7 +300,7 @@ const CNDMonitoramento = () => {
 
             <Modal isOpen={!!clientToDelete} onClose={() => setClientToDelete(null)} title="Confirmar Exclusão">
                 <div>
-                    <p style={{marginBottom: theme.spacing.lg}}>Tem certeza de que deseja excluir o cliente com CNPJ: {clientToDelete?.cnpj}?</p>
+                    <p style={{marginBottom: theme.spacing.lg}}>Tem certeza que deseja excluir a configuração de consulta para o CNPJ {clientToDelete?.cnpj}? Esta ação removerá o monitoramento.</p>
                     <div style={{display: 'flex', justifyContent: 'flex-end', gap: theme.spacing.md}}>
                         <InteractiveButton onClick={() => setClientToDelete(null)} variant="secondary">
                             Cancelar

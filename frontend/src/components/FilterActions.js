@@ -94,7 +94,7 @@ const FilterActions = ({ onFilterChange, onAddClient, onExportExcel, onExportPdf
                 <div style={{...styles.buttonContainer, gridColumn: 'span 2'}}>
                     <InteractiveButton onClick={onAddClient}>
                         <Plus size={20} />
-                        <span>Cadastrar</span>
+                        <span>Cadastrar Consulta</span>
                     </InteractiveButton>
                     <InteractiveButton onClick={onExportExcel} variant="secondary">
                         <FileDown size={20} />

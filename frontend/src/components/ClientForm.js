@@ -72,8 +72,24 @@ const ClientForm = ({ clientToEdit, onCreate, onUpdate, onClose, isOpen, error }
     setFormData(prev => ({ ...prev, [name]: type === 'checkbox' ? checked : value }));
   };
 
+  const [errors, setErrors] = useState({});
+
+  const validate = () => {
+    const newErrors = {};
+    if (!formData.cnpj) newErrors.cnpj = 'O campo CNPJ é obrigatório.';
+    if (!formData.nomeEmpresa) newErrors.nomeEmpresa = 'O campo Nome do Cliente é obrigatório.';
+    if (!formData.nacional && !formData.estadual && !formData.municipal) newErrors.consultas = 'Selecione ao menos uma consulta.';
+    if (formData.municipal && !formData.municipio) newErrors.municipio = 'O campo Município é obrigatório.';
+    if (formData.periodicidade <= 0) newErrors.periodicidade = 'A periodicidade deve ser um número positivo.';
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
+    if (!validate()) return;
+
     if (clientToEdit && !formData.id) {
         console.error("Tentativa de atualização sem ID de cliente.");
         return;
@@ -90,7 +106,7 @@ const ClientForm = ({ clientToEdit, onCreate, onUpdate, onClose, isOpen, error }
       municipio: formData.municipio,
       observacoes: formData.observacoes,
       empresa: {
-        idEmpresa: formData.fk_empresa,
+        nomeEmpresa: formData.nomeEmpresa,
       }
     };
 
@@ -160,27 +176,25 @@ const ClientForm = ({ clientToEdit, onCreate, onUpdate, onClose, isOpen, error }
     <form onSubmit={handleSubmit} style={styles.form}>
         {error && <div style={{color: 'red', marginBottom: '10px'}}>{error}</div>}
       <div>
-        <label htmlFor="statusCliente" style={styles.label}>Status da Consulta</label>
+        <label htmlFor="statusCliente" style={styles.label}>Status</label>
         <select id="statusCliente" name="statusCliente" value={formData.statusCliente} onChange={handleChange} required style={styles.input}>
             <option value="ATIVO">Ativo</option>
             <option value="INATIVO">Inativo</option>
         </select>
       </div>
       <div>
-        <label htmlFor="cnpj" style={styles.label}>CNPJ</label>
+        <label htmlFor="cnpj" style={styles.label}>CPF/CNPJ</label>
         <input id="cnpj" name="cnpj" value={formData.cnpj} onChange={handleChange} placeholder="XX.XXX.XXX/XXXX-XX" required style={styles.input} disabled={!!clientToEdit} />
+        {errors.cnpj && <p style={{color: 'red'}}>{errors.cnpj}</p>}
       </div>
       <div>
-        <label htmlFor="fk_empresa" style={styles.label}>ID da Empresa</label>
-        <input id="fk_empresa" name="fk_empresa" value={formData.fk_empresa} onChange={handleFkEmpresaChange} placeholder="ID da Empresa no sistema SAAM" required style={styles.input} disabled={!!clientToEdit} />
-      </div>
-      <div>
-        <label htmlFor="nomeEmpresa" style={styles.label}>Nome da Empresa</label>
-        <input id="nomeEmpresa" name="nomeEmpresa" value={formData.nomeEmpresa} readOnly style={{...styles.input, backgroundColor: '#f3f4f6'}} />
-        {loadingEmpresa && <p>Buscando...</p>}
+        <label htmlFor="nomeEmpresa" style={styles.label}>Nome do Cliente</label>
+        <input id="nomeEmpresa" name="nomeEmpresa" value={formData.nomeEmpresa} onChange={handleChange} required style={styles.input} />
+        {errors.nomeEmpresa && <p style={{color: 'red'}}>{errors.nomeEmpresa}</p>}
       </div>
       <fieldset>
-        <legend style={styles.label}>Escopos</legend>
+        <legend style={styles.label}>Consultas Ativas</legend>
+        {errors.consultas && <p style={{color: 'red'}}>{errors.consultas}</p>}
         <div style={{display: 'flex', flexDirection: 'column', gap: theme.spacing.sm, marginTop: theme.spacing.xs}}>
           <div style={styles.checkboxContainer}>
             <input id="nacional" name="nacional" type="checkbox" checked={formData.nacional} onChange={handleChange} />
@@ -200,11 +214,13 @@ const ClientForm = ({ clientToEdit, onCreate, onUpdate, onClose, isOpen, error }
             <div>
                 <label htmlFor="municipio" style={styles.label}>Município</label>
                 <input id="municipio" name="municipio" value={formData.municipio} onChange={handleChange} placeholder="Município" required style={styles.input} disabled={!!clientToEdit} />
+                {errors.municipio && <p style={{color: 'red'}}>{errors.municipio}</p>}
             </div>
         )}
       <div>
         <label htmlFor="periodicidade" style={styles.label}>Periodicidade (dias)</label>
         <input id="periodicidade" name="periodicidade" type="number" value={formData.periodicidade} onChange={handleChange} required style={styles.input} />
+        {errors.periodicidade && <p style={{color: 'red'}}>{errors.periodicidade}</p>}
       </div>
       <div>
         <label htmlFor="observacoes" style={styles.label}>Observações</label>
