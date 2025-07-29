@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import { FileText } from 'lucide-react';
 import Modal from '../components/ui/Modal';
@@ -7,7 +7,15 @@ import InteractiveButton from '../components/ui/InteractiveButton';
 import StatsCards from '../components/StatsCards';
 import FilterActions from '../components/FilterActions';
 import ClientsTable from '../components/ClientsTable';
+import { showToast } from '../components/ui/Toast';
 import theme from '../theme';
+import ImportSaamModal from '../components/ImportSaamModal';
+
+// --- LIBS DE EXPORTAÇÃO ---
+import * as XLSX from 'xlsx';
+import jsPDF from 'jspdf';
+import 'jspdf-autotable';
+
 
 const CNDMonitoramento = () => {
     // --- ESTADO CENTRALIZADO ---
@@ -15,51 +23,65 @@ const CNDMonitoramento = () => {
     const [loading, setLoading] = useState(true);
     const [filteredClients, setFilteredClients] = useState([]);
     const [isFormModalOpen, setFormModalOpen] = useState(false);
+    const [isImportModalOpen, setImportModalOpen] = useState(false);
     const [clientToEdit, setClientToEdit] = useState(null);
     const [clientToDelete, setClientToDelete] = useState(null);
 
+    // --- ESTADO DOS FILTROS ---
+    const [searchTerm, setSearchTerm] = useState('');
+    const [statusFilter, setStatusFilter] = useState('ALL');
+
     // --- LÓGICA DE DADOS (CRUD) ---
-    useEffect(() => {
-        // 1. Extrair e configurar o token JWT
-        const urlParams = new URLSearchParams(window.location.search);
-        const token = urlParams.get('token');
-
-        if (token) {
-            // Armazena o token para persistência (recarregar a página não vai te deslogar)
-            localStorage.setItem('jwtToken', token);
-            // Limpa a URL para que o token não fique exposto
-            window.history.replaceState({}, document.title, window.location.pathname);
-        }
-
-        const storedToken = localStorage.getItem('jwtToken');
-        if (storedToken) {
-            // Configura o cabeçalho de autorização para todas as futuras requisições do axios
-            axios.defaults.headers.common['Authorization'] = `Bearer ${storedToken}`;
-        }
-
-        // 2. Agora, busca os clientes
-        fetchClients();
-    }, []);
-
-    const fetchClients = async () => {
+    const fetchClients = useCallback(async () => {
         setLoading(true);
         try {
             const response = await axios.get('/api/clientes');
             setClients(response.data);
-            setFilteredClients(response.data);
         } catch (error) {
+            showToast.error("Erro ao buscar clientes.");
             console.error("Erro ao buscar clientes:", error);
         } finally {
             setLoading(false);
         }
-    };
+    }, []);
+
+    useEffect(() => {
+        const urlParams = new URLSearchParams(window.location.search);
+        const token = urlParams.get('token');
+        if (token) {
+            localStorage.setItem('jwtToken', token);
+            window.history.replaceState({}, document.title, window.location.pathname);
+        }
+        const storedToken = localStorage.getItem('jwtToken');
+        if (storedToken) {
+            axios.defaults.headers.common['Authorization'] = `Bearer ${storedToken}`;
+        }
+        fetchClients();
+    }, [fetchClients]);
+
+    // --- LÓGICA DE FILTRAGEM ---
+    useEffect(() => {
+        let filtered = clients;
+        if (searchTerm) {
+            filtered = filtered.filter(client =>
+                client.cnpj.toLowerCase().includes(searchTerm.toLowerCase())
+            );
+        }
+        if (statusFilter !== 'ALL') {
+            filtered = filtered.filter(client => client.statusCliente === statusFilter);
+        }
+        setFilteredClients(filtered);
+    }, [clients, searchTerm, statusFilter]);
+
 
     const handleCreate = async (payload) => {
         try {
             await axios.post('/api/clientes', payload);
+            showToast.success("Cliente criado com sucesso!");
             fetchClients();
-            closeModal();
+            closeFormModal();
         } catch (error) {
+            showToast.error("Erro ao criar cliente.");
             console.error("Erro ao criar cliente:", error);
         }
     };
@@ -67,9 +89,11 @@ const CNDMonitoramento = () => {
     const handleUpdate = async (clientId, payload) => {
         try {
             await axios.put(`/api/clientes/${clientId}`, payload);
+            showToast.success("Cliente atualizado com sucesso!");
             fetchClients();
-            closeModal();
+            closeFormModal();
         } catch (error) {
+            showToast.error("Erro ao atualizar cliente.");
             console.error("Erro ao atualizar cliente:", error);
         }
     };
@@ -78,31 +102,70 @@ const CNDMonitoramento = () => {
         if (!clientToDelete) return;
         try {
             await axios.delete(`/api/clientes/${clientToDelete.id}`);
+            showToast.success("Cliente excluído com sucesso!");
             fetchClients();
-            setClientToDelete(null); // Fechar o modal de confirmação
+            setClientToDelete(null);
         } catch (error) {
+            showToast.error("Erro ao excluir cliente.");
             console.error("Erro ao excluir cliente:", error);
         }
     };
 
-    // --- FUNÇÕES DE UI (MODALS, FILTROS) ---
-    const openModal = (client = null) => {
+    // --- LÓGICA DE EXPORTAÇÃO ---
+    const handleExportExcel = () => {
+        if (filteredClients.length === 0) {
+            showToast.warn("Nenhum dado para exportar.");
+            return;
+        }
+        const dataToExport = filteredClients.map(c => ({
+            CNPJ: c.cnpj,
+            Status: c.statusCliente,
+            Periodicidade: c.periodicidade,
+            'Última Verificação': c.dataUltimaVerificacao ? new Date(c.dataUltimaVerificacao).toLocaleString() : 'N/A',
+        }));
+        const worksheet = XLSX.utils.json_to_sheet(dataToExport);
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, "Clientes");
+        XLSX.writeFile(workbook, "clientes_cnd.xlsx");
+        showToast.success("Dados exportados para Excel com sucesso!");
+    };
+
+    const handleExportPdf = () => {
+        if (filteredClients.length === 0) {
+            showToast.warn("Nenhum dado para exportar.");
+            return;
+        }
+        const doc = new jsPDF();
+        doc.text("Relatório de Clientes CND", 14, 16);
+        doc.autoTable({
+            head: [['CNPJ', 'Status', 'Periodicidade', 'Última Verificação']],
+            body: filteredClients.map(c => [
+                c.cnpj,
+                c.statusCliente,
+                c.periodicidade,
+                c.dataUltimaVerificacao ? new Date(c.dataUltimaVerificacao).toLocaleDateString() : 'N/A',
+            ]),
+            startY: 20,
+        });
+        doc.save('clientes_cnd.pdf');
+        showToast.success("Dados exportados para PDF com sucesso!");
+    };
+
+
+    // --- FUNÇÕES DE UI (MODALS) ---
+    const openFormModal = (client = null) => {
         setClientToEdit(client);
         setFormModalOpen(true);
     };
 
-    const closeModal = () => {
+    const closeFormModal = () => {
         setClientToEdit(null);
         setFormModalOpen(false);
     };
 
-    const handleFilterChange = (e) => {
-        const searchTerm = e.target.value.toLowerCase();
-        const filtered = clients.filter(client =>
-            client.cnpj.includes(searchTerm)
-        );
-        setFilteredClients(filtered);
-    };
+    const openImportModal = () => setImportModalOpen(true);
+    const closeImportModal = () => setImportModalOpen(false);
+
 
     // --- ESTILOS DO LAYOUT ---
     const styles = {
@@ -148,23 +211,32 @@ const CNDMonitoramento = () => {
                 </p>
             </header>
 
-            <FilterActions onFilterChange={handleFilterChange} onAddClient={() => openModal()} />
+            <FilterActions
+                onSearchChange={(e) => setSearchTerm(e.target.value)}
+                onStatusChange={(e) => setStatusFilter(e.target.value)}
+                searchValue={searchTerm}
+                statusValue={statusFilter}
+                onAddClient={() => openFormModal()}
+                onExportExcel={handleExportExcel}
+                onExportPdf={handleExportPdf}
+                onOpenImportModal={openImportModal}
+            />
 
             <StatsCards total={clients.length} filtered={filteredClients.length} selected={0} />
 
             <ClientsTable
                 clients={filteredClients}
                 loading={loading}
-                onEdit={(client) => openModal(client)}
+                onEdit={(client) => openFormModal(client)}
                 onDelete={(client) => setClientToDelete(client)}
             />
 
-            <Modal isOpen={isFormModalOpen} onClose={closeModal} title={clientToEdit ? 'Editar Cliente' : 'Cadastrar Novo Cliente'}>
+            <Modal isOpen={isFormModalOpen} onClose={closeFormModal} title={clientToEdit ? 'Editar Cliente' : 'Cadastrar Novo Cliente'}>
                 <ClientForm
                     clientToEdit={clientToEdit}
                     onCreate={handleCreate}
                     onUpdate={handleUpdate}
-                    onClose={closeModal}
+                    onClose={closeFormModal}
                     isOpen={isFormModalOpen}
                 />
             </Modal>
@@ -181,6 +253,15 @@ const CNDMonitoramento = () => {
                         </InteractiveButton>
                     </div>
                 </div>
+            </Modal>
+
+            <Modal isOpen={isImportModalOpen} onClose={closeImportModal} title="Importar Empresas do SAAM">
+                <ImportSaamModal
+                    isOpen={isImportModalOpen}
+                    onClose={closeImportModal}
+                    existingClients={clients}
+                    onImportSuccess={fetchClients}
+                />
             </Modal>
         </div>
     );

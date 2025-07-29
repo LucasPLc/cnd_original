@@ -142,7 +142,17 @@ const ClientForm = ({ clientToEdit, onCreate, onUpdate, onClose, isOpen }) => {
       </div>
        <div>
         <label htmlFor="statusCliente" style={styles.label}>Status</label>
-        <input id="statusCliente" name="statusCliente" value={formData.statusCliente} onChange={handleChange} required style={styles.input} />
+        <select
+          id="statusCliente"
+          name="statusCliente"
+          value={formData.statusCliente}
+          onChange={handleChange}
+          required
+          style={styles.input}
+        >
+          <option value="ATIVO">Ativo</option>
+          <option value="INATIVO">Inativo</option>
+        </select>
       </div>
 
       <fieldset>
