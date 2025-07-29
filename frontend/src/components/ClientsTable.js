@@ -66,10 +66,10 @@ const ClientsTable = ({ clients, onEdit, onDelete, loading }) => {
                             <tr key={client.id} className="hover-row">
                                 <td style={{...styles.td, display: 'flex', alignItems: 'center', gap: theme.spacing.md}}>
                                     <div style={styles.avatar}>
-                                        {client.cnpj.charAt(0)}
+                                        {(client.empresa?.nomeEmpresa || client.cnpj).charAt(0)}
                                     </div>
                                     <div>
-                                        <div style={{fontWeight: 500}}>{`Cliente ${client.cnpj.substring(0, 2)}`}</div>
+                                        <div style={{fontWeight: 500}}>{client.empresa?.nomeEmpresa || `Cliente`}</div>
                                         <div style={{fontSize: '0.875rem', color: theme.colors.mutedForeground}}>{client.cnpj}</div>
                                     </div>
                                 </td>

@@ -7,9 +7,11 @@ import lombok.Setter;
 @Setter
 public class IntegracaoEmpresa {
 
+    private String idCliente = null;
     private String cnpj = null;
     private String ie = null;
     private String nome = null;
     private String banco = null;
     private String controlePorIE = null;
 }
+

@@ -4,7 +4,17 @@ import { showToast } from './ui/Toast';
 import InteractiveButton from './ui/InteractiveButton';
 import theme from '../theme';
 
-const ImportSaamModal = ({ isOpen, onClose, existingClients, onImportSuccess }) => {
+const formatCNPJ = (cnpj) => {
+    if (!cnpj) return '';
+    const cnpjOnlyNumbers = cnpj.replace(/[^\d]/g, '');
+    if (cnpjOnlyNumbers.length !== 14) return cnpj; // Retorna o original se não for um CNPJ puro
+    return cnpjOnlyNumbers.replace(
+        /(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/,
+        '$1.$2.$3/$4-$5'
+    );
+};
+
+const ImportSaamModal = ({ isOpen, onClose, existingClients, onImportSuccess, saamClientId }) => {
     const [saamCompanies, setSaamCompanies] = useState([]);
     const [loading, setLoading] = useState(false);
     const [selectedCompanies, setSelectedCompanies] = useState(new Set());
@@ -13,7 +23,7 @@ const ImportSaamModal = ({ isOpen, onClose, existingClients, onImportSuccess }) 
     useEffect(() => {
         if (isOpen) {
             fetchSaamCompanies();
-            setSelectedCompanies(new Set()); // Reset selection
+            setSelectedCompanies(new Set());
         }
     }, [isOpen]);
 
@@ -23,12 +33,13 @@ const ImportSaamModal = ({ isOpen, onClose, existingClients, onImportSuccess }) 
             const response = await axios.get('/api/empresas');
             const existingCnpjs = new Set(existingClients.map(c => c.cnpj));
             const availableCompanies = response.data.filter(
-                company => !existingCnpjs.has(company.cnpj)
+                company => company.cnpj && !existingCnpjs.has(formatCNPJ(company.cnpj))
             );
             setSaamCompanies(availableCompanies);
         } catch (error) {
-            showToast.error('Erro ao buscar empresas do SAAM.');
+            showToast.error('Erro ao buscar empresas do SAAM. Verifique a conexão com o backend.');
             console.error('Erro ao buscar empresas do SAAM:', error);
+            onClose();
         } finally {
             setLoading(false);
         }
@@ -54,6 +65,10 @@ const ImportSaamModal = ({ isOpen, onClose, existingClients, onImportSuccess }) 
     };
 
     const handleImport = async () => {
+        if (!saamClientId) {
+            showToast.error('ID do cliente SAAM não encontrado. Verifique o token de autenticação.');
+            return;
+        }
         if (selectedCompanies.size === 0) {
             showToast.warn('Nenhuma empresa selecionada para importação.');
             return;
@@ -67,17 +82,16 @@ const ImportSaamModal = ({ isOpen, onClose, existingClients, onImportSuccess }) 
 
         for (const company of companiesToImport) {
             try {
-                // Payload corrigido para corresponder à estrutura esperada pelo backend
                 const payload = {
-                    cnpj: company.cnpj,
+                    cnpj: formatCNPJ(company.cnpj), // CNPJ formatado
                     periodicidade: 30,
                     statusCliente: 'ATIVO',
                     nacional: true,
                     municipal: true,
                     estadual: false,
                     empresa: {
-                        idEmpresa: company.id, // Usando o ID da empresa vindo do SAAM
-                        cnpj: company.cnpj,
+                        idEmpresa: saamClientId,
+                        cnpj: formatCNPJ(company.cnpj), // CNPJ formatado
                         nomeEmpresa: company.nome
                     }
                 };
@@ -85,18 +99,22 @@ const ImportSaamModal = ({ isOpen, onClose, existingClients, onImportSuccess }) 
                 successCount++;
             } catch (error) {
                 errorCount++;
+                const errorMessage = error.response?.data?.message || 'Erro desconhecido';
+                showToast.error(`Erro ao importar ${company.cnpj}: ${errorMessage}`);
                 console.error(`Erro ao importar CNPJ ${company.cnpj}:`, error);
             }
         }
 
         setImporting(false);
-        showToast.success(`${successCount} empresa(s) importada(s) com sucesso!`);
+        if (successCount > 0) {
+            showToast.success(`${successCount} empresa(s) importada(s) com sucesso!`);
+        }
         if (errorCount > 0) {
             showToast.error(`${errorCount} empresa(s) falharam ao importar.`);
         }
 
-        onImportSuccess(); // Refresh the main client list
-        onClose(); // Close the modal
+        onImportSuccess();
+        onClose();
     };
 
     const styles = {
@@ -105,14 +123,22 @@ const ImportSaamModal = ({ isOpen, onClose, existingClients, onImportSuccess }) 
             overflowY: 'auto',
             border: `1px solid ${theme.colors.border}`,
             borderRadius: theme.borderRadius.md,
-            padding: theme.spacing.sm,
         },
-        listItem: {
-            display: 'flex',
-            alignItems: 'center',
+        table: {
+            width: '100%',
+            borderCollapse: 'collapse',
+        },
+        th: {
+            padding: theme.spacing.md,
+            textAlign: 'left',
+            fontWeight: '600',
+            color: theme.colors.primary,
+            background: `rgba(53, 81, 138, 0.05)`,
+            borderBottom: `1px solid ${theme.colors.border}`,
+        },
+        td: {
             padding: theme.spacing.md,
             borderBottom: `1px solid ${theme.colors.border}`,
-            gap: theme.spacing.md,
         },
         checkbox: {
             width: '20px',
@@ -135,27 +161,40 @@ const ImportSaamModal = ({ isOpen, onClose, existingClients, onImportSuccess }) 
             ) : (
                 <>
                     <div style={styles.listContainer}>
-                        <div style={{...styles.listItem, fontWeight: 'bold'}}>
-                            <input
-                                type="checkbox"
-                                style={styles.checkbox}
-                                checked={selectedCompanies.size === saamCompanies.length}
-                                onChange={handleSelectAll}
-                            />
-                            <span style={{flex: 1}}>Selecionar Todas</span>
-                        </div>
-                        {saamCompanies.map(company => (
-                            <div key={company.cnpj} style={styles.listItem}>
-                                <input
-                                    type="checkbox"
-                                    style={styles.checkbox}
-                                    checked={selectedCompanies.has(company.cnpj)}
-                                    onChange={() => handleSelectCompany(company.cnpj)}
-                                />
-                                <span style={{flex: 1}}>{company.nome}</span>
-                                <span>{company.cnpj}</span>
-                            </div>
-                        ))}
+                        <table style={styles.table}>
+                            <thead>
+                                <tr>
+                                    <th style={{...styles.th, width: '50px'}}>
+                                        <input
+                                            type="checkbox"
+                                            style={styles.checkbox}
+                                            checked={saamCompanies.length > 0 && selectedCompanies.size === saamCompanies.length}
+                                            onChange={handleSelectAll}
+                                        />
+                                    </th>
+                                    <th style={styles.th}>Nome</th>
+                                    <th style={styles.th}>IE</th>
+                                    <th style={styles.th}>CNPJ</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {saamCompanies.map(company => (
+                                    <tr key={company.cnpj}>
+                                        <td style={styles.td}>
+                                            <input
+                                                type="checkbox"
+                                                style={styles.checkbox}
+                                                checked={selectedCompanies.has(company.cnpj)}
+                                                onChange={() => handleSelectCompany(company.cnpj)}
+                                            />
+                                        </td>
+                                        <td style={styles.td}>{company.nome}</td>
+                                        <td style={styles.td}>{company.ie || 'N/A'}</td>
+                                        <td style={styles.td}>{formatCNPJ(company.cnpj)}</td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
                     </div>
                     <div style={styles.footer}>
                         <span>{selectedCompanies.size} de {saamCompanies.length} selecionada(s)</span>

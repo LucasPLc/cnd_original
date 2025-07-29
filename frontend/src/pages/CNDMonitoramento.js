@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import { FileText } from 'lucide-react';
+import { jwtDecode } from 'jwt-decode'; // Importa a função de decodificação
 import Modal from '../components/ui/Modal';
 import ClientForm from '../components/ClientForm';
 import InteractiveButton from '../components/ui/InteractiveButton';
@@ -26,6 +27,7 @@ const CNDMonitoramento = () => {
     const [isImportModalOpen, setImportModalOpen] = useState(false);
     const [clientToEdit, setClientToEdit] = useState(null);
     const [clientToDelete, setClientToDelete] = useState(null);
+    const [saamClientId, setSaamClientId] = useState(null); // Estado para o ID do cliente SAAM
 
     // --- ESTADO DOS FILTROS ---
     const [searchTerm, setSearchTerm] = useState('');
@@ -55,21 +57,30 @@ const CNDMonitoramento = () => {
         const storedToken = localStorage.getItem('jwtToken');
         if (storedToken) {
             axios.defaults.headers.common['Authorization'] = `Bearer ${storedToken}`;
+            try {
+                const decodedToken = jwtDecode(storedToken);
+                setSaamClientId(decodedToken.clientId); // Decodifica e armazena o clientId
+            } catch (error) {
+                console.error("Falha ao decodificar o token JWT:", error);
+                showToast.error("Token de autenticação inválido.");
+            }
         }
         fetchClients();
     }, [fetchClients]);
 
     // --- LÓGICA DE FILTRAGEM ---
     useEffect(() => {
-        let filtered = clients;
-        if (searchTerm) {
-            filtered = filtered.filter(client =>
-                client.cnpj.toLowerCase().includes(searchTerm.toLowerCase())
-            );
-        }
-        if (statusFilter !== 'ALL') {
-            filtered = filtered.filter(client => client.statusCliente === statusFilter);
-        }
+        const normalizedSearchTerm = searchTerm.replace(/[^\d]/g, '');
+
+        let filtered = clients.filter(client => {
+            const normalizedCnpj = client.cnpj.replace(/[^\d]/g, '');
+            
+            const matchesSearch = normalizedSearchTerm ? normalizedCnpj.includes(normalizedSearchTerm) : true;
+            const matchesStatus = statusFilter !== 'ALL' ? client.statusCliente === statusFilter : true;
+
+            return matchesSearch && matchesStatus;
+        });
+
         setFilteredClients(filtered);
     }, [clients, searchTerm, statusFilter]);
 
@@ -118,9 +129,10 @@ const CNDMonitoramento = () => {
             return;
         }
         const dataToExport = filteredClients.map(c => ({
-            CNPJ: c.cnpj,
-            Status: c.statusCliente,
-            Periodicidade: c.periodicidade,
+            'Razão Social': c.empresa?.nomeEmpresa || 'N/A',
+            'CNPJ': c.cnpj,
+            'Status': c.statusCliente,
+            'Periodicidade': c.periodicidade,
             'Última Verificação': c.dataUltimaVerificacao ? new Date(c.dataUltimaVerificacao).toLocaleString() : 'N/A',
         }));
         const worksheet = XLSX.utils.json_to_sheet(dataToExport);
@@ -138,8 +150,9 @@ const CNDMonitoramento = () => {
         const doc = new jsPDF();
         doc.text("Relatório de Clientes CND", 14, 16);
         doc.autoTable({
-            head: [['CNPJ', 'Status', 'Periodicidade', 'Última Verificação']],
+            head: [['Razão Social', 'CNPJ', 'Status', 'Periodicidade', 'Última Verificação']],
             body: filteredClients.map(c => [
+                c.empresa?.nomeEmpresa || 'N/A',
                 c.cnpj,
                 c.statusCliente,
                 c.periodicidade,
@@ -261,6 +274,7 @@ const CNDMonitoramento = () => {
                     onClose={closeImportModal}
                     existingClients={clients}
                     onImportSuccess={fetchClients}
+                    saamClientId={saamClientId}
                 />
             </Modal>
         </div>

@@ -8,9 +8,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.client.RestTemplate;
 
 import java.lang.reflect.Type;
@@ -25,6 +29,8 @@ public class IntegracaoService {
 
     private final RestTemplate apiSisaudconRestTemplate;
     private final String urlIntegracaoApiSisaudcon;
+    private final String headerKey;
+    private final String headerValue;
 
     private final RestTemplate restTemplate;
     private final String urlIntegracaoWebserviceSaam;
@@ -35,6 +41,8 @@ public class IntegracaoService {
     public IntegracaoService(
             @Qualifier("apiSisaudconRestTemplate") RestTemplate apiSisaudconRestTemplate,
             @Value("${app.integration.api.sisaudcon.url}") String urlIntegracaoApiSisaudcon,
+            @Value("${app.integration.api.sisaudcon.request-header-key}") String headerKey,
+            @Value("${app.integration.api.sisaudcon.request-header-value}") String headerValue,
             @Qualifier("apiWebServiceRestTemplate") RestTemplate restTemplate,
             @Value("${app.integration.api.webservicesaam.url}") String urlIntegracaoWebserviceSaam,
             CriptografiaService criptografiaService,
@@ -42,6 +50,8 @@ public class IntegracaoService {
     ) {
         this.apiSisaudconRestTemplate = apiSisaudconRestTemplate;
         this.urlIntegracaoApiSisaudcon = urlIntegracaoApiSisaudcon;
+        this.headerKey = headerKey;
+        this.headerValue = headerValue;
         this.restTemplate = restTemplate;
         this.urlIntegracaoWebserviceSaam = urlIntegracaoWebserviceSaam;
         this.criptografiaService = criptografiaService;
@@ -49,21 +59,41 @@ public class IntegracaoService {
     }
 
     public CredenciaisDbEmpresa buscarCredenciaisEmpresaPorCliente(String clientId) {
-        ResponseEntity<List<CredenciaisDbEmpresa>> response = apiSisaudconRestTemplate.exchange(
-                urlIntegracaoApiSisaudcon + clientId,
-                HttpMethod.GET,
-                null,
-                new org.springframework.core.ParameterizedTypeReference<List<CredenciaisDbEmpresa>>() {
-                }
-        );
+        String url = urlIntegracaoApiSisaudcon + clientId;
+        logger.info("PASSO 1: Buscando credenciais em: {}", url);
 
-        List<CredenciaisDbEmpresa> credenciais = response.getBody();
+        try {
+            // Criar cabeçalhos e adicionar a chave da API
+            HttpHeaders headers = new HttpHeaders();
+            headers.set(headerKey, headerValue);
+            HttpEntity<String> entity = new HttpEntity<>(headers);
 
-        if (credenciais == null || credenciais.isEmpty()) {
-            throw new RuntimeException("Nenhuma credencial encontrada para o clientId: " + clientId);
+            logger.info("Enviando requisição com o cabeçalho: '{}'", headerKey);
+
+            ResponseEntity<List<CredenciaisDbEmpresa>> response = apiSisaudconRestTemplate.exchange(
+                    url,
+                    HttpMethod.GET,
+                    entity, // Usando a entidade com o cabeçalho
+                    new org.springframework.core.ParameterizedTypeReference<List<CredenciaisDbEmpresa>>() {}
+            );
+
+            List<CredenciaisDbEmpresa> credenciais = response.getBody();
+
+            if (credenciais == null || credenciais.isEmpty()) {
+                logger.warn("Nenhuma credencial encontrada para o clientId: {}", clientId);
+                throw new RuntimeException("Nenhuma credencial encontrada para o clientId: " + clientId);
+            }
+
+            logger.info("Credenciais encontradas com sucesso para o clientId: {}", clientId);
+            return credenciais.getFirst();
+
+        } catch (HttpClientErrorException | HttpServerErrorException e) {
+            logger.error("Erro na API ao buscar credenciais. Status: {}, Body: {}", e.getStatusCode(), e.getResponseBodyAsString());
+            throw new RuntimeException("Erro na API ao buscar credenciais: " + e.getMessage(), e);
+        } catch (Exception e) {
+            logger.error("Erro inesperado ao buscar credenciais para o clientId: {}", clientId, e);
+            throw new RuntimeException("Erro inesperado ao buscar credenciais: " + e.getMessage(), e);
         }
-
-        return credenciais.getFirst();
     }
 
     public List<IntegracaoEmpresa> buscarBancosDeDadosEmpresa(CredenciaisDbEmpresa credenciais) {
@@ -76,29 +106,51 @@ public class IntegracaoService {
                 + formatarParametro(credenciais.getId()) + "/"
                 + formatarParametro("SA006-AUTOMACAO");
 
-        ResponseEntity<String> responseEntity = restTemplate.exchange(
-                url,
-                HttpMethod.GET,
-                null,
-                String.class
-        );
+        logger.info("PASSO 2: Buscando lista de empresas em: {}", url);
 
-        String body = responseEntity.getBody();
+        try {
+            ResponseEntity<String> responseEntity = restTemplate.exchange(
+                    url,
+                    HttpMethod.GET,
+                    null,
+                    String.class
+            );
 
-        if (body == null || body.isBlank()) {
-            return Collections.emptyList();
+            String body = responseEntity.getBody();
+            logger.debug("Corpo da resposta (bruto): {}", body);
+
+            if (body == null || body.isBlank()) {
+                logger.warn("Corpo da resposta da lista de empresas está vazio.");
+                return Collections.emptyList();
+            }
+
+            logger.info("Resposta recebida, iniciando descriptografia.");
+            return descriptografarCorpo(body, IntegracaoEmpresa.class);
+
+        } catch (HttpClientErrorException | HttpServerErrorException e) {
+            logger.error("Erro na API ao buscar lista de empresas. Status: {}, Body: {}", e.getStatusCode(), e.getResponseBodyAsString());
+            throw new RuntimeException("Erro na API ao buscar lista de empresas: " + e.getMessage(), e);
+        } catch (Exception e) {
+            logger.error("Erro inesperado ao buscar lista de empresas.", e);
+            throw new RuntimeException("Erro inesperado ao buscar lista de empresas: " + e.getMessage(), e);
         }
-
-        return descriptografarCorpo(body, IntegracaoEmpresa.class);
     }
 
     private <T> List<T> descriptografarCorpo(String corpo, Class<T> clazz) {
-        byte[] arrayBytes = gson.fromJson("[" + corpo + "]", byte[].class);
-        String jsonDescriptografado = criptografiaService.decrypt(arrayBytes);
+        try {
+            logger.info("PASSO 3: Descriptografando corpo da resposta.");
+            byte[] arrayBytes = gson.fromJson("[" + corpo + "]", byte[].class);
+            String jsonDescriptografado = criptografiaService.decrypt(arrayBytes);
+            logger.debug("JSON Descriptografado: {}", jsonDescriptografado);
 
-        Type tipoLista = TypeToken.getParameterized(ArrayList.class, clazz).getType();
-
-        return gson.fromJson(jsonDescriptografado, tipoLista);
+            Type tipoLista = TypeToken.getParameterized(ArrayList.class, clazz).getType();
+            List<T> result = gson.fromJson(jsonDescriptografado, tipoLista);
+            logger.info("Corpo descriptografado e parseado com sucesso. {} itens encontrados.", result.size());
+            return result;
+        } catch (Exception e) {
+            logger.error("Falha ao descriptografar ou parsear o corpo da resposta.", e);
+            throw new RuntimeException("Falha ao processar resposta do serviço legado.", e);
+        }
     }
 
     private String formatarParametro(Object parametro) {
