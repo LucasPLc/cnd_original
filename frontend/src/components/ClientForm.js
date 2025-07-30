@@ -4,12 +4,12 @@ import theme from '../theme';
 const ClientForm = ({ clientToEdit, onCreate, onUpdate, onClose, isOpen }) => {
   const [formData, setFormData] = useState({
     cnpj: '',
+    nomeEmpresa: '',
     periodicidade: 30,
     statusCliente: 'ATIVO',
     nacional: true,
     municipal: true,
     estadual: false,
-    fk_empresa: '',
   });
 
   useEffect(() => {
@@ -17,25 +17,25 @@ const ClientForm = ({ clientToEdit, onCreate, onUpdate, onClose, isOpen }) => {
       setFormData({
         id: clientToEdit.id,
         cnpj: clientToEdit.cnpj,
+        nomeEmpresa: clientToEdit.empresa?.nomeEmpresa || '',
         periodicidade: clientToEdit.periodicidade,
         statusCliente: clientToEdit.statusCliente,
         nacional: clientToEdit.nacional,
         municipal: clientToEdit.municipal,
         estadual: clientToEdit.estadual,
-        fk_empresa: clientToEdit.empresa?.idEmpresa || '',
       });
     } else {
       setFormData({
         cnpj: '',
+        nomeEmpresa: '',
         periodicidade: 30,
         statusCliente: 'ATIVO',
         nacional: true,
         municipal: true,
         estadual: false,
-        fk_empresa: '',
       });
     }
-  }, [clientToEdit, isOpen]); // Adicionado isOpen para resetar o form
+  }, [clientToEdit, isOpen]);
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -44,23 +44,12 @@ const ClientForm = ({ clientToEdit, onCreate, onUpdate, onClose, isOpen }) => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (clientToEdit && !formData.id) {
-        console.error("Tentativa de atualização sem ID de cliente.");
-        return; // Salvaguarda para não enviar requisição sem ID
-    }
-
+    
     const payload = {
-      id: formData.id,
-      cnpj: formData.cnpj,
-      periodicidade: formData.periodicidade,
-      statusCliente: formData.statusCliente,
-      nacional: formData.nacional,
-      municipal: formData.municipal,
-      estadual: formData.estadual,
+      ...formData,
       empresa: {
-        idEmpresa: formData.fk_empresa,
-        cnpj: "00.000.000/0000-00",
-        nomeEmpresa: "Empresa Mock"
+        cnpj: formData.cnpj, 
+        nomeEmpresa: formData.nomeEmpresa,
       }
     };
 
@@ -133,8 +122,8 @@ const ClientForm = ({ clientToEdit, onCreate, onUpdate, onClose, isOpen }) => {
         <input id="cnpj" name="cnpj" value={formData.cnpj} onChange={handleChange} placeholder="XX.XXX.XXX/XXXX-XX" required style={styles.input} />
       </div>
       <div>
-        <label htmlFor="fk_empresa" style={styles.label}>ID da Empresa</label>
-        <input id="fk_empresa" name="fk_empresa" value={formData.fk_empresa} onChange={handleChange} placeholder="ID da Empresa no sistema SAAM" required style={styles.input} />
+        <label htmlFor="nomeEmpresa" style={styles.label}>Nome da Empresa</label>
+        <input id="nomeEmpresa" name="nomeEmpresa" value={formData.nomeEmpresa} onChange={handleChange} placeholder="Digite o nome da empresa" required style={styles.input} />
       </div>
       <div>
         <label htmlFor="periodicidade" style={styles.label}>Periodicidade (dias)</label>

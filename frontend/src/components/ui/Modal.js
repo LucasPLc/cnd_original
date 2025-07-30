@@ -10,17 +10,18 @@ const Modal = ({ isOpen, onClose, title, children }) => {
       position: 'fixed',
       inset: 0,
       backgroundColor: 'rgba(0, 0, 0, 0.5)',
-      zIndex: 50,
+      zIndex: 9999, // Aumentado para garantir visibilidade
       display: 'flex',
       justifyContent: 'center',
       alignItems: 'center',
+      transform: 'translate(0, 0)', // Garante que a posição não seja afetada
     },
     modal: {
       backgroundColor: theme.colors.background,
       borderRadius: theme.borderRadius.lg,
       boxShadow: theme.shadows.lg,
       width: '90%',
-      maxWidth: '500px',
+      maxWidth: '600px', // Aumentado para um tamanho mais comum
       margin: theme.spacing.md,
     },
     header: {

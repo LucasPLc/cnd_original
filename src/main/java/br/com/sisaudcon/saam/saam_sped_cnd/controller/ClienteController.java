@@ -13,6 +13,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
+import java.util.Map;
 
 @AllArgsConstructor
 @RestController
@@ -22,6 +23,11 @@ public class ClienteController {
     private final RegistroClienteService registroClienteService;
     private final ClienteRepository clienteRepository;
     private final ClienteService clienteService;
+
+    @GetMapping("/count")
+    public ResponseEntity<Long> count() {
+        return ResponseEntity.ok(clienteService.countClientes());
+    }
 
     @GetMapping
     public List<ClienteDTO> listar() {
@@ -36,6 +42,11 @@ public class ClienteController {
         Cliente cliente = clienteRepository.findById(clienteId)
                 .orElseThrow(() -> new ClienteNotFoundException("Cliente não encontrado para o ID informado."));
         return ResponseEntity.ok(ClienteMapper.toDTO(cliente));
+    }
+
+    @GetMapping("/debug/por-cnpj/{cnpj}")
+    public ResponseEntity<Map<String, Object>> getDebugInfo(@PathVariable String cnpj) {
+        return ResponseEntity.ok(clienteService.getDebugInfoByCnpj(cnpj));
     }
 
     @GetMapping("/buscar")

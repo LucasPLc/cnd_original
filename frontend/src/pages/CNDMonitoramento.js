@@ -11,11 +11,15 @@ import ClientsTable from '../components/ClientsTable';
 import { showToast } from '../components/ui/Toast';
 import theme from '../theme';
 import ImportSaamModal from '../components/ImportSaamModal';
+import ResultadoCNDModal from '../components/ResultadoCNDModal';
+
+import logo from '../assets/logo.jpg'; // Importa a logo
 
 // --- LIBS DE EXPORTAÇÃO ---
 import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
+
 
 
 const CNDMonitoramento = () => {
@@ -28,6 +32,11 @@ const CNDMonitoramento = () => {
     const [clientToEdit, setClientToEdit] = useState(null);
     const [clientToDelete, setClientToDelete] = useState(null);
     const [saamClientId, setSaamClientId] = useState(null); // Estado para o ID do cliente SAAM
+    const [isResultadoModalOpen, setResultadoModalOpen] = useState(false);
+    const [selectedClientForModal, setSelectedClientForModal] = useState(null);
+    const [cndResultados, setCndResultados] = useState([]);
+    const [isResultadoLoading, setResultadoLoading] = useState(false);
+
 
     // --- ESTADO DOS FILTROS ---
     const [searchTerm, setSearchTerm] = useState('');
@@ -86,25 +95,43 @@ const CNDMonitoramento = () => {
 
 
     const handleCreate = async (payload) => {
+        const finalPayload = {
+            ...payload,
+            empresa: {
+                ...payload.empresa,
+                idEmpresa: saamClientId 
+            }
+        };
+
         try {
-            await axios.post('/api/clientes', payload);
+            await axios.post('/api/clientes', finalPayload);
             showToast.success("Cliente criado com sucesso!");
             fetchClients();
             closeFormModal();
         } catch (error) {
-            showToast.error("Erro ao criar cliente.");
+            const errorMessage = error.response?.data?.error || "Erro ao criar cliente.";
+            showToast.error(errorMessage);
             console.error("Erro ao criar cliente:", error);
         }
     };
 
     const handleUpdate = async (clientId, payload) => {
+        const finalPayload = {
+            ...payload,
+            empresa: {
+                ...payload.empresa,
+                idEmpresa: clientToEdit.empresa.idEmpresa
+            }
+        };
+
         try {
-            await axios.put(`/api/clientes/${clientId}`, payload);
+            await axios.put(`/api/clientes/${clientId}`, finalPayload);
             showToast.success("Cliente atualizado com sucesso!");
             fetchClients();
             closeFormModal();
         } catch (error) {
-            showToast.error("Erro ao atualizar cliente.");
+            const errorMessage = error.response?.data?.error || "Erro ao atualizar cliente.";
+            showToast.error(errorMessage);
             console.error("Erro ao atualizar cliente:", error);
         }
     };
@@ -119,6 +146,28 @@ const CNDMonitoramento = () => {
         } catch (error) {
             showToast.error("Erro ao excluir cliente.");
             console.error("Erro ao excluir cliente:", error);
+        }
+    };
+
+    const handleRowClick = async (client) => {
+        console.log("Cliente selecionado:", client); // Log para depuração
+        if (!client || !client.id) {
+            showToast.error("ID do cliente inválido ou não encontrado.");
+            console.error("Objeto cliente inválido:", client);
+            return;
+        }
+
+        setSelectedClientForModal(client);
+        setResultadoModalOpen(true);
+        setResultadoLoading(true);
+        try {
+            const response = await axios.get(`/api/resultados/cliente/${client.id}`);
+            setCndResultados(response.data);
+        } catch (error) {
+            showToast.error("Erro ao buscar resultados da CND.");
+            console.error("Erro ao buscar resultados:", error);
+        } finally {
+            setResultadoLoading(false);
         }
     };
 
@@ -213,6 +262,7 @@ const CNDMonitoramento = () => {
     return (
         <div style={styles.container}>
             <header style={styles.header}>
+                <img src={logo} alt="Logo da Empresa" style={{width: '100px', marginBottom: theme.spacing.lg}} />
                 <div style={styles.headerTitleContainer}>
                     <FileText style={{color: theme.colors.primary}} size={32} />
                     <h1 style={styles.headerTitle}>
@@ -242,6 +292,7 @@ const CNDMonitoramento = () => {
                 loading={loading}
                 onEdit={(client) => openFormModal(client)}
                 onDelete={(client) => setClientToDelete(client)}
+                onRowClick={handleRowClick}
             />
 
             <Modal isOpen={isFormModalOpen} onClose={closeFormModal} title={clientToEdit ? 'Editar Cliente' : 'Cadastrar Novo Cliente'}>
@@ -277,6 +328,19 @@ const CNDMonitoramento = () => {
                     saamClientId={saamClientId}
                 />
             </Modal>
+
+            {isResultadoModalOpen && selectedClientForModal && (
+                <ResultadoCNDModal
+                    isOpen={isResultadoModalOpen}
+                    cliente={selectedClientForModal}
+                    resultados={cndResultados}
+                    onClose={() => {
+                        setResultadoModalOpen(false);
+                        setSelectedClientForModal(null);
+                    }}
+                    loading={isResultadoLoading}
+                />
+            )}
         </div>
     );
 };
