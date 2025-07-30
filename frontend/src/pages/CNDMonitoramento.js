@@ -16,7 +16,7 @@ import ResultadoCNDModal from '../components/ResultadoCNDModal';
 import logo from '../assets/logo.jpg';
 import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
-import 'jspdf-autotable';
+import autoTable from 'jspdf-autotable';
 
 const CNDMonitoramento = () => {
     // --- ESTADO CENTRALIZADO ---
@@ -190,14 +190,13 @@ const CNDMonitoramento = () => {
         }
         const doc = new jsPDF();
         doc.text("Relatório de Clientes CND", 14, 16);
-        doc.autoTable({
-            head: [['Razão Social', 'CNPJ', 'Status', 'Periodicidade', 'Última Verificação']],
+        autoTable(doc, {
+            head: [['Razão Social', 'CNPJ', 'Status', 'Periodicidade']],
             body: filteredClients.map(c => [
                 c.empresa?.nomeEmpresa || 'N/A',
                 c.cnpj,
                 c.statusCliente,
                 c.periodicidade,
-                c.dataUltimaVerificacao ? new Date(c.dataUltimaVerificacao).toLocaleDateString() : 'N/A',
             ]),
             startY: 20,
         });
