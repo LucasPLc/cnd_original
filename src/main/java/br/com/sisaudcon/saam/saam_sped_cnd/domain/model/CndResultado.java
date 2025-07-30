@@ -40,6 +40,12 @@ public class CndResultado {
     @Column(name = "status", length = 50)
     private String status;
 
+    @Column(name = "orgao_emissor", length = 100)
+    private String orgaoEmissor;
+
+    @Column(name = "tipo_certidao", length = 100)
+    private String tipoCertidao;
+
     @ManyToOne(optional = false)
     @JoinColumn(name = "fk_cliente", nullable = false)
     private Cliente cliente;

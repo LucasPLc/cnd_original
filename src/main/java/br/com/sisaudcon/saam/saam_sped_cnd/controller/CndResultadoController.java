@@ -3,6 +3,7 @@ package br.com.sisaudcon.saam.saam_sped_cnd.controller;
 import br.com.sisaudcon.saam.saam_sped_cnd.domain.model.CndResultado;
 import br.com.sisaudcon.saam.saam_sped_cnd.domain.repository.CndResultadoRepository;
 import br.com.sisaudcon.saam.saam_sped_cnd.domain.service.CndResultadoService;
+import br.com.sisaudcon.saam.saam_sped_cnd.dto.CndResultadoComClienteDTO;
 import br.com.sisaudcon.saam.saam_sped_cnd.dto.CndResultadoDTO;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -20,6 +21,12 @@ public class CndResultadoController {
 
     private final CndResultadoRepository cndResultadoRepository;
     private final CndResultadoService cndResultadoService;
+
+    @GetMapping
+    public ResponseEntity<List<CndResultadoComClienteDTO>> listarTodos() {
+        List<CndResultadoComClienteDTO> resultados = cndResultadoService.listarTodosComCliente();
+        return ResponseEntity.ok(resultados);
+    }
 
     @GetMapping("/{id}")
     public ResponseEntity<CndResultado> getResultadoPorId(@PathVariable Long id) {
