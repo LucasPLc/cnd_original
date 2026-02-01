@@ -1,5 +1,7 @@
 import React from 'react';
 import theme from '../theme';
+import { Download } from 'lucide-react';
+import { handleDownloadPdf } from '../util/download';
 
 const ResultsTable = ({ results, loading }) => {
     const styles = {
@@ -24,6 +26,18 @@ const ResultsTable = ({ results, loading }) => {
         td: {
             padding: theme.spacing.md,
             borderTop: `1px solid ${theme.colors.border}`,
+        },
+        downloadBtn: {
+            padding: '6px',
+            borderRadius: theme.borderRadius.md,
+            border: 'none',
+            background: 'transparent',
+            cursor: 'pointer',
+            color: theme.colors.primary,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            transition: 'background 0.2s',
         },
         avatar: {
             width: '40px',
@@ -50,32 +64,37 @@ const ResultsTable = ({ results, loading }) => {
                 <thead>
                     <tr>
                         <th style={styles.th}>Cliente</th>
+                        <th style={styles.th}>Processado em</th>
                         <th style={styles.th}>Situação</th>
                         <th style={styles.th}>Órgão Emissor</th>
                         <th style={styles.th}>Data de Emissão</th>
                         <th style={styles.th}>Data de Validade</th>
+                        <th style={styles.th}>Código</th>
                         <th style={styles.th}>Status</th>
+                        <th style={styles.th}>Ações</th>
                     </tr>
                 </thead>
                 <tbody>
                     {loading ? (
-                        <tr><td colSpan="6" style={{textAlign: 'center', padding: theme.spacing.xl}}>Carregando resultados...</td></tr>
+                        <tr><td colSpan="9" style={{textAlign: 'center', padding: theme.spacing.xl}}>Carregando resultados...</td></tr>
                     ) : (
                         results.map(result => (
                             <tr key={result.id}>
                                 <td style={{...styles.td, display: 'flex', alignItems: 'center', gap: theme.spacing.md}}>
                                     <div style={styles.avatar}>
-                                        {(result.cliente?.nomeEmpresa || result.cliente?.cnpj).charAt(0)}
+                                        {(result.cliente?.nomeEmpresa || result.cliente?.cnpj || '?').charAt(0)}
                                     </div>
                                     <div>
                                         <div style={{fontWeight: 500}}>{result.cliente?.nomeEmpresa || 'N/A'}</div>
                                         <div style={{fontSize: '0.875rem', color: theme.colors.mutedForeground}}>{result.cliente?.cnpj}</div>
                                     </div>
                                 </td>
+                                <td style={styles.td}>{result.dataProcessamento ? new Date(result.dataProcessamento).toLocaleString() : 'N/A'}</td>
                                 <td style={styles.td}>{result.situacao || 'N/A'}</td>
                                 <td style={styles.td}>{result.orgaoEmissor || 'N/A'}</td>
                                 <td style={styles.td}>{formatDate(result.dataEmissao)}</td>
                                 <td style={styles.td}>{formatDate(result.dataValidade)}</td>
+                                <td style={styles.td}>{result.codigoControle || '-'}</td>
                                 <td style={styles.td}>
                                      <span style={{
                                         padding: '4px 8px',
@@ -87,6 +106,20 @@ const ResultsTable = ({ results, loading }) => {
                                     }}>
                                         {result.status || 'Pendente'}
                                     </span>
+                                </td>
+                                <td style={styles.td}>
+                                    <button
+                                        style={{
+                                            ...styles.downloadBtn,
+                                            opacity: result.temArquivo ? 1 : 0.3,
+                                            cursor: result.temArquivo ? 'pointer' : 'not-allowed'
+                                        }}
+                                        disabled={!result.temArquivo}
+                                        onClick={() => handleDownloadPdf(result.id, result.cliente?.cnpj)}
+                                        title={result.temArquivo ? "Baixar PDF" : "PDF não disponível"}
+                                    >
+                                        <Download size={20} />
+                                    </button>
                                 </td>
                             </tr>
                         ))
