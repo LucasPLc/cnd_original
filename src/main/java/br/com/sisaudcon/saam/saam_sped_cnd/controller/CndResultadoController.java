@@ -52,4 +52,9 @@ public class CndResultadoController {
     public void remover(@PathVariable Long id) {
         cndResultadoService.excluirResultado(id);
     }
+
+    @GetMapping("/{id}/pdf")
+    public ResponseEntity<byte[]> downloadPdf(@PathVariable Long id) {
+        return cndResultadoService.downloadPdf(id);
+    }
 }

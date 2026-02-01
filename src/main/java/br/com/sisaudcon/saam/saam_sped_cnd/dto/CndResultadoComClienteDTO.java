@@ -16,6 +16,7 @@ public class CndResultadoComClienteDTO {
     private String status;
     private String orgaoEmissor;
     private String tipoCertidao;
+    private boolean temArquivo;
     private ClienteInfo cliente;
 
     @Data
