@@ -1,7 +1,12 @@
-import React from 'react';
+import React, { useState } from 'react';
+import axios from 'axios';
+import { Download, Loader2 } from 'lucide-react';
 import theme from '../theme';
+import { downloadPDF } from '../util/download';
+import { showToast } from './ui/Toast';
 
 const ResultsTable = ({ results, loading }) => {
+    const [downloadingId, setDownloadingId] = useState(null);
     const styles = {
         tableContainer: {
             background: theme.colors.background,
@@ -24,6 +29,21 @@ const ResultsTable = ({ results, loading }) => {
         td: {
             padding: theme.spacing.md,
             borderTop: `1px solid ${theme.colors.border}`,
+            verticalAlign: 'middle',
+        },
+        downloadButton: {
+            background: 'none',
+            border: 'none',
+            color: theme.colors.primary,
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: theme.spacing.xs,
+            padding: theme.spacing.xs,
+            borderRadius: theme.borderRadius.md,
+            transition: 'background 0.2s',
+            fontSize: '0.875rem',
+            fontWeight: '500',
         },
         avatar: {
             width: '40px',
@@ -44,6 +64,31 @@ const ResultsTable = ({ results, loading }) => {
         return new Date(dateString).toLocaleDateString();
     };
 
+    const handleDownload = async (result) => {
+        if (downloadingId) return;
+        setDownloadingId(result.id);
+        try {
+            const response = await axios.get(`/api/resultados/${result.id}`);
+            const fullResult = response.data;
+            if (fullResult.arquivo) {
+                downloadPDF(
+                    fullResult.arquivo,
+                    result.cliente?.cnpj,
+                    result.orgaoEmissor,
+                    result.dataEmissao
+                );
+                showToast.success("Download iniciado!");
+            } else {
+                showToast.error("Arquivo não encontrado.");
+            }
+        } catch (error) {
+            console.error("Erro ao baixar PDF:", error);
+            showToast.error("Erro ao realizar o download.");
+        } finally {
+            setDownloadingId(null);
+        }
+    };
+
     return (
         <div style={styles.tableContainer}>
             <table style={styles.table}>
@@ -55,11 +100,12 @@ const ResultsTable = ({ results, loading }) => {
                         <th style={styles.th}>Data de Emissão</th>
                         <th style={styles.th}>Data de Validade</th>
                         <th style={styles.th}>Status</th>
+                        <th style={styles.th}>Arquivo</th>
                     </tr>
                 </thead>
                 <tbody>
                     {loading ? (
-                        <tr><td colSpan="6" style={{textAlign: 'center', padding: theme.spacing.xl}}>Carregando resultados...</td></tr>
+                        <tr><td colSpan="7" style={{textAlign: 'center', padding: theme.spacing.xl}}>Carregando resultados...</td></tr>
                     ) : (
                         results.map(result => (
                             <tr key={result.id}>
@@ -87,6 +133,24 @@ const ResultsTable = ({ results, loading }) => {
                                     }}>
                                         {result.status || 'Pendente'}
                                     </span>
+                                </td>
+                                <td style={styles.td}>
+                                    {result.hasArquivo ? (
+                                        <button
+                                            style={styles.downloadButton}
+                                            onClick={() => handleDownload(result)}
+                                            disabled={!!downloadingId}
+                                        >
+                                            {downloadingId === result.id ? (
+                                                <Loader2 size={18} className="animate-spin" />
+                                            ) : (
+                                                <Download size={18} />
+                                            )}
+                                            Baixar
+                                        </button>
+                                    ) : (
+                                        <span style={{color: theme.colors.mutedForeground, fontSize: '0.875rem'}}>N/A</span>
+                                    )}
                                 </td>
                             </tr>
                         ))
