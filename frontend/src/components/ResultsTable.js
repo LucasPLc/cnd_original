@@ -1,5 +1,7 @@
 import React from 'react';
 import theme from '../theme';
+import { Download } from 'lucide-react';
+import { downloadPDF } from '../util/download';
 
 const ResultsTable = ({ results, loading }) => {
     const styles = {
@@ -24,6 +26,7 @@ const ResultsTable = ({ results, loading }) => {
         td: {
             padding: theme.spacing.md,
             borderTop: `1px solid ${theme.colors.border}`,
+            verticalAlign: 'middle',
         },
         avatar: {
             width: '40px',
@@ -55,11 +58,12 @@ const ResultsTable = ({ results, loading }) => {
                         <th style={styles.th}>Data de Emissão</th>
                         <th style={styles.th}>Data de Validade</th>
                         <th style={styles.th}>Status</th>
+                        <th style={styles.th}>Ações</th>
                     </tr>
                 </thead>
                 <tbody>
                     {loading ? (
-                        <tr><td colSpan="6" style={{textAlign: 'center', padding: theme.spacing.xl}}>Carregando resultados...</td></tr>
+                        <tr><td colSpan="7" style={{textAlign: 'center', padding: theme.spacing.xl}}>Carregando resultados...</td></tr>
                     ) : (
                         results.map(result => (
                             <tr key={result.id}>
@@ -87,6 +91,26 @@ const ResultsTable = ({ results, loading }) => {
                                     }}>
                                         {result.status || 'Pendente'}
                                     </span>
+                                </td>
+                                <td style={styles.td}>
+                                    <button
+                                        onClick={() => downloadPDF(result.id, result.cliente?.cnpj, result.tipoCertidao, result.dataEmissao)}
+                                        disabled={!result.hasArquivo}
+                                        style={{
+                                            background: 'none',
+                                            border: 'none',
+                                            color: result.hasArquivo ? theme.colors.primary : theme.colors.mutedForeground,
+                                            cursor: result.hasArquivo ? 'pointer' : 'not-allowed',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: '4px',
+                                            padding: '4px',
+                                            opacity: result.hasArquivo ? 1 : 0.5,
+                                        }}
+                                        title={result.hasArquivo ? "Baixar PDF" : "PDF indisponível"}
+                                    >
+                                        <Download size={18} />
+                                    </button>
                                 </td>
                             </tr>
                         ))
