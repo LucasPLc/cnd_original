@@ -6,6 +6,7 @@ import br.com.sisaudcon.saam.saam_sped_cnd.domain.service.CndResultadoService;
 import br.com.sisaudcon.saam.saam_sped_cnd.dto.CndResultadoComClienteDTO;
 import br.com.sisaudcon.saam.saam_sped_cnd.dto.CndResultadoDTO;
 import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -17,6 +18,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/resultados")
 @AllArgsConstructor
+@Slf4j
 public class CndResultadoController {
 
     private final CndResultadoRepository cndResultadoRepository;
@@ -30,9 +32,16 @@ public class CndResultadoController {
 
     @GetMapping("/{id}")
     public ResponseEntity<CndResultado> getResultadoPorId(@PathVariable Long id) {
+        log.info("Buscando resultado por ID: {}", id);
         return cndResultadoRepository.findById(id)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+                .map(resultado -> {
+                    log.info("Resultado encontrado para o ID: {}. Retornando arquivo PDF.", id);
+                    return ResponseEntity.ok(resultado);
+                })
+                .orElseGet(() -> {
+                    log.warn("Resultado não encontrado para o ID: {}", id);
+                    return ResponseEntity.notFound().build();
+                });
     }
 
     @GetMapping("/cliente/{clienteId}")
