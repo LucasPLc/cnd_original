@@ -1,9 +1,14 @@
-import React from 'react';
+import React, { useState } from 'react';
+import axios from 'axios';
+import { toast } from 'react-toastify';
 import Modal from './ui/Modal';
 import theme from '../theme';
 import { Download } from 'lucide-react';
+import { downloadBase64PDF } from '../util/download';
+import { getOrgaoAbbreviation, getStatusStyle } from '../util/cnd';
 
 const ResultadoCNDModal = ({ isOpen, cliente, resultados, onClose, loading }) => {
+    const [downloadingId, setDownloadingId] = useState(null);
     if (!cliente) return null;
 
     const styles = {
@@ -42,17 +47,30 @@ const ResultadoCNDModal = ({ isOpen, cliente, resultados, onClose, loading }) =>
         }
     };
 
-    const getStatusStyle = (status) => {
-        if (status === 'Disponível') {
-            return {
-                background: 'hsl(142.1, 76.2%, 90%)',
-                color: 'hsl(142.1, 70.2%, 30%)',
-            };
+    const handleDownload = async (r) => {
+        try {
+            setDownloadingId(r.id);
+            const response = await axios.get(`/api/resultados/${r.id}`);
+            const fullResult = response.data;
+
+            if (!fullResult.arquivo) {
+                toast.error('Arquivo não encontrado para esta certidão.');
+                return;
+            }
+
+            const cnpj = cliente?.cnpj?.replace(/\D/g, '') || '00000000000000';
+            const orgao = getOrgaoAbbreviation(r.orgaoEmissor);
+            const data = r.dataEmissao || new Date().toISOString().split('T')[0];
+            const fileName = `CND_${cnpj}_${orgao}_${data}.pdf`;
+
+            downloadBase64PDF(fullResult.arquivo, fileName);
+            toast.success('Download iniciado com sucesso!');
+        } catch (error) {
+            console.error('Erro ao baixar CND:', error);
+            toast.error('Erro ao realizar o download da CND.');
+        } finally {
+            setDownloadingId(null);
         }
-        return {
-            background: 'hsl(0, 72.2%, 90%)',
-            color: 'hsl(0, 70.2%, 30%)',
-        };
     };
 
     return (
@@ -84,15 +102,23 @@ const ResultadoCNDModal = ({ isOpen, cliente, resultados, onClose, loading }) =>
                                             </span>
                                         </td>
                                         <td style={styles.td}>
-                                            {r.status === 'Disponível' && r.arquivo ? (
-                                                <a 
-                                                  href={`data:application/pdf;base64,${r.arquivo}`} 
-                                                  download={`cnd-${cliente?.cnpj}-${r.id}.pdf`}
-                                                  style={styles.downloadLink}
+                                            {(r.hasArquivo) ? (
+                                                <button
+                                                  onClick={() => handleDownload(r)}
+                                                  disabled={downloadingId === r.id}
+                                                  style={{
+                                                    ...styles.downloadLink,
+                                                    background: 'none',
+                                                    border: 'none',
+                                                    cursor: downloadingId === r.id ? 'not-allowed' : 'pointer',
+                                                    padding: 0,
+                                                    opacity: downloadingId === r.id ? 0.5 : 1
+                                                  }}
+                                                  title={downloadingId === r.id ? "Baixando..." : "Baixar PDF"}
                                                 >
                                                     <Download size={16} />
-                                                    Baixar
-                                                </a>
+                                                    {downloadingId === r.id ? 'Baixando...' : 'Baixar'}
+                                                </button>
                                             ) : (
                                                 'Indisponível'
                                             )}
