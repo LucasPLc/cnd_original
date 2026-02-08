@@ -65,6 +65,7 @@ public class CndResultadoService{
         dto.setDataValidade(resultado.getDataValidade());
         dto.setCodigoControle(resultado.getCodigoControle());
         dto.setStatus(resultado.getStatus());
+        dto.setHasArquivo(resultado.getArquivo() != null && !resultado.getArquivo().isBlank());
         dto.setOrgaoEmissor(resultado.getOrgaoEmissor());
         dto.setTipoCertidao(resultado.getTipoCertidao());
 

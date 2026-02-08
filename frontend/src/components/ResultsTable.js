@@ -1,7 +1,13 @@
-import React from 'react';
+import React, { useState } from 'react';
 import theme from '../theme';
+import { Download, Loader2 } from 'lucide-react';
+import axios from 'axios';
+import { downloadBase64PDF } from '../util/download';
+import { getOrgaoAbbreviation } from '../util/cnd';
+import { showToast } from './ui/Toast';
 
 const ResultsTable = ({ results, loading }) => {
+    const [downloadingId, setDownloadingId] = useState(null);
     const styles = {
         tableContainer: {
             background: theme.colors.background,
@@ -24,6 +30,22 @@ const ResultsTable = ({ results, loading }) => {
         td: {
             padding: theme.spacing.md,
             borderTop: `1px solid ${theme.colors.border}`,
+            verticalAlign: 'middle',
+        },
+        downloadButton: {
+            color: theme.colors.primary,
+            background: 'none',
+            border: 'none',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: theme.spacing.xs,
+            borderRadius: theme.borderRadius.md,
+            transition: 'background 0.2s',
+            ':hover': {
+                background: `rgba(53, 81, 138, 0.1)`,
+            }
         },
         avatar: {
             width: '40px',
@@ -44,6 +66,31 @@ const ResultsTable = ({ results, loading }) => {
         return new Date(dateString).toLocaleDateString();
     };
 
+    const handleDownload = async (result) => {
+        setDownloadingId(result.id);
+        try {
+            const response = await axios.get(`/api/resultados/${result.id}`);
+            const fullResultado = response.data;
+
+            if (fullResultado && fullResultado.arquivo) {
+                const orgao = getOrgaoAbbreviation(fullResultado.tipoCertidao || fullResultado.orgaoEmissor);
+                const dataEmissao = fullResultado.dataEmissao || new Date(fullResultado.dataProcessamento).toISOString().split('T')[0];
+                const cnpj = result.cliente?.cnpj || 'unknown';
+                const filename = `CND_${cnpj.replace(/[^\d]/g, '')}_${orgao}_${dataEmissao}.pdf`;
+
+                downloadBase64PDF(fullResultado.arquivo, filename);
+                showToast.success("Download iniciado!");
+            } else {
+                showToast.error("Arquivo não disponível para este resultado.");
+            }
+        } catch (error) {
+            console.error("Erro ao buscar arquivo:", error);
+            showToast.error("Erro ao buscar o arquivo para download.");
+        } finally {
+            setDownloadingId(null);
+        }
+    };
+
     return (
         <div style={styles.tableContainer}>
             <table style={styles.table}>
@@ -55,6 +102,7 @@ const ResultsTable = ({ results, loading }) => {
                         <th style={styles.th}>Data de Emissão</th>
                         <th style={styles.th}>Data de Validade</th>
                         <th style={styles.th}>Status</th>
+                        <th style={styles.th}>Ações</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -87,6 +135,22 @@ const ResultsTable = ({ results, loading }) => {
                                     }}>
                                         {result.status || 'Pendente'}
                                     </span>
+                                </td>
+                                <td style={styles.td}>
+                                    {result.hasArquivo && (
+                                        <button
+                                            onClick={() => handleDownload(result)}
+                                            style={styles.downloadButton}
+                                            title="Baixar PDF"
+                                            disabled={downloadingId !== null}
+                                        >
+                                            {downloadingId === result.id ? (
+                                                <Loader2 size={18} className="animate-spin" />
+                                            ) : (
+                                                <Download size={18} />
+                                            )}
+                                        </button>
+                                    )}
                                 </td>
                             </tr>
                         ))
