@@ -11,15 +11,29 @@ import java.util.stream.Collectors;
 public class CndResultadoMapper {
 
     public CndResultadoDTO toDTO(CndResultado cndResultado) {
+        return toDTO(cndResultado, false);
+    }
+
+    public CndResultadoDTO toDTOWithArquivo(CndResultado cndResultado) {
+        return toDTO(cndResultado, true);
+    }
+
+    private CndResultadoDTO toDTO(CndResultado cndResultado, boolean includeArquivo) {
         CndResultadoDTO dto = new CndResultadoDTO();
         dto.setId(cndResultado.getId());
         dto.setDataProcessamento(cndResultado.getDataProcessamento());
-        dto.setArquivo(cndResultado.getArquivo());
+        // Remove direct file mapping for performance. Use hasArquivo to indicate presence.
+        dto.setHasArquivo(cndResultado.getArquivo() != null && !cndResultado.getArquivo().isBlank());
+        if (includeArquivo) {
+            dto.setArquivo(cndResultado.getArquivo());
+        }
         dto.setSituacao(cndResultado.getSituacao());
         dto.setDataEmissao(cndResultado.getDataEmissao());
         dto.setDataValidade(cndResultado.getDataValidade());
         dto.setCodigoControle(cndResultado.getCodigoControle());
         dto.setStatus(cndResultado.getStatus());
+        dto.setOrgaoEmissor(cndResultado.getOrgaoEmissor());
+        dto.setTipoCertidao(cndResultado.getTipoCertidao());
         if (cndResultado.getCliente() != null && cndResultado.getCliente().getId() != null) {
             dto.setClienteId(cndResultado.getCliente().getId().longValue());
         }
