@@ -1,7 +1,30 @@
-import React from 'react';
+import React, { useState } from 'react';
 import theme from '../theme';
+import { Download, Loader2 } from 'lucide-react';
+import { downloadPDF } from '../util/download';
+import { formatCNDFilename } from '../util/cnd';
+import { showToast } from './ui/Toast';
 
 const ResultsTable = ({ results, loading }) => {
+    const [downloadingId, setDownloadingId] = useState(null);
+
+    const handleDownload = async (result) => {
+        setDownloadingId(result.id);
+        try {
+            const filename = formatCNDFilename(
+                result.cliente?.cnpj,
+                result.orgaoEmissor,
+                result.tipoCertidao,
+                result.dataEmissao || result.dataProcessamento
+            );
+            await downloadPDF(result.id, filename);
+            showToast.success("Download iniciado!");
+        } catch (error) {
+            showToast.error("Erro ao baixar o arquivo.");
+        } finally {
+            setDownloadingId(null);
+        }
+    };
     const styles = {
         tableContainer: {
             background: theme.colors.background,
@@ -55,11 +78,12 @@ const ResultsTable = ({ results, loading }) => {
                         <th style={styles.th}>Data de Emissão</th>
                         <th style={styles.th}>Data de Validade</th>
                         <th style={styles.th}>Status</th>
+                        <th style={styles.th}>Ações</th>
                     </tr>
                 </thead>
                 <tbody>
                     {loading ? (
-                        <tr><td colSpan="6" style={{textAlign: 'center', padding: theme.spacing.xl}}>Carregando resultados...</td></tr>
+                        <tr><td colSpan="7" style={{textAlign: 'center', padding: theme.spacing.xl}}>Carregando resultados...</td></tr>
                     ) : (
                         results.map(result => (
                             <tr key={result.id}>
@@ -87,6 +111,32 @@ const ResultsTable = ({ results, loading }) => {
                                     }}>
                                         {result.status || 'Pendente'}
                                     </span>
+                                </td>
+                                <td style={styles.td}>
+                                    <button
+                                        onClick={() => handleDownload(result)}
+                                        disabled={!result.hasArquivo || downloadingId === result.id}
+                                        style={{
+                                            background: 'none',
+                                            border: 'none',
+                                            cursor: result.hasArquivo ? 'pointer' : 'not-allowed',
+                                            color: result.hasArquivo ? theme.colors.primary : theme.colors.mutedForeground,
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: '4px',
+                                            fontSize: '0.875rem',
+                                            fontWeight: 500,
+                                            opacity: result.hasArquivo ? 1 : 0.5,
+                                        }}
+                                        title={result.hasArquivo ? "Baixar PDF" : "PDF indisponível"}
+                                    >
+                                        {downloadingId === result.id ? (
+                                            <Loader2 size={16} className="animate-spin" />
+                                        ) : (
+                                            <Download size={16} />
+                                        )}
+                                        PDF
+                                    </button>
                                 </td>
                             </tr>
                         ))

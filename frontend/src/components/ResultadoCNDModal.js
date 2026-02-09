@@ -1,9 +1,31 @@
-import React from 'react';
+import React, { useState } from 'react';
 import Modal from './ui/Modal';
 import theme from '../theme';
-import { Download } from 'lucide-react';
+import { Download, Loader2 } from 'lucide-react';
+import { downloadPDF } from '../util/download';
+import { formatCNDFilename } from '../util/cnd';
+import { showToast } from './ui/Toast';
 
 const ResultadoCNDModal = ({ isOpen, cliente, resultados, onClose, loading }) => {
+    const [downloadingId, setDownloadingId] = useState(null);
+
+    const handleDownload = async (result) => {
+        setDownloadingId(result.id);
+        try {
+            const filename = formatCNDFilename(
+                cliente?.cnpj,
+                result.orgaoEmissor,
+                result.tipoCertidao,
+                result.dataEmissao || result.dataProcessamento
+            );
+            await downloadPDF(result.id, filename);
+            showToast.success("Download iniciado!");
+        } catch (error) {
+            showToast.error("Erro ao baixar o arquivo.");
+        } finally {
+            setDownloadingId(null);
+        }
+    };
     if (!cliente) return null;
 
     const styles = {
@@ -84,15 +106,25 @@ const ResultadoCNDModal = ({ isOpen, cliente, resultados, onClose, loading }) =>
                                             </span>
                                         </td>
                                         <td style={styles.td}>
-                                            {r.status === 'Disponível' && r.arquivo ? (
-                                                <a 
-                                                  href={`data:application/pdf;base64,${r.arquivo}`} 
-                                                  download={`cnd-${cliente?.cnpj}-${r.id}.pdf`}
-                                                  style={styles.downloadLink}
+                                            {r.hasArquivo ? (
+                                                <button
+                                                  onClick={() => handleDownload(r)}
+                                                  disabled={downloadingId === r.id}
+                                                  style={{
+                                                      ...styles.downloadLink,
+                                                      background: 'none',
+                                                      border: 'none',
+                                                      cursor: 'pointer',
+                                                      opacity: downloadingId === r.id ? 0.7 : 1
+                                                  }}
                                                 >
-                                                    <Download size={16} />
+                                                    {downloadingId === r.id ? (
+                                                        <Loader2 size={16} className="animate-spin" />
+                                                    ) : (
+                                                        <Download size={16} />
+                                                    )}
                                                     Baixar
-                                                </a>
+                                                </button>
                                             ) : (
                                                 'Indisponível'
                                             )}
