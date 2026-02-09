@@ -11,10 +11,23 @@ import java.util.stream.Collectors;
 public class CndResultadoMapper {
 
     public CndResultadoDTO toDTO(CndResultado cndResultado) {
+        CndResultadoDTO dto = mapToDTO(cndResultado);
+        dto.setHasArquivo(cndResultado.getArquivo() != null && !cndResultado.getArquivo().isBlank());
+        dto.setArquivo(null); // Lazy loading
+        return dto;
+    }
+
+    public CndResultadoDTO toDTOWithArquivo(CndResultado cndResultado) {
+        CndResultadoDTO dto = mapToDTO(cndResultado);
+        dto.setHasArquivo(cndResultado.getArquivo() != null && !cndResultado.getArquivo().isBlank());
+        dto.setArquivo(cndResultado.getArquivo());
+        return dto;
+    }
+
+    private CndResultadoDTO mapToDTO(CndResultado cndResultado) {
         CndResultadoDTO dto = new CndResultadoDTO();
         dto.setId(cndResultado.getId());
         dto.setDataProcessamento(cndResultado.getDataProcessamento());
-        dto.setArquivo(cndResultado.getArquivo());
         dto.setSituacao(cndResultado.getSituacao());
         dto.setDataEmissao(cndResultado.getDataEmissao());
         dto.setDataValidade(cndResultado.getDataValidade());
