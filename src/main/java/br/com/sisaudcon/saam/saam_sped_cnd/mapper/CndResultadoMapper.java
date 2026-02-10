@@ -14,7 +14,8 @@ public class CndResultadoMapper {
         CndResultadoDTO dto = new CndResultadoDTO();
         dto.setId(cndResultado.getId());
         dto.setDataProcessamento(cndResultado.getDataProcessamento());
-        dto.setArquivo(cndResultado.getArquivo());
+        dto.setHasArquivo(cndResultado.getArquivo() != null && !cndResultado.getArquivo().isBlank());
+        dto.setArquivo(null); // Lazy loading: don't send large base64 strings in lists
         dto.setSituacao(cndResultado.getSituacao());
         dto.setDataEmissao(cndResultado.getDataEmissao());
         dto.setDataValidade(cndResultado.getDataValidade());

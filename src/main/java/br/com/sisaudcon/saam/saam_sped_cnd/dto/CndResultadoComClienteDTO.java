@@ -10,6 +10,7 @@ public class CndResultadoComClienteDTO {
     private Long id;
     private OffsetDateTime dataProcessamento;
     private String situacao;
+    private boolean hasArquivo;
     private LocalDate dataEmissao;
     private LocalDate dataValidade;
     private String codigoControle;
