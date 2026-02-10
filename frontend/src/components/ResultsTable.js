@@ -1,5 +1,7 @@
 import React from 'react';
 import theme from '../theme';
+import { Download } from 'lucide-react';
+import { downloadCndPdf } from '../util/download';
 
 const ResultsTable = ({ results, loading }) => {
     const styles = {
@@ -55,6 +57,7 @@ const ResultsTable = ({ results, loading }) => {
                         <th style={styles.th}>Data de Emissão</th>
                         <th style={styles.th}>Data de Validade</th>
                         <th style={styles.th}>Status</th>
+                        <th style={styles.th}>Arquivo</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -87,6 +90,29 @@ const ResultsTable = ({ results, loading }) => {
                                     }}>
                                         {result.status || 'Pendente'}
                                     </span>
+                                </td>
+                                <td style={styles.td}>
+                                    {result.hasArquivo ? (
+                                        <button
+                                            onClick={() => downloadCndPdf(result, result.cliente?.cnpj)}
+                                            style={{
+                                                background: 'none',
+                                                border: 'none',
+                                                color: theme.colors.primary,
+                                                cursor: 'pointer',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                gap: '4px',
+                                                fontWeight: 500,
+                                                padding: 0
+                                            }}
+                                        >
+                                            <Download size={16} />
+                                            Download
+                                        </button>
+                                    ) : (
+                                        <span style={{color: theme.colors.mutedForeground, fontSize: '0.875rem'}}>Indisponível</span>
+                                    )}
                                 </td>
                             </tr>
                         ))

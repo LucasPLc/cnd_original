@@ -12,6 +12,7 @@ public class CndResultadoDTO {
     private Long id;
     private OffsetDateTime dataProcessamento;
     private String arquivo;
+    private boolean hasArquivo;
     private String situacao;
     private LocalDate dataEmissao;
     private LocalDate dataValidade;
