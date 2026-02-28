@@ -1,7 +1,10 @@
 import React from 'react';
 import theme from '../theme';
+import { Download } from 'lucide-react';
+import InteractiveButton from './ui/InteractiveButton';
+import { getStatusStyle } from '../util/cnd';
 
-const ResultsTable = ({ results, loading }) => {
+const ResultsTable = ({ results, loading, onDownload }) => {
     const styles = {
         tableContainer: {
             background: theme.colors.background,
@@ -55,6 +58,7 @@ const ResultsTable = ({ results, loading }) => {
                         <th style={styles.th}>Data de Emissão</th>
                         <th style={styles.th}>Data de Validade</th>
                         <th style={styles.th}>Status</th>
+                        <th style={styles.th}>Ações</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -82,11 +86,21 @@ const ResultsTable = ({ results, loading }) => {
                                         fontSize: '0.75rem',
                                         fontWeight: 500,
                                         borderRadius: theme.borderRadius.full,
-                                        background: result.status === 'Concluído' ? 'hsl(142.1, 76.2%, 80%)' : 'hsl(35, 92%, 80%)',
-                                        color: result.status === 'Concluído' ? 'hsl(142.1, 70.2%, 25%)' : 'hsl(35, 92%, 25%)',
+                                        ...getStatusStyle(result.status, theme)
                                     }}>
                                         {result.status || 'Pendente'}
                                     </span>
+                                </td>
+                                <td style={styles.td}>
+                                    <InteractiveButton
+                                        onClick={() => onDownload(result)}
+                                        disabled={!result.hasArquivo}
+                                        variant="secondary"
+                                        size="sm"
+                                        title={result.hasArquivo ? "Baixar PDF" : "PDF Indisponível"}
+                                    >
+                                        <Download size={16} />
+                                    </InteractiveButton>
                                 </td>
                             </tr>
                         ))

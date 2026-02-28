@@ -10,6 +10,8 @@ import FilterActions from '../components/FilterActions';
 import ClientsTable from '../components/ClientsTable';
 import ResultsTable from '../components/ResultsTable'; // Importa a nova tabela
 import { showToast } from '../components/ui/Toast';
+import { downloadPdfFromBase64 } from '../util/download';
+import { generateCndFilename } from '../util/cnd';
 import theme from '../theme';
 import ImportSaamModal from '../components/ImportSaamModal';
 import ResultadoCNDModal from '../components/ResultadoCNDModal';
@@ -131,6 +133,23 @@ const CNDMonitoramento = () => {
         } catch (error) {
             const errorMessage = error.response?.data?.error || "Erro ao atualizar cliente.";
             showToast.error(errorMessage);
+        }
+    };
+
+    const handleDownload = async (result) => {
+        try {
+            const response = await axios.get(`/api/resultados/${result.id}`);
+            const fullResult = response.data;
+            if (fullResult.arquivo) {
+                const filename = generateCndFilename(fullResult.clienteCnpj || result.cliente?.cnpj, fullResult.orgaoEmissor, fullResult.dataEmissao);
+                downloadPdfFromBase64(fullResult.arquivo, filename);
+                showToast.success("Download iniciado.");
+            } else {
+                showToast.error("Arquivo não encontrado no servidor.");
+            }
+        } catch (error) {
+            showToast.error("Erro ao buscar arquivo para download.");
+            console.error(error);
         }
     };
 
@@ -262,7 +281,7 @@ const CNDMonitoramento = () => {
                     onRowClick={handleRowClick}
                 />
             ) : (
-                <ResultsTable results={allResults} loading={resultsLoading} />
+                <ResultsTable results={allResults} loading={resultsLoading} onDownload={handleDownload} />
             )}
 
             <Modal isOpen={isFormModalOpen} onClose={closeFormModal} title={clientToEdit ? 'Editar Cliente' : 'Cadastrar Novo Cliente'}>
