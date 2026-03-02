@@ -2,6 +2,8 @@ import React from 'react';
 import Modal from './ui/Modal';
 import theme from '../theme';
 import { Download } from 'lucide-react';
+import { getStatusStyle } from '../util/cnd';
+import { handleCndDownload } from '../util/download';
 
 const ResultadoCNDModal = ({ isOpen, cliente, resultados, onClose, loading }) => {
     if (!cliente) return null;
@@ -42,19 +44,6 @@ const ResultadoCNDModal = ({ isOpen, cliente, resultados, onClose, loading }) =>
         }
     };
 
-    const getStatusStyle = (status) => {
-        if (status === 'Disponível') {
-            return {
-                background: 'hsl(142.1, 76.2%, 90%)',
-                color: 'hsl(142.1, 70.2%, 30%)',
-            };
-        }
-        return {
-            background: 'hsl(0, 72.2%, 90%)',
-            color: 'hsl(0, 70.2%, 30%)',
-        };
-    };
-
     return (
         <Modal isOpen={isOpen} title={`Resultados da CND para: ${cliente.cnpj}`} onClose={onClose}>
             {loading ? (
@@ -84,15 +73,14 @@ const ResultadoCNDModal = ({ isOpen, cliente, resultados, onClose, loading }) =>
                                             </span>
                                         </td>
                                         <td style={styles.td}>
-                                            {r.status === 'Disponível' && r.arquivo ? (
-                                                <a 
-                                                  href={`data:application/pdf;base64,${r.arquivo}`} 
-                                                  download={`cnd-${cliente?.cnpj}-${r.id}.pdf`}
-                                                  style={styles.downloadLink}
+                                            {(r.status === 'Disponível' || r.status === 'Concluído') && (r.arquivo || r.hasArquivo) ? (
+                                                <button
+                                                  onClick={() => handleCndDownload(r, cliente?.cnpj)}
+                                                  style={{...styles.downloadLink, background: 'none', border: 'none', cursor: 'pointer', padding: 0}}
                                                 >
                                                     <Download size={16} />
                                                     Baixar
-                                                </a>
+                                                </button>
                                             ) : (
                                                 'Indisponível'
                                             )}
