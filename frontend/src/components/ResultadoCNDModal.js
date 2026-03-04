@@ -1,9 +1,39 @@
-import React from 'react';
+import React, { useState } from 'react';
+import axios from 'axios';
 import Modal from './ui/Modal';
 import theme from '../theme';
-import { Download } from 'lucide-react';
+import { Download, Loader2 } from 'lucide-react';
+import { downloadPdfFromBase64 } from '../util/download';
+import { generateCndFilename, getStatusStyle } from '../util/cnd';
+import { showToast } from './ui/Toast';
 
 const ResultadoCNDModal = ({ isOpen, cliente, resultados, onClose, loading }) => {
+    const [downloadingId, setDownloadingId] = useState(null);
+
+    const handleDownload = async (result) => {
+        setDownloadingId(result.id);
+        try {
+            const response = await axios.get(`/api/resultados/${result.id}`);
+            const fullResult = response.data;
+
+            if (fullResult && fullResult.arquivo) {
+                const filename = generateCndFilename(
+                    cliente?.cnpj,
+                    result.orgaoEmissor || result.tipoCertidao,
+                    result.dataEmissao
+                );
+                downloadPdfFromBase64(fullResult.arquivo, filename);
+            } else {
+                showToast.error("Arquivo PDF não encontrado.");
+            }
+        } catch (error) {
+            console.error("Erro no download do modal:", error);
+            showToast.error("Erro ao realizar o download.");
+        } finally {
+            setDownloadingId(null);
+        }
+    };
+
     if (!cliente) return null;
 
     const styles = {
@@ -32,27 +62,18 @@ const ResultadoCNDModal = ({ isOpen, cliente, resultados, onClose, loading }) =>
             borderRadius: theme.borderRadius.full,
             display: 'inline-block',
         },
-        downloadLink: {
+        downloadButton: {
+            background: 'none',
+            border: 'none',
+            cursor: 'pointer',
             color: theme.colors.primary,
-            textDecoration: 'none',
             display: 'flex',
             alignItems: 'center',
             gap: theme.spacing.sm,
             fontWeight: 500,
+            padding: 0,
+            transition: 'opacity 0.2s',
         }
-    };
-
-    const getStatusStyle = (status) => {
-        if (status === 'Disponível') {
-            return {
-                background: 'hsl(142.1, 76.2%, 90%)',
-                color: 'hsl(142.1, 70.2%, 30%)',
-            };
-        }
-        return {
-            background: 'hsl(0, 72.2%, 90%)',
-            color: 'hsl(0, 70.2%, 30%)',
-        };
     };
 
     return (
@@ -84,15 +105,19 @@ const ResultadoCNDModal = ({ isOpen, cliente, resultados, onClose, loading }) =>
                                             </span>
                                         </td>
                                         <td style={styles.td}>
-                                            {r.status === 'Disponível' && r.arquivo ? (
-                                                <a 
-                                                  href={`data:application/pdf;base64,${r.arquivo}`} 
-                                                  download={`cnd-${cliente?.cnpj}-${r.id}.pdf`}
-                                                  style={styles.downloadLink}
+                                            {r.status === 'Disponível' ? (
+                                                <button
+                                                  onClick={() => handleDownload(r)}
+                                                  disabled={downloadingId === r.id}
+                                                  style={{...styles.downloadButton, opacity: downloadingId === r.id ? 0.6 : 1}}
                                                 >
-                                                    <Download size={16} />
+                                                    {downloadingId === r.id ? (
+                                                        <Loader2 size={16} className="animate-spin" />
+                                                    ) : (
+                                                        <Download size={16} />
+                                                    )}
                                                     Baixar
-                                                </a>
+                                                </button>
                                             ) : (
                                                 'Indisponível'
                                             )}
