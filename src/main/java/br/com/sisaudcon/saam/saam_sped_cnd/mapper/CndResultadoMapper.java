@@ -11,15 +11,24 @@ import java.util.stream.Collectors;
 public class CndResultadoMapper {
 
     public CndResultadoDTO toDTO(CndResultado cndResultado) {
+        return toDTO(cndResultado, true);
+    }
+
+    public CndResultadoDTO toDTO(CndResultado cndResultado, boolean includeArquivo) {
         CndResultadoDTO dto = new CndResultadoDTO();
         dto.setId(cndResultado.getId());
         dto.setDataProcessamento(cndResultado.getDataProcessamento());
-        dto.setArquivo(cndResultado.getArquivo());
+        if (includeArquivo) {
+            dto.setArquivo(cndResultado.getArquivo());
+        }
         dto.setSituacao(cndResultado.getSituacao());
         dto.setDataEmissao(cndResultado.getDataEmissao());
         dto.setDataValidade(cndResultado.getDataValidade());
         dto.setCodigoControle(cndResultado.getCodigoControle());
         dto.setStatus(cndResultado.getStatus());
+        dto.setOrgaoEmissor(cndResultado.getOrgaoEmissor());
+        dto.setTipoCertidao(cndResultado.getTipoCertidao());
+        dto.setHasArquivo(cndResultado.getArquivo() != null && !cndResultado.getArquivo().isBlank());
         if (cndResultado.getCliente() != null && cndResultado.getCliente().getId() != null) {
             dto.setClienteId(cndResultado.getCliente().getId().longValue());
         }
@@ -27,6 +36,10 @@ public class CndResultadoMapper {
     }
 
     public List<CndResultadoDTO> toDTOList(List<CndResultado> cndResultados) {
-        return cndResultados.stream().map(this::toDTO).collect(Collectors.toList());
+        return toDTOList(cndResultados, true);
+    }
+
+    public List<CndResultadoDTO> toDTOList(List<CndResultado> cndResultados, boolean includeArquivo) {
+        return cndResultados.stream().map(r -> toDTO(r, includeArquivo)).collect(Collectors.toList());
     }
 }

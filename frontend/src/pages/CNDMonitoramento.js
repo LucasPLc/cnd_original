@@ -11,6 +11,8 @@ import ClientsTable from '../components/ClientsTable';
 import ResultsTable from '../components/ResultsTable'; // Importa a nova tabela
 import { showToast } from '../components/ui/Toast';
 import theme from '../theme';
+import { generateCndFilename } from '../util/cnd';
+import { downloadPdfFromBase64 } from '../util/download';
 import ImportSaamModal from '../components/ImportSaamModal';
 import ResultadoCNDModal from '../components/ResultadoCNDModal';
 import logo from '../assets/logo.jpg';
@@ -164,6 +166,34 @@ const CNDMonitoramento = () => {
         }
     };
 
+    const handleDownloadCnd = async (result, client = null) => {
+        const targetClient = client || result.cliente;
+        if (!targetClient) {
+            showToast.error("Dados do cliente não encontrados para o download.");
+            return;
+        }
+
+        try {
+            const response = await axios.get(`/api/resultados/${result.id}`);
+            const fullResult = response.data;
+
+            if (fullResult.arquivo) {
+                const filename = generateCndFilename(
+                    targetClient.cnpj,
+                    fullResult.orgaoEmissor || result.orgaoEmissor,
+                    fullResult.dataEmissao || result.dataEmissao
+                );
+                downloadPdfFromBase64(fullResult.arquivo, filename);
+                showToast.success("Download iniciado!");
+            } else {
+                showToast.error("Arquivo não encontrado no servidor.");
+            }
+        } catch (error) {
+            console.error("Erro ao baixar CND:", error);
+            showToast.error("Erro ao baixar o arquivo PDF.");
+        }
+    };
+
     const handleExportExcel = () => {
         if (filteredClients.length === 0) {
             showToast.warn("Nenhum dado para exportar.");
@@ -262,7 +292,11 @@ const CNDMonitoramento = () => {
                     onRowClick={handleRowClick}
                 />
             ) : (
-                <ResultsTable results={allResults} loading={resultsLoading} />
+                <ResultsTable
+                    results={allResults}
+                    loading={resultsLoading}
+                    onDownload={handleDownloadCnd}
+                />
             )}
 
             <Modal isOpen={isFormModalOpen} onClose={closeFormModal} title={clientToEdit ? 'Editar Cliente' : 'Cadastrar Novo Cliente'}>
@@ -284,7 +318,14 @@ const CNDMonitoramento = () => {
             </Modal>
 
             {isResultadoModalOpen && selectedClientForModal && (
-                <ResultadoCNDModal isOpen={isResultadoModalOpen} cliente={selectedClientForModal} resultados={cndResultados} onClose={() => { setResultadoModalOpen(false); setSelectedClientForModal(null); }} loading={isResultadoLoading} />
+                <ResultadoCNDModal
+                    isOpen={isResultadoModalOpen}
+                    cliente={selectedClientForModal}
+                    resultados={cndResultados}
+                    onClose={() => { setResultadoModalOpen(false); setSelectedClientForModal(null); }}
+                    loading={isResultadoLoading}
+                    onDownload={handleDownloadCnd}
+                />
             )}
         </div>
     );
