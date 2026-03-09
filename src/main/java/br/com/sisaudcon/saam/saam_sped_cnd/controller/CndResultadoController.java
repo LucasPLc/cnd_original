@@ -3,6 +3,7 @@ package br.com.sisaudcon.saam.saam_sped_cnd.controller;
 import br.com.sisaudcon.saam.saam_sped_cnd.domain.model.CndResultado;
 import br.com.sisaudcon.saam.saam_sped_cnd.domain.repository.CndResultadoRepository;
 import br.com.sisaudcon.saam.saam_sped_cnd.domain.service.CndResultadoService;
+import br.com.sisaudcon.saam.saam_sped_cnd.mapper.CndResultadoMapper;
 import br.com.sisaudcon.saam.saam_sped_cnd.dto.CndResultadoComClienteDTO;
 import br.com.sisaudcon.saam.saam_sped_cnd.dto.CndResultadoDTO;
 import lombok.AllArgsConstructor;
@@ -21,6 +22,7 @@ public class CndResultadoController {
 
     private final CndResultadoRepository cndResultadoRepository;
     private final CndResultadoService cndResultadoService;
+    private final CndResultadoMapper cndResultadoMapper;
 
     @GetMapping
     public ResponseEntity<List<CndResultadoComClienteDTO>> listarTodos() {
@@ -29,8 +31,9 @@ public class CndResultadoController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<CndResultado> getResultadoPorId(@PathVariable Long id) {
+    public ResponseEntity<CndResultadoDTO> getResultadoPorId(@PathVariable Long id) {
         return cndResultadoRepository.findById(id)
+                .map(cndResultadoMapper::toDTO)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
