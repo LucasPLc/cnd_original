@@ -5,7 +5,9 @@ import br.com.sisaudcon.saam.saam_sped_cnd.domain.repository.CndResultadoReposit
 import br.com.sisaudcon.saam.saam_sped_cnd.domain.service.CndResultadoService;
 import br.com.sisaudcon.saam.saam_sped_cnd.dto.CndResultadoComClienteDTO;
 import br.com.sisaudcon.saam.saam_sped_cnd.dto.CndResultadoDTO;
+import br.com.sisaudcon.saam.saam_sped_cnd.mapper.CndResultadoMapper;
 import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -17,10 +19,12 @@ import java.util.List;
 @RestController
 @RequestMapping("/resultados")
 @AllArgsConstructor
+@Slf4j
 public class CndResultadoController {
 
     private final CndResultadoRepository cndResultadoRepository;
     private final CndResultadoService cndResultadoService;
+    private final CndResultadoMapper cndResultadoMapper;
 
     @GetMapping
     public ResponseEntity<List<CndResultadoComClienteDTO>> listarTodos() {
@@ -29,10 +33,16 @@ public class CndResultadoController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<CndResultado> getResultadoPorId(@PathVariable Long id) {
+    public ResponseEntity<CndResultadoDTO> getResultadoPorId(@PathVariable Long id) {
         return cndResultadoRepository.findById(id)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+                .map(resultado -> {
+                    log.info("Solicitado download do PDF para o resultado ID: {}", id);
+                    return ResponseEntity.ok(cndResultadoMapper.toDTOFull(resultado));
+                })
+                .orElseGet(() -> {
+                    log.warn("Tentativa de download para resultado ID: {} não encontrado", id);
+                    return ResponseEntity.notFound().build();
+                });
     }
 
     @GetMapping("/cliente/{clienteId}")
