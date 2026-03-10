@@ -11,15 +11,30 @@ import java.util.stream.Collectors;
 public class CndResultadoMapper {
 
     public CndResultadoDTO toDTO(CndResultado cndResultado) {
+        CndResultadoDTO dto = mapBaseFields(cndResultado);
+        dto.setArquivo(null); // Lazy loading: do not include heavy file content in lists
+        return dto;
+    }
+
+    public CndResultadoDTO toDTOFull(CndResultado cndResultado) {
+        CndResultadoDTO dto = mapBaseFields(cndResultado);
+        dto.setArquivo(cndResultado.getArquivo());
+        return dto;
+    }
+
+    private CndResultadoDTO mapBaseFields(CndResultado cndResultado) {
         CndResultadoDTO dto = new CndResultadoDTO();
         dto.setId(cndResultado.getId());
         dto.setDataProcessamento(cndResultado.getDataProcessamento());
-        dto.setArquivo(cndResultado.getArquivo());
         dto.setSituacao(cndResultado.getSituacao());
         dto.setDataEmissao(cndResultado.getDataEmissao());
         dto.setDataValidade(cndResultado.getDataValidade());
         dto.setCodigoControle(cndResultado.getCodigoControle());
         dto.setStatus(cndResultado.getStatus());
+        dto.setOrgaoEmissor(cndResultado.getOrgaoEmissor());
+        dto.setTipoCertidao(cndResultado.getTipoCertidao());
+        dto.setHasArquivo(cndResultado.getArquivo() != null && !cndResultado.getArquivo().isEmpty());
+
         if (cndResultado.getCliente() != null && cndResultado.getCliente().getId() != null) {
             dto.setClienteId(cndResultado.getCliente().getId().longValue());
         }

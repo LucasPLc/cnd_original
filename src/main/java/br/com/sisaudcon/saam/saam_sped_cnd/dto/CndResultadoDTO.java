@@ -12,10 +12,13 @@ public class CndResultadoDTO {
     private Long id;
     private OffsetDateTime dataProcessamento;
     private String arquivo;
+    private Boolean hasArquivo;
     private String situacao;
     private LocalDate dataEmissao;
     private LocalDate dataValidade;
     private String codigoControle;
     private String status;
     private Long clienteId;
+    private String orgaoEmissor;
+    private String tipoCertidao;
 }
