@@ -1,9 +1,45 @@
-import React from 'react';
+import React, { useState } from 'react';
 import Modal from './ui/Modal';
 import theme from '../theme';
-import { Download } from 'lucide-react';
+import { Download, Loader2 } from 'lucide-react';
+import axios from 'axios';
+import { showToast } from './ui/Toast';
+import { downloadPdf } from '../util/download';
+import { generateCndFilename, getStatusStyle } from '../util/cnd';
 
 const ResultadoCNDModal = ({ isOpen, cliente, resultados, onClose, loading }) => {
+    const [downloadingId, setDownloadingId] = useState(null);
+
+    const handleDownload = async (resultado) => {
+        setDownloadingId(resultado.id);
+        try {
+            const response = await axios.get(`/api/resultados/${resultado.id}`);
+            const fullResult = response.data;
+
+            if (fullResult.arquivo) {
+                const filename = generateCndFilename(
+                    cliente?.cnpj,
+                    fullResult.orgaoEmissor,
+                    fullResult.dataEmissao
+                );
+
+                const success = downloadPdf(fullResult.arquivo, filename);
+                if (success) {
+                    showToast.success("Download iniciado!");
+                } else {
+                    showToast.error("Erro ao gerar arquivo PDF.");
+                }
+            } else {
+                showToast.error("Conteúdo do arquivo não encontrado.");
+            }
+        } catch (error) {
+            console.error("Erro ao baixar CND:", error);
+            showToast.error("Erro ao buscar arquivo no servidor.");
+        } finally {
+            setDownloadingId(null);
+        }
+    };
+
     if (!cliente) return null;
 
     const styles = {
@@ -39,20 +75,12 @@ const ResultadoCNDModal = ({ isOpen, cliente, resultados, onClose, loading }) =>
             alignItems: 'center',
             gap: theme.spacing.sm,
             fontWeight: 500,
+            cursor: 'pointer',
+            background: 'none',
+            border: 'none',
+            padding: 0,
+            font: 'inherit',
         }
-    };
-
-    const getStatusStyle = (status) => {
-        if (status === 'Disponível') {
-            return {
-                background: 'hsl(142.1, 76.2%, 90%)',
-                color: 'hsl(142.1, 70.2%, 30%)',
-            };
-        }
-        return {
-            background: 'hsl(0, 72.2%, 90%)',
-            color: 'hsl(0, 70.2%, 30%)',
-        };
     };
 
     return (
@@ -84,15 +112,23 @@ const ResultadoCNDModal = ({ isOpen, cliente, resultados, onClose, loading }) =>
                                             </span>
                                         </td>
                                         <td style={styles.td}>
-                                            {r.status === 'Disponível' && r.arquivo ? (
-                                                <a 
-                                                  href={`data:application/pdf;base64,${r.arquivo}`} 
-                                                  download={`cnd-${cliente?.cnpj}-${r.id}.pdf`}
-                                                  style={styles.downloadLink}
+                                            {(r.status === 'Disponível' || r.status === 'Concluído') ? (
+                                                <button
+                                                  onClick={() => handleDownload(r)}
+                                                  disabled={downloadingId === r.id}
+                                                  style={{
+                                                      ...styles.downloadLink,
+                                                      opacity: downloadingId === r.id ? 0.6 : 1,
+                                                      cursor: downloadingId === r.id ? 'not-allowed' : 'pointer'
+                                                  }}
                                                 >
-                                                    <Download size={16} />
-                                                    Baixar
-                                                </a>
+                                                    {downloadingId === r.id ? (
+                                                        <Loader2 size={16} className="animate-spin" />
+                                                    ) : (
+                                                        <Download size={16} />
+                                                    )}
+                                                    {downloadingId === r.id ? 'Baixando...' : 'Baixar'}
+                                                </button>
                                             ) : (
                                                 'Indisponível'
                                             )}
