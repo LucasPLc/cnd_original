@@ -2,6 +2,7 @@ import React from 'react';
 import Modal from './ui/Modal';
 import theme from '../theme';
 import { Download } from 'lucide-react';
+import { generateCndFilename } from '../util/cnd';
 
 const ResultadoCNDModal = ({ isOpen, cliente, resultados, onClose, loading }) => {
     if (!cliente) return null;
@@ -87,7 +88,7 @@ const ResultadoCNDModal = ({ isOpen, cliente, resultados, onClose, loading }) =>
                                             {r.status === 'Disponível' && r.arquivo ? (
                                                 <a 
                                                   href={`data:application/pdf;base64,${r.arquivo}`} 
-                                                  download={`cnd-${cliente?.cnpj}-${r.id}.pdf`}
+                                                  download={generateCndFilename(cliente?.cnpj, r.tipoCertidao, r.dataEmissao)}
                                                   style={styles.downloadLink}
                                                 >
                                                     <Download size={16} />
