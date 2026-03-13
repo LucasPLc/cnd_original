@@ -17,5 +17,7 @@ public class CndResultadoDTO {
     private LocalDate dataValidade;
     private String codigoControle;
     private String status;
+    private String orgaoEmissor;
+    private String tipoCertidao;
     private Long clienteId;
 }
