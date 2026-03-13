@@ -1,9 +1,39 @@
-import React from 'react';
+import React, { useState } from 'react';
 import Modal from './ui/Modal';
 import theme from '../theme';
-import { Download } from 'lucide-react';
+import { Download, Loader2 } from 'lucide-react';
+import axios from 'axios';
+import { generateCndFilename, getStatusStyle } from '../util/cnd';
+import { downloadBase64PDF } from '../util/download';
+import { showToast } from './ui/Toast';
 
 const ResultadoCNDModal = ({ isOpen, cliente, resultados, onClose, loading }) => {
+    const [downloadingId, setDownloadingId] = useState(null);
+
+    const handleDownload = async (r) => {
+        setDownloadingId(r.id);
+        try {
+            const response = await axios.get(`/api/resultados/${r.id}`);
+            const fullResult = response.data;
+            if (fullResult.arquivo) {
+                const filename = generateCndFilename(
+                    cliente?.cnpj,
+                    r.tipoCertidao || r.orgaoEmissor,
+                    r.dataEmissao
+                );
+                downloadBase64PDF(fullResult.arquivo, filename);
+                showToast.success("Download iniciado!");
+            } else {
+                showToast.error("Arquivo não encontrado.");
+            }
+        } catch (error) {
+            console.error("Erro ao baixar CND:", error);
+            showToast.error("Erro ao realizar o download.");
+        } finally {
+            setDownloadingId(null);
+        }
+    };
+
     if (!cliente) return null;
 
     const styles = {
@@ -42,19 +72,6 @@ const ResultadoCNDModal = ({ isOpen, cliente, resultados, onClose, loading }) =>
         }
     };
 
-    const getStatusStyle = (status) => {
-        if (status === 'Disponível') {
-            return {
-                background: 'hsl(142.1, 76.2%, 90%)',
-                color: 'hsl(142.1, 70.2%, 30%)',
-            };
-        }
-        return {
-            background: 'hsl(0, 72.2%, 90%)',
-            color: 'hsl(0, 70.2%, 30%)',
-        };
-    };
-
     return (
         <Modal isOpen={isOpen} title={`Resultados da CND para: ${cliente.cnpj}`} onClose={onClose}>
             {loading ? (
@@ -84,15 +101,24 @@ const ResultadoCNDModal = ({ isOpen, cliente, resultados, onClose, loading }) =>
                                             </span>
                                         </td>
                                         <td style={styles.td}>
-                                            {r.status === 'Disponível' && r.arquivo ? (
-                                                <a 
-                                                  href={`data:application/pdf;base64,${r.arquivo}`} 
-                                                  download={`cnd-${cliente?.cnpj}-${r.id}.pdf`}
-                                                  style={styles.downloadLink}
+                                            {(r.status === 'Disponível' || r.status === 'Concluído') ? (
+                                                <button
+                                                  onClick={() => handleDownload(r)}
+                                                  disabled={downloadingId === r.id}
+                                                  style={{
+                                                    ...styles.downloadLink,
+                                                    background: 'none',
+                                                    border: 'none',
+                                                    cursor: 'pointer',
+                                                  }}
                                                 >
-                                                    <Download size={16} />
+                                                    {downloadingId === r.id ? (
+                                                        <Loader2 size={16} className="animate-spin" />
+                                                    ) : (
+                                                        <Download size={16} />
+                                                    )}
                                                     Baixar
-                                                </a>
+                                                </button>
                                             ) : (
                                                 'Indisponível'
                                             )}

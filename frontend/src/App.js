@@ -7,6 +7,21 @@ import 'react-toastify/dist/ReactToastify.css';
 function App() {
   return (
     <Router>
+      <style>
+        {`
+          @keyframes spin {
+            from {
+              transform: rotate(0deg);
+            }
+            to {
+              transform: rotate(360deg);
+            }
+          }
+          .animate-spin {
+            animation: spin 1s linear infinite;
+          }
+        `}
+      </style>
       <ToastContainer
         position="top-right"
         autoClose={5000}
