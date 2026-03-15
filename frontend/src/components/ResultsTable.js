@@ -1,7 +1,38 @@
-import React from 'react';
+import React, { useState } from 'react';
 import theme from '../theme';
+import { Download, Loader2 } from 'lucide-react';
+import axios from 'axios';
+import { showToast } from './ui/Toast';
+import { downloadPdfFromBase64, generateCndFilename } from '../util/download';
 
 const ResultsTable = ({ results, loading }) => {
+    const [downloadingId, setDownloadingId] = useState(null);
+
+    const handleDownload = async (result) => {
+        setDownloadingId(result.id);
+        try {
+            const response = await axios.get(`/api/resultados/${result.id}`);
+            const { arquivo } = response.data;
+
+            if (arquivo) {
+                const filename = generateCndFilename(
+                    result.cliente?.cnpj,
+                    result.orgaoEmissor,
+                    result.dataEmissao
+                );
+                downloadPdfFromBase64(arquivo, filename);
+                showToast.success("Download iniciado!");
+            } else {
+                showToast.error("Arquivo não encontrado para este resultado.");
+            }
+        } catch (error) {
+            console.error("Erro ao baixar CND:", error);
+            showToast.error("Erro ao realizar o download do PDF.");
+        } finally {
+            setDownloadingId(null);
+        }
+    };
+
     const styles = {
         tableContainer: {
             background: theme.colors.background,
@@ -55,11 +86,12 @@ const ResultsTable = ({ results, loading }) => {
                         <th style={styles.th}>Data de Emissão</th>
                         <th style={styles.th}>Data de Validade</th>
                         <th style={styles.th}>Status</th>
+                        <th style={styles.th}>Ações</th>
                     </tr>
                 </thead>
                 <tbody>
                     {loading ? (
-                        <tr><td colSpan="6" style={{textAlign: 'center', padding: theme.spacing.xl}}>Carregando resultados...</td></tr>
+                        <tr><td colSpan="7" style={{textAlign: 'center', padding: theme.spacing.xl}}>Carregando resultados...</td></tr>
                     ) : (
                         results.map(result => (
                             <tr key={result.id}>
@@ -87,6 +119,34 @@ const ResultsTable = ({ results, loading }) => {
                                     }}>
                                         {result.status || 'Pendente'}
                                     </span>
+                                </td>
+                                <td style={styles.td}>
+                                    <button
+                                        onClick={() => handleDownload(result)}
+                                        disabled={!result.hasArquivo || downloadingId === result.id}
+                                        style={{
+                                            background: 'none',
+                                            border: 'none',
+                                            cursor: result.hasArquivo ? 'pointer' : 'not-allowed',
+                                            color: result.hasArquivo ? theme.colors.primary : theme.colors.mutedForeground,
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: '4px',
+                                            opacity: result.hasArquivo ? 1 : 0.5,
+                                            padding: '4px',
+                                            borderRadius: '4px',
+                                            transition: 'background 0.2s',
+                                        }}
+                                        title={result.hasArquivo ? "Baixar PDF" : "Arquivo indisponível"}
+                                        onMouseEnter={(e) => result.hasArquivo && (e.currentTarget.style.background = 'rgba(53, 81, 138, 0.1)')}
+                                        onMouseLeave={(e) => (e.currentTarget.style.background = 'none')}
+                                    >
+                                        {downloadingId === result.id ? (
+                                            <Loader2 size={18} className="animate-spin" />
+                                        ) : (
+                                            <Download size={18} />
+                                        )}
+                                    </button>
                                 </td>
                             </tr>
                         ))
