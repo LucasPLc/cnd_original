@@ -1,9 +1,14 @@
-import React from 'react';
+import React, { useState } from 'react';
+import axios from 'axios';
 import Modal from './ui/Modal';
 import theme from '../theme';
-import { Download } from 'lucide-react';
+import { Download, Loader2 } from 'lucide-react';
+import { generateCndFilename, downloadPdfFromBase64 } from '../util/download';
+import { showToast } from './ui/Toast';
 
 const ResultadoCNDModal = ({ isOpen, cliente, resultados, onClose, loading }) => {
+    const [downloadingId, setDownloadingId] = useState(null);
+
     if (!cliente) return null;
 
     const styles = {
@@ -32,27 +37,52 @@ const ResultadoCNDModal = ({ isOpen, cliente, resultados, onClose, loading }) =>
             borderRadius: theme.borderRadius.full,
             display: 'inline-block',
         },
-        downloadLink: {
+        downloadBtn: {
             color: theme.colors.primary,
             textDecoration: 'none',
             display: 'flex',
             alignItems: 'center',
             gap: theme.spacing.sm,
             fontWeight: 500,
+            background: 'none',
+            border: 'none',
+            padding: 0,
+            cursor: 'pointer',
         }
     };
 
     const getStatusStyle = (status) => {
-        if (status === 'Disponível') {
+        if (status === 'Disponível' || status === 'Concluído') {
             return {
                 background: 'hsl(142.1, 76.2%, 90%)',
                 color: 'hsl(142.1, 70.2%, 30%)',
             };
         }
         return {
-            background: 'hsl(0, 72.2%, 90%)',
-            color: 'hsl(0, 70.2%, 30%)',
+            background: 'hsl(35, 92%, 90%)',
+            color: 'hsl(35, 92%, 30%)',
         };
+    };
+
+    const handleDownload = async (resultado) => {
+        if (downloadingId) return;
+        setDownloadingId(resultado.id);
+        try {
+            const response = await axios.get(`/api/resultados/${resultado.id}`);
+            const data = response.data;
+            if (data.arquivo) {
+                const filename = generateCndFilename(cliente.cnpj, data.orgaoEmissor, data.dataEmissao);
+                downloadPdfFromBase64(data.arquivo, filename);
+                showToast.success("Download iniciado!");
+            } else {
+                showToast.error("Arquivo não encontrado.");
+            }
+        } catch (error) {
+            console.error("Erro ao baixar PDF:", error);
+            showToast.error("Falha ao baixar o arquivo.");
+        } finally {
+            setDownloadingId(null);
+        }
     };
 
     return (
@@ -84,15 +114,15 @@ const ResultadoCNDModal = ({ isOpen, cliente, resultados, onClose, loading }) =>
                                             </span>
                                         </td>
                                         <td style={styles.td}>
-                                            {r.status === 'Disponível' && r.arquivo ? (
-                                                <a 
-                                                  href={`data:application/pdf;base64,${r.arquivo}`} 
-                                                  download={`cnd-${cliente?.cnpj}-${r.id}.pdf`}
-                                                  style={styles.downloadLink}
+                                            {(r.status === 'Disponível' || r.status === 'Concluído') && r.arquivo ? (
+                                                <button
+                                                  onClick={() => handleDownload(r)}
+                                                  disabled={downloadingId === r.id}
+                                                  style={styles.downloadBtn}
                                                 >
-                                                    <Download size={16} />
-                                                    Baixar
-                                                </a>
+                                                    {downloadingId === r.id ? <Loader2 className="animate-spin" size={16} /> : <Download size={16} />}
+                                                    {downloadingId === r.id ? 'Baixando...' : 'Baixar'}
+                                                </button>
                                             ) : (
                                                 'Indisponível'
                                             )}

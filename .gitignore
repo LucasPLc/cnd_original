@@ -1,6 +1,8 @@
 HELP.md
 target/
 .mvn/wrapper/maven-wrapper.jar
+npm_start.log
+frontend/npm_start.log
 !**/src/main/**/target/
 !**/src/test/**/target/
 

@@ -11,6 +11,7 @@ import br.com.sisaudcon.saam.saam_sped_cnd.mapper.CndResultadoMapper;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 import java.time.OffsetDateTime;
 import java.util.List;
@@ -67,6 +68,7 @@ public class CndResultadoService{
         dto.setStatus(resultado.getStatus());
         dto.setOrgaoEmissor(resultado.getOrgaoEmissor());
         dto.setTipoCertidao(resultado.getTipoCertidao());
+        dto.setHasArquivo(StringUtils.hasText(resultado.getArquivo()));
 
         CndResultadoComClienteDTO.ClienteInfo clienteInfo = new CndResultadoComClienteDTO.ClienteInfo();
         clienteInfo.setId(resultado.getCliente().getId());
