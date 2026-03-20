@@ -1,7 +1,18 @@
-import React from 'react';
+import React, { useState } from 'react';
 import theme from '../theme';
+import { Download, Loader2 } from 'lucide-react';
+import { handleCndDownload } from '../util/download';
 
 const ResultsTable = ({ results, loading }) => {
+    const [downloadingId, setDownloadingId] = useState(null);
+
+    const onDownloadClick = async (e, resultId, cnpj) => {
+        e.stopPropagation();
+        setDownloadingId(resultId);
+        await handleCndDownload(resultId, cnpj);
+        setDownloadingId(null);
+    };
+
     const styles = {
         tableContainer: {
             background: theme.colors.background,
@@ -55,11 +66,12 @@ const ResultsTable = ({ results, loading }) => {
                         <th style={styles.th}>Data de Emissão</th>
                         <th style={styles.th}>Data de Validade</th>
                         <th style={styles.th}>Status</th>
+                        <th style={styles.th}>Ações</th>
                     </tr>
                 </thead>
                 <tbody>
                     {loading ? (
-                        <tr><td colSpan="6" style={{textAlign: 'center', padding: theme.spacing.xl}}>Carregando resultados...</td></tr>
+                        <tr><td colSpan="7" style={{textAlign: 'center', padding: theme.spacing.xl}}>Carregando resultados...</td></tr>
                     ) : (
                         results.map(result => (
                             <tr key={result.id}>
@@ -87,6 +99,33 @@ const ResultsTable = ({ results, loading }) => {
                                     }}>
                                         {result.status || 'Pendente'}
                                     </span>
+                                </td>
+                                <td style={styles.td}>
+                                    <button
+                                        disabled={!result.hasArquivo || downloadingId === result.id}
+                                        onClick={(e) => onDownloadClick(e, result.id, result.cliente?.cnpj)}
+                                        style={{
+                                            border: 'none',
+                                            background: 'transparent',
+                                            cursor: result.hasArquivo ? 'pointer' : 'not-allowed',
+                                            color: result.hasArquivo ? theme.colors.primary : theme.colors.mutedForeground,
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: '4px',
+                                            padding: '4px',
+                                            opacity: result.hasArquivo ? 1 : 0.5,
+                                            transition: 'transform 0.2s',
+                                        }}
+                                        title={result.hasArquivo ? "Baixar PDF" : "Arquivo não disponível"}
+                                        onMouseEnter={(e) => result.hasArquivo && (e.currentTarget.style.transform = 'scale(1.1)')}
+                                        onMouseLeave={(e) => result.hasArquivo && (e.currentTarget.style.transform = 'scale(1)')}
+                                    >
+                                        {downloadingId === result.id ? (
+                                            <Loader2 className="animate-spin" size={20} />
+                                        ) : (
+                                            <Download size={20} />
+                                        )}
+                                    </button>
                                 </td>
                             </tr>
                         ))
