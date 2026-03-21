@@ -1,5 +1,7 @@
 import React from 'react';
 import theme from '../theme';
+import { Download } from 'lucide-react';
+import { handleCndDownload } from '../util/download';
 
 const ResultsTable = ({ results, loading }) => {
     const styles = {
@@ -37,11 +39,38 @@ const ResultsTable = ({ results, loading }) => {
             color: theme.colors.primary,
             flexShrink: 0,
         },
+        downloadButton: {
+            background: 'none',
+            border: 'none',
+            color: theme.colors.primary,
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '4px',
+            fontWeight: 500,
+            padding: '4px 8px',
+            borderRadius: theme.borderRadius.md,
+            transition: 'background 0.2s',
+        },
+        disabledButton: {
+            color: theme.colors.mutedForeground,
+            cursor: 'not-allowed',
+            opacity: 0.5,
+        }
     };
 
     const formatDate = (dateString) => {
         if (!dateString) return 'N/A';
         return new Date(dateString).toLocaleDateString();
+    };
+
+    const onDownloadClick = (result) => {
+        handleCndDownload(
+            result.id,
+            result.cliente?.cnpj,
+            result.orgaoEmissor,
+            result.dataEmissao
+        );
     };
 
     return (
@@ -55,11 +84,12 @@ const ResultsTable = ({ results, loading }) => {
                         <th style={styles.th}>Data de Emissão</th>
                         <th style={styles.th}>Data de Validade</th>
                         <th style={styles.th}>Status</th>
+                        <th style={styles.th}>Ações</th>
                     </tr>
                 </thead>
                 <tbody>
                     {loading ? (
-                        <tr><td colSpan="6" style={{textAlign: 'center', padding: theme.spacing.xl}}>Carregando resultados...</td></tr>
+                        <tr><td colSpan="7" style={{textAlign: 'center', padding: theme.spacing.xl}}>Carregando resultados...</td></tr>
                     ) : (
                         results.map(result => (
                             <tr key={result.id}>
@@ -87,6 +117,20 @@ const ResultsTable = ({ results, loading }) => {
                                     }}>
                                         {result.status || 'Pendente'}
                                     </span>
+                                </td>
+                                <td style={styles.td}>
+                                    <button
+                                        onClick={() => onDownloadClick(result)}
+                                        disabled={!result.hasArquivo}
+                                        style={{
+                                            ...styles.downloadButton,
+                                            ...(!result.hasArquivo ? styles.disabledButton : {})
+                                        }}
+                                        title={result.hasArquivo ? "Baixar PDF" : "PDF não disponível"}
+                                    >
+                                        <Download size={18} />
+                                        <span>PDF</span>
+                                    </button>
                                 </td>
                             </tr>
                         ))
