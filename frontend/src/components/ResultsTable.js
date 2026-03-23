@@ -1,7 +1,43 @@
-import React from 'react';
+import React, { useState } from 'react';
+import axios from 'axios';
+import { Download, Loader2 } from 'lucide-react';
 import theme from '../theme';
+import { showToast } from './ui/Toast';
+import { generateCndFilename, downloadPdfFromBase64 } from '../util/download';
 
 const ResultsTable = ({ results, loading }) => {
+    const [downloadingId, setDownloadingId] = useState(null);
+
+    const handleDownload = async (result) => {
+        if (!result.hasArquivo) {
+            showToast.warn("Arquivo não disponível para este resultado.");
+            return;
+        }
+
+        setDownloadingId(result.id);
+        try {
+            const response = await axios.get(`/api/resultados/${result.id}`);
+            const fullResult = response.data;
+
+            if (fullResult.arquivo) {
+                const filename = generateCndFilename(
+                    fullResult.cliente?.cnpj || result.cliente?.cnpj,
+                    fullResult.orgaoEmissor || result.orgaoEmissor,
+                    fullResult.dataEmissao || result.dataEmissao
+                );
+                downloadPdfFromBase64(fullResult.arquivo, filename);
+                showToast.success("Download iniciado!");
+            } else {
+                showToast.error("Arquivo não encontrado no servidor.");
+            }
+        } catch (error) {
+            console.error("Erro ao baixar CND:", error);
+            showToast.error("Erro ao realizar o download do arquivo.");
+        } finally {
+            setDownloadingId(null);
+        }
+    };
+
     const styles = {
         tableContainer: {
             background: theme.colors.background,
@@ -55,6 +91,7 @@ const ResultsTable = ({ results, loading }) => {
                         <th style={styles.th}>Data de Emissão</th>
                         <th style={styles.th}>Data de Validade</th>
                         <th style={styles.th}>Status</th>
+                        <th style={styles.th}>Ações</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -87,6 +124,32 @@ const ResultsTable = ({ results, loading }) => {
                                     }}>
                                         {result.status || 'Pendente'}
                                     </span>
+                                </td>
+                                <td style={styles.td}>
+                                    <button
+                                        onClick={() => handleDownload(result)}
+                                        disabled={!result.hasArquivo || downloadingId === result.id}
+                                        title={result.hasArquivo ? "Baixar PDF" : "PDF não disponível"}
+                                        style={{
+                                            background: 'none',
+                                            border: 'none',
+                                            cursor: result.hasArquivo ? 'pointer' : 'not-allowed',
+                                            color: result.hasArquivo ? theme.colors.primary : theme.colors.mutedForeground,
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            opacity: result.hasArquivo ? 1 : 0.5,
+                                            transition: 'transform 0.2s',
+                                        }}
+                                        onMouseEnter={(e) => result.hasArquivo && (e.currentTarget.style.transform = 'scale(1.1)')}
+                                        onMouseLeave={(e) => result.hasArquivo && (e.currentTarget.style.transform = 'scale(1)')}
+                                    >
+                                        {downloadingId === result.id ? (
+                                            <Loader2 size={18} className="animate-spin" />
+                                        ) : (
+                                            <Download size={18} />
+                                        )}
+                                    </button>
                                 </td>
                             </tr>
                         ))
