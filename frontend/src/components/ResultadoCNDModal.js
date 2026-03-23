@@ -1,9 +1,39 @@
-import React from 'react';
+import React, { useState } from 'react';
+import axios from 'axios';
 import Modal from './ui/Modal';
 import theme from '../theme';
-import { Download } from 'lucide-react';
+import { Download, Loader2 } from 'lucide-react';
+import { generateCndFilename, downloadPdfFromBase64 } from '../util/download';
+import { showToast } from './ui/Toast';
 
 const ResultadoCNDModal = ({ isOpen, cliente, resultados, onClose, loading }) => {
+    const [downloadingId, setDownloadingId] = useState(null);
+
+    const handleDownload = async (r) => {
+        setDownloadingId(r.id);
+        try {
+            const response = await axios.get(`/api/resultados/${r.id}`);
+            const fullResult = response.data;
+
+            if (fullResult.arquivo) {
+                const filename = generateCndFilename(
+                    cliente?.cnpj,
+                    fullResult.orgaoEmissor || r.orgaoEmissor,
+                    fullResult.dataEmissao || r.dataEmissao
+                );
+                downloadPdfFromBase64(fullResult.arquivo, filename);
+                showToast.success("Download iniciado!");
+            } else {
+                showToast.error("Arquivo não encontrado no servidor.");
+            }
+        } catch (error) {
+            console.error("Erro ao baixar CND:", error);
+            showToast.error("Erro ao realizar o download do arquivo.");
+        } finally {
+            setDownloadingId(null);
+        }
+    };
+
     if (!cliente) return null;
 
     const styles = {
@@ -39,6 +69,12 @@ const ResultadoCNDModal = ({ isOpen, cliente, resultados, onClose, loading }) =>
             alignItems: 'center',
             gap: theme.spacing.sm,
             fontWeight: 500,
+            background: 'none',
+            border: 'none',
+            padding: 0,
+            cursor: 'pointer',
+            fontFamily: 'inherit',
+            fontSize: 'inherit',
         }
     };
 
@@ -84,15 +120,19 @@ const ResultadoCNDModal = ({ isOpen, cliente, resultados, onClose, loading }) =>
                                             </span>
                                         </td>
                                         <td style={styles.td}>
-                                            {r.status === 'Disponível' && r.arquivo ? (
-                                                <a 
-                                                  href={`data:application/pdf;base64,${r.arquivo}`} 
-                                                  download={`cnd-${cliente?.cnpj}-${r.id}.pdf`}
+                                            {r.status === 'Disponível' ? (
+                                                <button
+                                                  onClick={() => handleDownload(r)}
+                                                  disabled={downloadingId === r.id}
                                                   style={styles.downloadLink}
                                                 >
-                                                    <Download size={16} />
-                                                    Baixar
-                                                </a>
+                                                    {downloadingId === r.id ? (
+                                                        <Loader2 size={16} className="animate-spin" />
+                                                    ) : (
+                                                        <Download size={16} />
+                                                    )}
+                                                    {downloadingId === r.id ? 'Baixando...' : 'Baixar'}
+                                                </button>
                                             ) : (
                                                 'Indisponível'
                                             )}
