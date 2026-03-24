@@ -1,7 +1,48 @@
-import React from 'react';
+import React, { useState } from 'react';
 import theme from '../theme';
+import { Download, Loader2 } from 'lucide-react';
+import { handleCndDownload } from '../util/download';
+import styled from 'styled-components';
+
+const DownloadButton = styled.button`
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 12px;
+    border-radius: ${theme.borderRadius.md};
+    border: 1px solid ${theme.colors.primary};
+    background: transparent;
+    color: ${theme.colors.primary};
+    cursor: pointer;
+    font-size: 0.875rem;
+    font-weight: 500;
+    transition: all 0.2s;
+
+    &:hover:not(:disabled) {
+        background: ${theme.colors.primary};
+        color: white;
+    }
+
+    &:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        border-color: ${theme.colors.mutedForeground};
+        color: ${theme.colors.mutedForeground};
+    }
+
+    .animate-spin {
+        animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+    }
+`;
 
 const ResultsTable = ({ results, loading }) => {
+    const [downloadingId, setDownloadingId] = useState(null);
+
     const styles = {
         tableContainer: {
             background: theme.colors.background,
@@ -24,6 +65,7 @@ const ResultsTable = ({ results, loading }) => {
         td: {
             padding: theme.spacing.md,
             borderTop: `1px solid ${theme.colors.border}`,
+            verticalAlign: 'middle',
         },
         avatar: {
             width: '40px',
@@ -55,11 +97,12 @@ const ResultsTable = ({ results, loading }) => {
                         <th style={styles.th}>Data de Emissão</th>
                         <th style={styles.th}>Data de Validade</th>
                         <th style={styles.th}>Status</th>
+                        <th style={styles.th}>Ações</th>
                     </tr>
                 </thead>
                 <tbody>
                     {loading ? (
-                        <tr><td colSpan="6" style={{textAlign: 'center', padding: theme.spacing.xl}}>Carregando resultados...</td></tr>
+                        <tr><td colSpan="7" style={{textAlign: 'center', padding: theme.spacing.xl}}>Carregando resultados...</td></tr>
                     ) : (
                         results.map(result => (
                             <tr key={result.id}>
@@ -87,6 +130,20 @@ const ResultsTable = ({ results, loading }) => {
                                     }}>
                                         {result.status || 'Pendente'}
                                     </span>
+                                </td>
+                                <td style={styles.td}>
+                                    <DownloadButton
+                                        onClick={() => handleCndDownload(result.id, result.cliente?.cnpj, result.orgaoEmissor, result.dataEmissao, setDownloadingId)}
+                                        disabled={!result.hasArquivo || downloadingId === result.id}
+                                        title={result.hasArquivo ? "Baixar PDF" : "Arquivo indisponível"}
+                                    >
+                                        {downloadingId === result.id ? (
+                                            <Loader2 size={16} className="animate-spin" />
+                                        ) : (
+                                            <Download size={16} />
+                                        )}
+                                        {downloadingId === result.id ? "Baixando..." : "Baixar"}
+                                    </DownloadButton>
                                 </td>
                             </tr>
                         ))
