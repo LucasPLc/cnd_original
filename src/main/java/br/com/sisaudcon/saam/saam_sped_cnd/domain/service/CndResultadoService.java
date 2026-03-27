@@ -49,6 +49,13 @@ public class CndResultadoService{
     }
 
     @Transactional(readOnly = true)
+    public CndResultadoDTO buscarPorId(Long id) {
+        return resultadoRepository.findById(id)
+                .map(cndResultadoMapper::toDTO)
+                .orElse(null);
+    }
+
+    @Transactional(readOnly = true)
     public List<CndResultadoComClienteDTO> listarTodosComCliente() {
         List<CndResultado> resultados = resultadoRepository.findAllWithClienteAndEmpresa();
         return resultados.stream()
@@ -67,6 +74,7 @@ public class CndResultadoService{
         dto.setStatus(resultado.getStatus());
         dto.setOrgaoEmissor(resultado.getOrgaoEmissor());
         dto.setTipoCertidao(resultado.getTipoCertidao());
+        dto.setHasArquivo(resultado.getArquivo() != null && !resultado.getArquivo().isBlank());
 
         CndResultadoComClienteDTO.ClienteInfo clienteInfo = new CndResultadoComClienteDTO.ClienteInfo();
         clienteInfo.setId(resultado.getCliente().getId());
