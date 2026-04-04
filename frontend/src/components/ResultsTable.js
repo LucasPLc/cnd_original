@@ -1,7 +1,11 @@
-import React from 'react';
+import React, { useState } from 'react';
 import theme from '../theme';
+import { Download, Loader2 } from 'lucide-react';
+import { handleCndDownload } from '../util/download';
 
 const ResultsTable = ({ results, loading }) => {
+    const [downloadingId, setDownloadingId] = useState(null);
+
     const styles = {
         tableContainer: {
             background: theme.colors.background,
@@ -37,11 +41,32 @@ const ResultsTable = ({ results, loading }) => {
             color: theme.colors.primary,
             flexShrink: 0,
         },
+        downloadButton: (isDisabled) => ({
+            background: 'none',
+            border: 'none',
+            color: isDisabled ? theme.colors.mutedForeground : theme.colors.primary,
+            cursor: isDisabled ? 'not-allowed' : 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '4px',
+            fontSize: '0.875rem',
+            fontWeight: 500,
+            padding: '4px 8px',
+            borderRadius: theme.borderRadius.md,
+            transition: 'background 0.2s',
+            opacity: isDisabled ? 0.5 : 1,
+        })
     };
 
     const formatDate = (dateString) => {
         if (!dateString) return 'N/A';
         return new Date(dateString).toLocaleDateString();
+    };
+
+    const onDownloadClick = async (id) => {
+        setDownloadingId(id);
+        await handleCndDownload(id);
+        setDownloadingId(null);
     };
 
     return (
@@ -55,17 +80,18 @@ const ResultsTable = ({ results, loading }) => {
                         <th style={styles.th}>Data de Emissão</th>
                         <th style={styles.th}>Data de Validade</th>
                         <th style={styles.th}>Status</th>
+                        <th style={styles.th}>Ações</th>
                     </tr>
                 </thead>
                 <tbody>
                     {loading ? (
-                        <tr><td colSpan="6" style={{textAlign: 'center', padding: theme.spacing.xl}}>Carregando resultados...</td></tr>
+                        <tr><td colSpan="7" style={{textAlign: 'center', padding: theme.spacing.xl}}>Carregando resultados...</td></tr>
                     ) : (
                         results.map(result => (
                             <tr key={result.id}>
                                 <td style={{...styles.td, display: 'flex', alignItems: 'center', gap: theme.spacing.md}}>
                                     <div style={styles.avatar}>
-                                        {(result.cliente?.nomeEmpresa || result.cliente?.cnpj).charAt(0)}
+                                        {(result.cliente?.nomeEmpresa || result.cliente?.cnpj || 'N').charAt(0)}
                                     </div>
                                     <div>
                                         <div style={{fontWeight: 500}}>{result.cliente?.nomeEmpresa || 'N/A'}</div>
@@ -87,6 +113,21 @@ const ResultsTable = ({ results, loading }) => {
                                     }}>
                                         {result.status || 'Pendente'}
                                     </span>
+                                </td>
+                                <td style={styles.td}>
+                                    <button
+                                        style={styles.downloadButton(!result.hasArquivo || downloadingId === result.id)}
+                                        onClick={() => onDownloadClick(result.id)}
+                                        disabled={!result.hasArquivo || downloadingId === result.id}
+                                        title={result.hasArquivo ? "Baixar PDF da CND" : "Arquivo indisponível"}
+                                    >
+                                        {downloadingId === result.id ? (
+                                            <Loader2 size={16} className="animate-spin" />
+                                        ) : (
+                                            <Download size={16} />
+                                        )}
+                                        {downloadingId === result.id ? 'Baixando...' : 'PDF'}
+                                    </button>
                                 </td>
                             </tr>
                         ))
