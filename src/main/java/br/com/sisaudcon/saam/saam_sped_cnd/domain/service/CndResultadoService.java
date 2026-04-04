@@ -52,28 +52,7 @@ public class CndResultadoService{
     public List<CndResultadoComClienteDTO> listarTodosComCliente() {
         List<CndResultado> resultados = resultadoRepository.findAllWithClienteAndEmpresa();
         return resultados.stream()
-                .map(this::mapToComClienteDTO)
+                .map(cndResultadoMapper::toComClienteDTO)
                 .collect(Collectors.toList());
-    }
-
-    private CndResultadoComClienteDTO mapToComClienteDTO(CndResultado resultado) {
-        CndResultadoComClienteDTO dto = new CndResultadoComClienteDTO();
-        dto.setId(resultado.getId());
-        dto.setDataProcessamento(resultado.getDataProcessamento());
-        dto.setSituacao(resultado.getSituacao());
-        dto.setDataEmissao(resultado.getDataEmissao());
-        dto.setDataValidade(resultado.getDataValidade());
-        dto.setCodigoControle(resultado.getCodigoControle());
-        dto.setStatus(resultado.getStatus());
-        dto.setOrgaoEmissor(resultado.getOrgaoEmissor());
-        dto.setTipoCertidao(resultado.getTipoCertidao());
-
-        CndResultadoComClienteDTO.ClienteInfo clienteInfo = new CndResultadoComClienteDTO.ClienteInfo();
-        clienteInfo.setId(resultado.getCliente().getId());
-        clienteInfo.setCnpj(resultado.getCliente().getCnpj());
-        clienteInfo.setNomeEmpresa(resultado.getCliente().getEmpresa().getNomeEmpresa());
-        dto.setCliente(clienteInfo);
-
-        return dto;
     }
 }

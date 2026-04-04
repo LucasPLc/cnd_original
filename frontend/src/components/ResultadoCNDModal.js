@@ -1,9 +1,12 @@
-import React from 'react';
+import React, { useState } from 'react';
 import Modal from './ui/Modal';
 import theme from '../theme';
-import { Download } from 'lucide-react';
+import { Download, Loader2 } from 'lucide-react';
+import { handleCndDownload } from '../util/download';
 
 const ResultadoCNDModal = ({ isOpen, cliente, resultados, onClose, loading }) => {
+    const [downloadingId, setDownloadingId] = useState(null);
+
     if (!cliente) return null;
 
     const styles = {
@@ -32,18 +35,24 @@ const ResultadoCNDModal = ({ isOpen, cliente, resultados, onClose, loading }) =>
             borderRadius: theme.borderRadius.full,
             display: 'inline-block',
         },
-        downloadLink: {
-            color: theme.colors.primary,
-            textDecoration: 'none',
+        downloadButton: (isDisabled) => ({
+            background: 'none',
+            border: 'none',
+            color: isDisabled ? theme.colors.mutedForeground : theme.colors.primary,
+            cursor: isDisabled ? 'not-allowed' : 'pointer',
             display: 'flex',
             alignItems: 'center',
             gap: theme.spacing.sm,
             fontWeight: 500,
-        }
+            padding: '4px 8px',
+            borderRadius: theme.borderRadius.md,
+            transition: 'background 0.2s',
+            opacity: isDisabled ? 0.5 : 1,
+        })
     };
 
     const getStatusStyle = (status) => {
-        if (status === 'Disponível') {
+        if (status === 'Disponível' || status === 'Concluído') {
             return {
                 background: 'hsl(142.1, 76.2%, 90%)',
                 color: 'hsl(142.1, 70.2%, 30%)',
@@ -53,6 +62,12 @@ const ResultadoCNDModal = ({ isOpen, cliente, resultados, onClose, loading }) =>
             background: 'hsl(0, 72.2%, 90%)',
             color: 'hsl(0, 70.2%, 30%)',
         };
+    };
+
+    const onDownloadClick = async (id) => {
+        setDownloadingId(id);
+        await handleCndDownload(id);
+        setDownloadingId(null);
     };
 
     return (
@@ -84,18 +99,19 @@ const ResultadoCNDModal = ({ isOpen, cliente, resultados, onClose, loading }) =>
                                             </span>
                                         </td>
                                         <td style={styles.td}>
-                                            {r.status === 'Disponível' && r.arquivo ? (
-                                                <a 
-                                                  href={`data:application/pdf;base64,${r.arquivo}`} 
-                                                  download={`cnd-${cliente?.cnpj}-${r.id}.pdf`}
-                                                  style={styles.downloadLink}
-                                                >
+                                            <button
+                                                style={styles.downloadButton(!r.hasArquivo || downloadingId === r.id)}
+                                                onClick={() => onDownloadClick(r.id)}
+                                                disabled={!r.hasArquivo || downloadingId === r.id}
+                                                title={r.hasArquivo ? "Baixar PDF" : "Arquivo indisponível"}
+                                            >
+                                                {downloadingId === r.id ? (
+                                                    <Loader2 size={16} className="animate-spin" />
+                                                ) : (
                                                     <Download size={16} />
-                                                    Baixar
-                                                </a>
-                                            ) : (
-                                                'Indisponível'
-                                            )}
+                                                )}
+                                                {downloadingId === r.id ? 'Baixando...' : 'Baixar'}
+                                            </button>
                                         </td>
                                     </tr>
                                 ))
