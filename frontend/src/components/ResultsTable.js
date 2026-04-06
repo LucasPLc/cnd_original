@@ -1,7 +1,11 @@
-import React from 'react';
+import React, { useState } from 'react';
 import theme from '../theme';
+import { Download, Loader2 } from 'lucide-react';
+import { handleCndDownload } from '../util/download';
+import { showToast } from './ui/Toast';
 
 const ResultsTable = ({ results, loading }) => {
+    const [downloadingId, setDownloadingId] = useState(null);
     const styles = {
         tableContainer: {
             background: theme.colors.background,
@@ -55,11 +59,12 @@ const ResultsTable = ({ results, loading }) => {
                         <th style={styles.th}>Data de Emissão</th>
                         <th style={styles.th}>Data de Validade</th>
                         <th style={styles.th}>Status</th>
+                        <th style={styles.th}>Ações</th>
                     </tr>
                 </thead>
                 <tbody>
                     {loading ? (
-                        <tr><td colSpan="6" style={{textAlign: 'center', padding: theme.spacing.xl}}>Carregando resultados...</td></tr>
+                        <tr><td colSpan="7" style={{textAlign: 'center', padding: theme.spacing.xl}}>Carregando resultados...</td></tr>
                     ) : (
                         results.map(result => (
                             <tr key={result.id}>
@@ -87,6 +92,32 @@ const ResultsTable = ({ results, loading }) => {
                                     }}>
                                         {result.status || 'Pendente'}
                                     </span>
+                                </td>
+                                <td style={styles.td}>
+                                    <button
+                                        onClick={() => handleCndDownload(result.id, (msg, type) => showToast[type](msg), setDownloadingId)}
+                                        disabled={!result.hasArquivo || downloadingId === result.id}
+                                        style={{
+                                            padding: theme.spacing.xs,
+                                            borderRadius: theme.borderRadius.md,
+                                            border: 'none',
+                                            background: result.hasArquivo ? theme.colors.primary : theme.colors.muted,
+                                            color: '#fff',
+                                            cursor: result.hasArquivo && downloadingId !== result.id ? 'pointer' : 'not-allowed',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            transition: 'opacity 0.2s',
+                                            opacity: result.hasArquivo && downloadingId !== result.id ? 1 : 0.6,
+                                        }}
+                                        title={result.hasArquivo ? "Baixar PDF" : "PDF não disponível"}
+                                    >
+                                        {downloadingId === result.id ? (
+                                            <Loader2 size={18} className="animate-spin" />
+                                        ) : (
+                                            <Download size={18} />
+                                        )}
+                                    </button>
                                 </td>
                             </tr>
                         ))
