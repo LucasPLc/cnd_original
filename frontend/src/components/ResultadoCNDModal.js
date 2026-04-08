@@ -1,9 +1,11 @@
-import React from 'react';
+import React, { useState } from 'react';
 import Modal from './ui/Modal';
 import theme from '../theme';
-import { Download } from 'lucide-react';
+import { Download, Loader2 } from 'lucide-react';
+import { handleCndDownload } from '../util/download';
 
 const ResultadoCNDModal = ({ isOpen, cliente, resultados, onClose, loading }) => {
+    const [downloadingId, setDownloadingId] = useState(null);
     if (!cliente) return null;
 
     const styles = {
@@ -39,6 +41,16 @@ const ResultadoCNDModal = ({ isOpen, cliente, resultados, onClose, loading }) =>
             alignItems: 'center',
             gap: theme.spacing.sm,
             fontWeight: 500,
+            cursor: 'pointer',
+            background: 'none',
+            border: 'none',
+            padding: 0,
+            font: 'inherit',
+        },
+        disabledLink: {
+            color: theme.colors.mutedForeground,
+            cursor: 'not-allowed',
+            opacity: 0.5,
         }
     };
 
@@ -84,15 +96,22 @@ const ResultadoCNDModal = ({ isOpen, cliente, resultados, onClose, loading }) =>
                                             </span>
                                         </td>
                                         <td style={styles.td}>
-                                            {r.status === 'Disponível' && r.arquivo ? (
-                                                <a 
-                                                  href={`data:application/pdf;base64,${r.arquivo}`} 
-                                                  download={`cnd-${cliente?.cnpj}-${r.id}.pdf`}
-                                                  style={styles.downloadLink}
+                                            {r.hasArquivo ? (
+                                                <button
+                                                  onClick={() => handleCndDownload(r.id, setDownloadingId)}
+                                                  disabled={downloadingId === r.id}
+                                                  style={{
+                                                      ...styles.downloadLink,
+                                                      ...(downloadingId === r.id ? styles.disabledLink : {})
+                                                  }}
                                                 >
-                                                    <Download size={16} />
+                                                    {downloadingId === r.id ? (
+                                                        <Loader2 size={16} className="animate-spin" />
+                                                    ) : (
+                                                        <Download size={16} />
+                                                    )}
                                                     Baixar
-                                                </a>
+                                                </button>
                                             ) : (
                                                 'Indisponível'
                                             )}
