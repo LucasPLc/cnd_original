@@ -1,20 +1,22 @@
 import React, { useState } from 'react';
 import theme from '../../theme';
 
-const InteractiveButton = ({ onClick, children, style, variant = 'primary' }) => {
+const InteractiveButton = ({ onClick, children, style, variant = 'primary', disabled = false, size = 'md', title }) => {
     const [isHovered, setIsHovered] = useState(false);
     const [isActive, setIsActive] = useState(false);
 
     const baseStyle = {
-        padding: `${theme.spacing.sm} ${theme.spacing.md}`,
+        padding: size === 'sm' ? `${theme.spacing.xs} ${theme.spacing.sm}` : `${theme.spacing.sm} ${theme.spacing.md}`,
         borderRadius: theme.borderRadius.md,
         border: 'none',
-        cursor: 'pointer',
+        cursor: disabled ? 'not-allowed' : 'pointer',
         display: 'flex',
         alignItems: 'center',
+        justifyContent: 'center',
         gap: theme.spacing.sm,
         fontWeight: 'bold',
-        transition: 'transform 0.1s ease, box-shadow 0.2s ease',
+        transition: 'all 0.2s ease',
+        opacity: disabled ? 0.6 : 1,
         ...style,
     };
 
@@ -30,31 +32,36 @@ const InteractiveButton = ({ onClick, children, style, variant = 'primary' }) =>
         secondary: {
             background: theme.colors.muted,
             color: theme.colors.foreground,
+        },
+        ghost: {
+            background: 'transparent',
+            color: 'inherit',
         }
     };
 
-    const hoverStyles = {
+    const hoverStyles = disabled ? {} : {
         transform: 'translateY(-2px)',
         boxShadow: theme.shadows.md,
+        filter: 'brightness(1.1)'
     };
 
-    const activeStyles = {
+    const activeStyles = disabled ? {} : {
         transform: 'translateY(-1px)',
         boxShadow: theme.shadows.sm,
     };
 
     let currentStyle = { ...baseStyle, ...variantStyles[variant] };
-    if (isHovered) {
+    if (isHovered && !disabled) {
         currentStyle = { ...currentStyle, ...hoverStyles };
     }
-    if (isActive) {
+    if (isActive && !disabled) {
         currentStyle = { ...currentStyle, ...activeStyles };
     }
 
     return (
         <button
             style={currentStyle}
-            onClick={onClick}
+            onClick={disabled ? undefined : onClick}
             onMouseEnter={() => setIsHovered(true)}
             onMouseLeave={() => {
                 setIsHovered(false);
@@ -62,6 +69,8 @@ const InteractiveButton = ({ onClick, children, style, variant = 'primary' }) =>
             }}
             onMouseDown={() => setIsActive(true)}
             onMouseUp={() => setIsActive(false)}
+            disabled={disabled}
+            title={title}
         >
             {children}
         </button>
