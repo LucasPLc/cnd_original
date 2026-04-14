@@ -20,8 +20,15 @@ public class CndResultadoMapper {
         dto.setDataValidade(cndResultado.getDataValidade());
         dto.setCodigoControle(cndResultado.getCodigoControle());
         dto.setStatus(cndResultado.getStatus());
-        if (cndResultado.getCliente() != null && cndResultado.getCliente().getId() != null) {
-            dto.setClienteId(cndResultado.getCliente().getId().longValue());
+        dto.setOrgaoEmissor(cndResultado.getOrgaoEmissor());
+        dto.setTipoCertidao(cndResultado.getTipoCertidao());
+        dto.setHasArquivo(cndResultado.getArquivo() != null && !cndResultado.getArquivo().isEmpty());
+
+        if (cndResultado.getCliente() != null) {
+            dto.setClienteCnpj(cndResultado.getCliente().getCnpj());
+            if (cndResultado.getCliente().getId() != null) {
+                dto.setClienteId(cndResultado.getCliente().getId().longValue());
+            }
         }
         return dto;
     }
