@@ -2,11 +2,27 @@ import React from 'react';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import CNDMonitoramento from './pages/CNDMonitoramento';
 import { ToastContainer } from 'react-toastify';
+import { createGlobalStyle } from 'styled-components';
 import 'react-toastify/dist/ReactToastify.css';
+
+const GlobalStyle = createGlobalStyle`
+  @keyframes spin {
+    from {
+      transform: rotate(0deg);
+    }
+    to {
+      transform: rotate(360deg);
+    }
+  }
+  .animate-spin {
+    animation: spin 1s linear infinite;
+  }
+`;
 
 function App() {
   return (
     <Router>
+      <GlobalStyle />
       <ToastContainer
         position="top-right"
         autoClose={5000}
