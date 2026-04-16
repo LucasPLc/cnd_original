@@ -67,11 +67,16 @@ public class CndResultadoService{
         dto.setStatus(resultado.getStatus());
         dto.setOrgaoEmissor(resultado.getOrgaoEmissor());
         dto.setTipoCertidao(resultado.getTipoCertidao());
+        dto.setHasArquivo(resultado.getArquivo() != null && !resultado.getArquivo().isBlank());
 
         CndResultadoComClienteDTO.ClienteInfo clienteInfo = new CndResultadoComClienteDTO.ClienteInfo();
-        clienteInfo.setId(resultado.getCliente().getId());
-        clienteInfo.setCnpj(resultado.getCliente().getCnpj());
-        clienteInfo.setNomeEmpresa(resultado.getCliente().getEmpresa().getNomeEmpresa());
+        if (resultado.getCliente() != null) {
+            clienteInfo.setId(resultado.getCliente().getId());
+            clienteInfo.setCnpj(resultado.getCliente().getCnpj());
+            if (resultado.getCliente().getEmpresa() != null) {
+                clienteInfo.setNomeEmpresa(resultado.getCliente().getEmpresa().getNomeEmpresa());
+            }
+        }
         dto.setCliente(clienteInfo);
 
         return dto;
