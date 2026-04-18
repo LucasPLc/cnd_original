@@ -1,9 +1,18 @@
-import React from 'react';
+import React, { useState } from 'react';
 import Modal from './ui/Modal';
 import theme from '../theme';
-import { Download } from 'lucide-react';
+import { Download, Loader2 } from 'lucide-react';
+import { handleCndDownload } from '../util/download';
+import InteractiveButton from './ui/InteractiveButton';
 
 const ResultadoCNDModal = ({ isOpen, cliente, resultados, onClose, loading }) => {
+    const [downloadingId, setDownloadingId] = useState(null);
+
+    const onDownload = async (id) => {
+        setDownloadingId(id);
+        await handleCndDownload(id);
+        setDownloadingId(null);
+    };
     if (!cliente) return null;
 
     const styles = {
@@ -84,15 +93,23 @@ const ResultadoCNDModal = ({ isOpen, cliente, resultados, onClose, loading }) =>
                                             </span>
                                         </td>
                                         <td style={styles.td}>
-                                            {r.status === 'Disponível' && r.arquivo ? (
-                                                <a 
-                                                  href={`data:application/pdf;base64,${r.arquivo}`} 
-                                                  download={`cnd-${cliente?.cnpj}-${r.id}.pdf`}
-                                                  style={styles.downloadLink}
+                                            {r.hasArquivo ? (
+                                                <InteractiveButton
+                                                    onClick={() => onDownload(r.id)}
+                                                    variant="secondary"
+                                                    size="sm"
+                                                    disabled={downloadingId === r.id}
+                                                    title="Baixar PDF"
                                                 >
-                                                    <Download size={16} />
-                                                    Baixar
-                                                </a>
+                                                    {downloadingId === r.id ? (
+                                                        <Loader2 size={16} className="animate-spin" />
+                                                    ) : (
+                                                        <>
+                                                            <Download size={16} />
+                                                            <span style={{marginLeft: theme.spacing.xs}}>Baixar</span>
+                                                        </>
+                                                    )}
+                                                </InteractiveButton>
                                             ) : (
                                                 'Indisponível'
                                             )}
