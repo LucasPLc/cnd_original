@@ -1,9 +1,12 @@
-import React from 'react';
+import React, { useState } from 'react';
 import Modal from './ui/Modal';
 import theme from '../theme';
-import { Download } from 'lucide-react';
+import { Download, Loader2 } from 'lucide-react';
+import InteractiveButton from './ui/InteractiveButton';
+import { handleCndDownload } from '../util/download';
 
 const ResultadoCNDModal = ({ isOpen, cliente, resultados, onClose, loading }) => {
+    const [downloadingId, setDownloadingId] = useState(null);
     if (!cliente) return null;
 
     const styles = {
@@ -84,18 +87,20 @@ const ResultadoCNDModal = ({ isOpen, cliente, resultados, onClose, loading }) =>
                                             </span>
                                         </td>
                                         <td style={styles.td}>
-                                            {r.status === 'Disponível' && r.arquivo ? (
-                                                <a 
-                                                  href={`data:application/pdf;base64,${r.arquivo}`} 
-                                                  download={`cnd-${cliente?.cnpj}-${r.id}.pdf`}
-                                                  style={styles.downloadLink}
-                                                >
-                                                    <Download size={16} />
-                                                    Baixar
-                                                </a>
-                                            ) : (
-                                                'Indisponível'
-                                            )}
+                                            <InteractiveButton
+                                                onClick={() => handleCndDownload(r.id, setDownloadingId)}
+                                                variant="secondary"
+                                                style={{ padding: '4px 8px', fontSize: '0.75rem' }}
+                                                disabled={!r.hasArquivo || downloadingId === r.id}
+                                                title={r.hasArquivo ? 'Baixar CND' : 'Arquivo indisponível'}
+                                            >
+                                                {downloadingId === r.id ? (
+                                                    <Loader2 size={14} className="animate-spin" />
+                                                ) : (
+                                                    <Download size={14} />
+                                                )}
+                                                Baixar
+                                            </InteractiveButton>
                                         </td>
                                     </tr>
                                 ))
