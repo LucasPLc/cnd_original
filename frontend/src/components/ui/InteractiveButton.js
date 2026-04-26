@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import theme from '../../theme';
 
-const InteractiveButton = ({ onClick, children, style, variant = 'primary' }) => {
+const InteractiveButton = ({ onClick, children, style, variant = 'primary', disabled = false, title }) => {
     const [isHovered, setIsHovered] = useState(false);
     const [isActive, setIsActive] = useState(false);
 
@@ -43,8 +43,13 @@ const InteractiveButton = ({ onClick, children, style, variant = 'primary' }) =>
         boxShadow: theme.shadows.sm,
     };
 
-    let currentStyle = { ...baseStyle, ...variantStyles[variant] };
-    if (isHovered) {
+    let currentStyle = {
+        ...baseStyle,
+        ...variantStyles[variant],
+        opacity: disabled ? 0.6 : 1,
+        cursor: disabled ? 'not-allowed' : 'pointer'
+    };
+    if (isHovered && !disabled) {
         currentStyle = { ...currentStyle, ...hoverStyles };
     }
     if (isActive) {
@@ -54,7 +59,9 @@ const InteractiveButton = ({ onClick, children, style, variant = 'primary' }) =>
     return (
         <button
             style={currentStyle}
-            onClick={onClick}
+            onClick={disabled ? undefined : onClick}
+            disabled={disabled}
+            title={title}
             onMouseEnter={() => setIsHovered(true)}
             onMouseLeave={() => {
                 setIsHovered(false);

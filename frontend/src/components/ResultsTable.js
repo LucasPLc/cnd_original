@@ -1,7 +1,12 @@
-import React from 'react';
+import React, { useState } from 'react';
 import theme from '../theme';
+import { Download, Loader2 } from 'lucide-react';
+import InteractiveButton from './ui/InteractiveButton';
+import { handleCndDownload } from '../util/download';
 
 const ResultsTable = ({ results, loading }) => {
+    const [downloadingId, setDownloadingId] = useState(null);
+
     const styles = {
         tableContainer: {
             background: theme.colors.background,
@@ -55,11 +60,12 @@ const ResultsTable = ({ results, loading }) => {
                         <th style={styles.th}>Data de Emissão</th>
                         <th style={styles.th}>Data de Validade</th>
                         <th style={styles.th}>Status</th>
+                        <th style={styles.th}>Ações</th>
                     </tr>
                 </thead>
                 <tbody>
                     {loading ? (
-                        <tr><td colSpan="6" style={{textAlign: 'center', padding: theme.spacing.xl}}>Carregando resultados...</td></tr>
+                        <tr><td colSpan="7" style={{textAlign: 'center', padding: theme.spacing.xl}}>Carregando resultados...</td></tr>
                     ) : (
                         results.map(result => (
                             <tr key={result.id}>
@@ -87,6 +93,26 @@ const ResultsTable = ({ results, loading }) => {
                                     }}>
                                         {result.status || 'Pendente'}
                                     </span>
+                                </td>
+                                <td style={styles.td}>
+                                    <InteractiveButton
+                                        onClick={() => handleCndDownload(result.id, setDownloadingId)}
+                                        style={{
+                                            padding: '6px 12px',
+                                            fontSize: '0.75rem',
+                                            opacity: result.hasArquivo ? 1 : 0.5,
+                                            cursor: result.hasArquivo ? 'pointer' : 'not-allowed'
+                                        }}
+                                        disabled={!result.hasArquivo || downloadingId === result.id}
+                                        title={result.hasArquivo ? "Baixar PDF" : "PDF não disponível"}
+                                    >
+                                        {downloadingId === result.id ? (
+                                            <Loader2 size={14} className="animate-spin" />
+                                        ) : (
+                                            <Download size={14} />
+                                        )}
+                                        PDF
+                                    </InteractiveButton>
                                 </td>
                             </tr>
                         ))
