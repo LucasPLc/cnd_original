@@ -1,7 +1,11 @@
-import React from 'react';
+import React, { useState } from 'react';
 import theme from '../theme';
+import { Download, Loader2 } from 'lucide-react';
+import { handleCndDownload } from '../util/download';
 
 const ResultsTable = ({ results, loading }) => {
+    const [downloadingId, setDownloadingId] = useState(null);
+
     const styles = {
         tableContainer: {
             background: theme.colors.background,
@@ -37,6 +41,23 @@ const ResultsTable = ({ results, loading }) => {
             color: theme.colors.primary,
             flexShrink: 0,
         },
+        downloadButton: {
+            background: 'none',
+            border: 'none',
+            color: theme.colors.primary,
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '4px',
+            padding: '4px',
+            borderRadius: '4px',
+            transition: 'background 0.2s',
+            opacity: 1,
+        },
+        downloadButtonDisabled: {
+            opacity: 0.5,
+            cursor: 'not-allowed',
+        }
     };
 
     const formatDate = (dateString) => {
@@ -55,17 +76,18 @@ const ResultsTable = ({ results, loading }) => {
                         <th style={styles.th}>Data de Emissão</th>
                         <th style={styles.th}>Data de Validade</th>
                         <th style={styles.th}>Status</th>
+                        <th style={styles.th}>Ações</th>
                     </tr>
                 </thead>
                 <tbody>
                     {loading ? (
-                        <tr><td colSpan="6" style={{textAlign: 'center', padding: theme.spacing.xl}}>Carregando resultados...</td></tr>
+                        <tr><td colSpan="7" style={{textAlign: 'center', padding: theme.spacing.xl}}>Carregando resultados...</td></tr>
                     ) : (
                         results.map(result => (
                             <tr key={result.id}>
                                 <td style={{...styles.td, display: 'flex', alignItems: 'center', gap: theme.spacing.md}}>
                                     <div style={styles.avatar}>
-                                        {(result.cliente?.nomeEmpresa || result.cliente?.cnpj).charAt(0)}
+                                        {(result.cliente?.nomeEmpresa || result.cliente?.cnpj || 'C').charAt(0)}
                                     </div>
                                     <div>
                                         <div style={{fontWeight: 500}}>{result.cliente?.nomeEmpresa || 'N/A'}</div>
@@ -87,6 +109,27 @@ const ResultsTable = ({ results, loading }) => {
                                     }}>
                                         {result.status || 'Pendente'}
                                     </span>
+                                </td>
+                                <td style={styles.td}>
+                                    {result.hasArquivo ? (
+                                        <button
+                                            style={{
+                                                ...styles.downloadButton,
+                                                ...(downloadingId === result.id ? styles.downloadButtonDisabled : {})
+                                            }}
+                                            onClick={() => handleCndDownload(result.id, setDownloadingId)}
+                                            disabled={downloadingId === result.id}
+                                            title="Baixar PDF"
+                                        >
+                                            {downloadingId === result.id ? (
+                                                <Loader2 size={18} className="animate-spin" />
+                                            ) : (
+                                                <Download size={18} />
+                                            )}
+                                        </button>
+                                    ) : (
+                                        <span style={{fontSize: '0.75rem', color: theme.colors.mutedForeground}}>Sem PDF</span>
+                                    )}
                                 </td>
                             </tr>
                         ))
