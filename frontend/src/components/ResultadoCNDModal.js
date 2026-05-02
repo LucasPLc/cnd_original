@@ -1,9 +1,13 @@
-import React from 'react';
+import React, { useState } from 'react';
 import Modal from './ui/Modal';
 import theme from '../theme';
-import { Download } from 'lucide-react';
+import { Download, Loader2 } from 'lucide-react';
+import InteractiveButton from './ui/InteractiveButton';
+import { handleCndDownload } from '../util/download';
 
 const ResultadoCNDModal = ({ isOpen, cliente, resultados, onClose, loading }) => {
+    const [downloadingId, setDownloadingId] = useState(null);
+
     if (!cliente) return null;
 
     const styles = {
@@ -84,18 +88,20 @@ const ResultadoCNDModal = ({ isOpen, cliente, resultados, onClose, loading }) =>
                                             </span>
                                         </td>
                                         <td style={styles.td}>
-                                            {r.status === 'Disponível' && r.arquivo ? (
-                                                <a 
-                                                  href={`data:application/pdf;base64,${r.arquivo}`} 
-                                                  download={`cnd-${cliente?.cnpj}-${r.id}.pdf`}
-                                                  style={styles.downloadLink}
-                                                >
+                                            <InteractiveButton
+                                                onClick={() => handleCndDownload(r.id, setDownloadingId)}
+                                                disabled={!r.hasArquivo || (downloadingId === r.id)}
+                                                size="sm"
+                                                variant="secondary"
+                                                title={r.hasArquivo ? "Baixar PDF" : "PDF não disponível"}
+                                            >
+                                                {downloadingId === r.id ? (
+                                                    <Loader2 size={16} className="animate-spin" />
+                                                ) : (
                                                     <Download size={16} />
-                                                    Baixar
-                                                </a>
-                                            ) : (
-                                                'Indisponível'
-                                            )}
+                                                )}
+                                                <span style={{marginLeft: theme.spacing.xs}}>Baixar</span>
+                                            </InteractiveButton>
                                         </td>
                                     </tr>
                                 ))
