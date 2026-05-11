@@ -1,9 +1,13 @@
-import React from 'react';
+import React, { useState } from 'react';
 import Modal from './ui/Modal';
 import theme from '../theme';
-import { Download } from 'lucide-react';
+import { Download, Loader2 } from 'lucide-react';
+import { generateCndFilename, downloadPdfFromBase64 } from '../util/download';
+import { showToast } from './ui/Toast';
 
 const ResultadoCNDModal = ({ isOpen, cliente, resultados, onClose, loading }) => {
+    const [downloadingId, setDownloadingId] = useState(null);
+
     if (!cliente) return null;
 
     const styles = {
@@ -32,18 +36,27 @@ const ResultadoCNDModal = ({ isOpen, cliente, resultados, onClose, loading }) =>
             borderRadius: theme.borderRadius.full,
             display: 'inline-block',
         },
-        downloadLink: {
+        downloadButton: {
             color: theme.colors.primary,
-            textDecoration: 'none',
+            background: 'transparent',
+            border: 'none',
+            cursor: 'pointer',
             display: 'flex',
             alignItems: 'center',
             gap: theme.spacing.sm,
             fontWeight: 500,
+            padding: '4px 8px',
+            borderRadius: theme.borderRadius.md,
+            transition: 'background 0.2s',
+        },
+        disabledButton: {
+            color: theme.colors.mutedForeground,
+            cursor: 'not-allowed',
         }
     };
 
     const getStatusStyle = (status) => {
-        if (status === 'Disponível') {
+        if (status === 'Disponível' || status === 'Concluído') {
             return {
                 background: 'hsl(142.1, 76.2%, 90%)',
                 color: 'hsl(142.1, 70.2%, 30%)',
@@ -53,6 +66,43 @@ const ResultadoCNDModal = ({ isOpen, cliente, resultados, onClose, loading }) =>
             background: 'hsl(0, 72.2%, 90%)',
             color: 'hsl(0, 70.2%, 30%)',
         };
+    };
+
+    const handleDownload = async (r) => {
+        if (!r.hasArquivo) return;
+
+        setDownloadingId(r.id);
+        try {
+            // Se já temos o arquivo no objeto r, usamos ele.
+            // Caso contrário (para ser resiliente), buscamos.
+            let arquivo = r.arquivo;
+            let orgaoEmissor = r.orgaoEmissor;
+            let dataEmissao = r.dataEmissao;
+            let clienteCnpj = r.clienteCnpj || cliente.cnpj;
+
+            if (!arquivo) {
+                const response = await fetch(`/api/resultados/${r.id}`);
+                if (!response.ok) throw new Error('Falha ao buscar arquivo');
+                const data = await response.json();
+                arquivo = data.arquivo;
+                orgaoEmissor = data.orgaoEmissor;
+                dataEmissao = data.dataEmissao;
+                clienteCnpj = data.clienteCnpj;
+            }
+
+            if (arquivo) {
+                const filename = generateCndFilename(clienteCnpj, orgaoEmissor, dataEmissao);
+                downloadPdfFromBase64(arquivo, filename);
+                showToast.success('Download concluído com sucesso');
+            } else {
+                showToast.error('Arquivo não encontrado para este registro');
+            }
+        } catch (error) {
+            console.error('Erro ao baixar CND:', error);
+            showToast.error('Erro ao realizar o download da CND');
+        } finally {
+            setDownloadingId(null);
+        }
     };
 
     return (
@@ -84,17 +134,21 @@ const ResultadoCNDModal = ({ isOpen, cliente, resultados, onClose, loading }) =>
                                             </span>
                                         </td>
                                         <td style={styles.td}>
-                                            {r.status === 'Disponível' && r.arquivo ? (
-                                                <a 
-                                                  href={`data:application/pdf;base64,${r.arquivo}`} 
-                                                  download={`cnd-${cliente?.cnpj}-${r.id}.pdf`}
-                                                  style={styles.downloadLink}
+                                            {r.hasArquivo ? (
+                                                <button
+                                                  onClick={() => handleDownload(r)}
+                                                  disabled={downloadingId === r.id}
+                                                  style={styles.downloadButton}
                                                 >
-                                                    <Download size={16} />
+                                                    {downloadingId === r.id ? (
+                                                        <Loader2 size={16} className="animate-spin" />
+                                                    ) : (
+                                                        <Download size={16} />
+                                                    )}
                                                     Baixar
-                                                </a>
+                                                </button>
                                             ) : (
-                                                'Indisponível'
+                                                <span style={styles.disabledButton}>Indisponível</span>
                                             )}
                                         </td>
                                     </tr>
