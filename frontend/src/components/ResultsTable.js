@@ -1,7 +1,12 @@
-import React from 'react';
+import React, { useState } from 'react';
 import theme from '../theme';
+import { Download, Loader2 } from 'lucide-react';
+import { generateCndFilename, downloadPdfFromBase64 } from '../util/download';
+import { showToast } from './ui/Toast';
 
 const ResultsTable = ({ results, loading }) => {
+    const [downloadingId, setDownloadingId] = useState(null);
+
     const styles = {
         tableContainer: {
             background: theme.colors.background,
@@ -37,11 +42,52 @@ const ResultsTable = ({ results, loading }) => {
             color: theme.colors.primary,
             flexShrink: 0,
         },
+        downloadButton: {
+            padding: '6px',
+            borderRadius: theme.borderRadius.md,
+            border: 'none',
+            background: 'transparent',
+            cursor: 'pointer',
+            color: theme.colors.primary,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            transition: 'background 0.2s',
+        },
+        disabledButton: {
+            color: theme.colors.mutedForeground,
+            cursor: 'not-allowed',
+        }
     };
 
     const formatDate = (dateString) => {
         if (!dateString) return 'N/A';
         return new Date(dateString).toLocaleDateString();
+    };
+
+    const handleDownload = async (result) => {
+        if (!result.hasArquivo) return;
+
+        setDownloadingId(result.id);
+        try {
+            const response = await fetch(`/api/resultados/${result.id}`);
+            if (!response.ok) throw new Error('Falha ao buscar arquivo');
+
+            const data = await response.json();
+
+            if (data.arquivo) {
+                const filename = generateCndFilename(data.clienteCnpj, data.orgaoEmissor, data.dataEmissao);
+                downloadPdfFromBase64(data.arquivo, filename);
+                showToast.success('Download concluído com sucesso');
+            } else {
+                showToast.error('Arquivo não encontrado para este registro');
+            }
+        } catch (error) {
+            console.error('Erro ao baixar CND:', error);
+            showToast.error('Erro ao realizar o download da CND');
+        } finally {
+            setDownloadingId(null);
+        }
     };
 
     return (
@@ -55,17 +101,18 @@ const ResultsTable = ({ results, loading }) => {
                         <th style={styles.th}>Data de Emissão</th>
                         <th style={styles.th}>Data de Validade</th>
                         <th style={styles.th}>Status</th>
+                        <th style={styles.th}>Ações</th>
                     </tr>
                 </thead>
                 <tbody>
                     {loading ? (
-                        <tr><td colSpan="6" style={{textAlign: 'center', padding: theme.spacing.xl}}>Carregando resultados...</td></tr>
+                        <tr><td colSpan="7" style={{textAlign: 'center', padding: theme.spacing.xl}}>Carregando resultados...</td></tr>
                     ) : (
                         results.map(result => (
                             <tr key={result.id}>
                                 <td style={{...styles.td, display: 'flex', alignItems: 'center', gap: theme.spacing.md}}>
                                     <div style={styles.avatar}>
-                                        {(result.cliente?.nomeEmpresa || result.cliente?.cnpj).charAt(0)}
+                                        {(result.cliente?.nomeEmpresa || result.cliente?.cnpj || 'N').charAt(0)}
                                     </div>
                                     <div>
                                         <div style={{fontWeight: 500}}>{result.cliente?.nomeEmpresa || 'N/A'}</div>
@@ -87,6 +134,23 @@ const ResultsTable = ({ results, loading }) => {
                                     }}>
                                         {result.status || 'Pendente'}
                                     </span>
+                                </td>
+                                <td style={styles.td}>
+                                    <button
+                                        style={{
+                                            ...styles.downloadButton,
+                                            ...(!result.hasArquivo ? styles.disabledButton : {})
+                                        }}
+                                        onClick={() => handleDownload(result)}
+                                        disabled={!result.hasArquivo || downloadingId === result.id}
+                                        title={result.hasArquivo ? "Baixar PDF" : "PDF indisponível"}
+                                    >
+                                        {downloadingId === result.id ? (
+                                            <Loader2 size={18} className="animate-spin" />
+                                        ) : (
+                                            <Download size={18} />
+                                        )}
+                                    </button>
                                 </td>
                             </tr>
                         ))
