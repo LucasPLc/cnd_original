@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import theme from '../../theme';
 
-const InteractiveButton = ({ onClick, children, style, variant = 'primary' }) => {
+const InteractiveButton = ({ onClick, children, style, variant = 'primary', disabled = false, title = '' }) => {
     const [isHovered, setIsHovered] = useState(false);
     const [isActive, setIsActive] = useState(false);
 
@@ -9,12 +9,13 @@ const InteractiveButton = ({ onClick, children, style, variant = 'primary' }) =>
         padding: `${theme.spacing.sm} ${theme.spacing.md}`,
         borderRadius: theme.borderRadius.md,
         border: 'none',
-        cursor: 'pointer',
+        cursor: disabled ? 'not-allowed' : 'pointer',
         display: 'flex',
         alignItems: 'center',
         gap: theme.spacing.sm,
         fontWeight: 'bold',
         transition: 'transform 0.1s ease, box-shadow 0.2s ease',
+        opacity: disabled ? 0.6 : 1,
         ...style,
     };
 
@@ -33,12 +34,12 @@ const InteractiveButton = ({ onClick, children, style, variant = 'primary' }) =>
         }
     };
 
-    const hoverStyles = {
+    const hoverStyles = disabled ? {} : {
         transform: 'translateY(-2px)',
         boxShadow: theme.shadows.md,
     };
 
-    const activeStyles = {
+    const activeStyles = disabled ? {} : {
         transform: 'translateY(-1px)',
         boxShadow: theme.shadows.sm,
     };
@@ -54,14 +55,16 @@ const InteractiveButton = ({ onClick, children, style, variant = 'primary' }) =>
     return (
         <button
             style={currentStyle}
-            onClick={onClick}
+            onClick={disabled ? undefined : onClick}
             onMouseEnter={() => setIsHovered(true)}
             onMouseLeave={() => {
                 setIsHovered(false);
                 setIsActive(false);
             }}
-            onMouseDown={() => setIsActive(true)}
+            onMouseDown={() => !disabled && setIsActive(true)}
             onMouseUp={() => setIsActive(false)}
+            disabled={disabled}
+            title={title}
         >
             {children}
         </button>
