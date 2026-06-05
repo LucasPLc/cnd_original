@@ -1,9 +1,12 @@
-import React from 'react';
+import React, { useState } from 'react';
 import Modal from './ui/Modal';
 import theme from '../theme';
-import { Download } from 'lucide-react';
+import { Download, Loader2 } from 'lucide-react';
+import { handleCndDownload } from '../util/download';
+import InteractiveButton from './ui/InteractiveButton';
 
 const ResultadoCNDModal = ({ isOpen, cliente, resultados, onClose, loading }) => {
+    const [downloadingId, setDownloadingId] = useState(null);
     if (!cliente) return null;
 
     const styles = {
@@ -84,18 +87,23 @@ const ResultadoCNDModal = ({ isOpen, cliente, resultados, onClose, loading }) =>
                                             </span>
                                         </td>
                                         <td style={styles.td}>
-                                            {r.status === 'Disponível' && r.arquivo ? (
-                                                <a 
-                                                  href={`data:application/pdf;base64,${r.arquivo}`} 
-                                                  download={`cnd-${cliente?.cnpj}-${r.id}.pdf`}
-                                                  style={styles.downloadLink}
-                                                >
-                                                    <Download size={16} />
-                                                    Baixar
-                                                </a>
-                                            ) : (
-                                                'Indisponível'
-                                            )}
+                                            <InteractiveButton
+                                                onClick={async () => {
+                                                    setDownloadingId(r.id);
+                                                    await handleCndDownload(r.id);
+                                                    setDownloadingId(null);
+                                                }}
+                                                disabled={!r.hasArquivo || downloadingId === r.id}
+                                                variant="outline"
+                                                title={r.hasArquivo ? "Baixar PDF" : "PDF não disponível"}
+                                                style={{ padding: '6px 12px', minWidth: 'auto', fontSize: '0.8rem' }}
+                                            >
+                                                {downloadingId === r.id ? (
+                                                    <Loader2 size={14} className="animate-spin" />
+                                                ) : (
+                                                    <><Download size={14} style={{ marginRight: '4px' }} /> Baixar</>
+                                                )}
+                                            </InteractiveButton>
                                         </td>
                                     </tr>
                                 ))
