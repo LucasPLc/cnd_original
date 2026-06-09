@@ -2,6 +2,8 @@ import React from 'react';
 import Modal from './ui/Modal';
 import theme from '../theme';
 import { Download } from 'lucide-react';
+import { handleCndDownload } from '../util/download';
+import InteractiveButton from './ui/InteractiveButton';
 
 const ResultadoCNDModal = ({ isOpen, cliente, resultados, onClose, loading }) => {
     if (!cliente) return null;
@@ -84,17 +86,18 @@ const ResultadoCNDModal = ({ isOpen, cliente, resultados, onClose, loading }) =>
                                             </span>
                                         </td>
                                         <td style={styles.td}>
-                                            {r.status === 'Disponível' && r.arquivo ? (
-                                                <a 
-                                                  href={`data:application/pdf;base64,${r.arquivo}`} 
-                                                  download={`cnd-${cliente?.cnpj}-${r.id}.pdf`}
-                                                  style={styles.downloadLink}
+                                            {r.hasArquivo ? (
+                                                <InteractiveButton
+                                                    onClick={() => handleCndDownload(r.id, r)}
+                                                    variant="secondary"
+                                                    size="sm"
+                                                    style={{ padding: '4px 12px', fontSize: '0.8rem' }}
                                                 >
-                                                    <Download size={16} />
+                                                    <Download size={14} style={{ marginRight: theme.spacing.xs }} />
                                                     Baixar
-                                                </a>
+                                                </InteractiveButton>
                                             ) : (
-                                                'Indisponível'
+                                                <span style={{ fontSize: '0.875rem', color: theme.colors.mutedForeground }}>Indisponível</span>
                                             )}
                                         </td>
                                     </tr>
