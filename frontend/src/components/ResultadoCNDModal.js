@@ -2,6 +2,8 @@ import React from 'react';
 import Modal from './ui/Modal';
 import theme from '../theme';
 import { Download } from 'lucide-react';
+import InteractiveButton from './ui/InteractiveButton';
+import { handleCndDownload } from '../util/download';
 
 const ResultadoCNDModal = ({ isOpen, cliente, resultados, onClose, loading }) => {
     if (!cliente) return null;
@@ -84,18 +86,16 @@ const ResultadoCNDModal = ({ isOpen, cliente, resultados, onClose, loading }) =>
                                             </span>
                                         </td>
                                         <td style={styles.td}>
-                                            {r.status === 'Disponível' && r.arquivo ? (
-                                                <a 
-                                                  href={`data:application/pdf;base64,${r.arquivo}`} 
-                                                  download={`cnd-${cliente?.cnpj}-${r.id}.pdf`}
-                                                  style={styles.downloadLink}
-                                                >
-                                                    <Download size={16} />
-                                                    Baixar
-                                                </a>
-                                            ) : (
-                                                'Indisponível'
-                                            )}
+                                            <InteractiveButton
+                                                onClick={() => handleCndDownload(r.id)}
+                                                disabled={!r.hasArquivo}
+                                                variant="secondary"
+                                                title={r.hasArquivo ? "Baixar PDF" : "PDF não disponível"}
+                                                style={{ padding: '4px 8px' }}
+                                            >
+                                                <Download size={16} />
+                                                <span style={{ marginLeft: '4px', fontSize: '0.875rem' }}>Baixar</span>
+                                            </InteractiveButton>
                                         </td>
                                     </tr>
                                 ))
