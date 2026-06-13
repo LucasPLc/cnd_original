@@ -1,7 +1,12 @@
 import React from 'react';
 import theme from '../theme';
+import { Download } from 'lucide-react';
+import InteractiveButton from './ui/InteractiveButton';
+import { handleCndDownload } from '../util/download';
+import { useToast } from './ui/Toast';
 
 const ResultsTable = ({ results, loading }) => {
+    const { toast } = useToast();
     const styles = {
         tableContainer: {
             background: theme.colors.background,
@@ -55,11 +60,12 @@ const ResultsTable = ({ results, loading }) => {
                         <th style={styles.th}>Data de Emissão</th>
                         <th style={styles.th}>Data de Validade</th>
                         <th style={styles.th}>Status</th>
+                        <th style={styles.th}>Ações</th>
                     </tr>
                 </thead>
                 <tbody>
                     {loading ? (
-                        <tr><td colSpan="6" style={{textAlign: 'center', padding: theme.spacing.xl}}>Carregando resultados...</td></tr>
+                        <tr><td colSpan="7" style={{textAlign: 'center', padding: theme.spacing.xl}}>Carregando resultados...</td></tr>
                     ) : (
                         results.map(result => (
                             <tr key={result.id}>
@@ -87,6 +93,17 @@ const ResultsTable = ({ results, loading }) => {
                                     }}>
                                         {result.status || 'Pendente'}
                                     </span>
+                                </td>
+                                <td style={styles.td}>
+                                    <InteractiveButton
+                                        variant="outline"
+                                        title={result.hasArquivo ? "Baixar PDF" : "PDF não disponível"}
+                                        disabled={!result.hasArquivo}
+                                        onClick={() => handleCndDownload(result.id, toast)}
+                                        style={{ padding: '6px', minWidth: 'auto' }}
+                                    >
+                                        <Download size={16} />
+                                    </InteractiveButton>
                                 </td>
                             </tr>
                         ))
