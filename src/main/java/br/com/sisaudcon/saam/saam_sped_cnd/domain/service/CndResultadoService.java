@@ -5,10 +5,13 @@ import br.com.sisaudcon.saam.saam_sped_cnd.domain.model.Cliente;
 import br.com.sisaudcon.saam.saam_sped_cnd.domain.model.CndResultado;
 import br.com.sisaudcon.saam.saam_sped_cnd.domain.repository.ClienteRepository;
 import br.com.sisaudcon.saam.saam_sped_cnd.domain.repository.CndResultadoRepository;
+import br.com.sisaudcon.saam.saam_sped_cnd.domain.exception.ResultadoNotFoundException;
 import br.com.sisaudcon.saam.saam_sped_cnd.dto.CndResultadoComClienteDTO;
 import br.com.sisaudcon.saam.saam_sped_cnd.dto.CndResultadoDTO;
 import br.com.sisaudcon.saam.saam_sped_cnd.mapper.CndResultadoMapper;
 import lombok.AllArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -18,7 +21,10 @@ import java.util.stream.Collectors;
 
 @AllArgsConstructor
 @Service
-public class CndResultadoService{
+public class CndResultadoService {
+
+    private static final Logger logger = LoggerFactory.getLogger(CndResultadoService.class);
+
     private final ClienteRepository clienteRepo;
     private final CndResultadoRepository resultadoRepository;
     private final SituacaoValidationService situacaoValidationService;
@@ -45,7 +51,15 @@ public class CndResultadoService{
     @Transactional(readOnly = true)
     public List<CndResultadoDTO> findAllByClienteId(Integer clienteId) {
         List<CndResultado> resultados = resultadoRepository.findAllByCliente_Id(clienteId);
-        return cndResultadoMapper.toDTOList(resultados);
+        return cndResultadoMapper.toSummaryDTOList(resultados);
+    }
+
+    @Transactional(readOnly = true)
+    public CndResultadoDTO buscarPorId(Long id) {
+        logger.info("Buscando resultado de CND por ID: {}", id);
+        return resultadoRepository.findById(id)
+                .map(cndResultadoMapper::toDTO)
+                .orElseThrow(() -> new ResultadoNotFoundException("Resultado não encontrado para o ID: " + id));
     }
 
     @Transactional(readOnly = true)
@@ -67,6 +81,7 @@ public class CndResultadoService{
         dto.setStatus(resultado.getStatus());
         dto.setOrgaoEmissor(resultado.getOrgaoEmissor());
         dto.setTipoCertidao(resultado.getTipoCertidao());
+        dto.setHasArquivo(resultado.getArquivo() != null && !resultado.getArquivo().isEmpty());
 
         CndResultadoComClienteDTO.ClienteInfo clienteInfo = new CndResultadoComClienteDTO.ClienteInfo();
         clienteInfo.setId(resultado.getCliente().getId());

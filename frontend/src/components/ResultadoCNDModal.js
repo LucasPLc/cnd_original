@@ -2,8 +2,12 @@ import React from 'react';
 import Modal from './ui/Modal';
 import theme from '../theme';
 import { Download } from 'lucide-react';
+import InteractiveButton from './ui/InteractiveButton';
+import { handleCndDownload } from '../util/download';
+import { useToast } from './ui/Toast';
 
 const ResultadoCNDModal = ({ isOpen, cliente, resultados, onClose, loading }) => {
+    const { toast } = useToast();
     if (!cliente) return null;
 
     const styles = {
@@ -84,15 +88,15 @@ const ResultadoCNDModal = ({ isOpen, cliente, resultados, onClose, loading }) =>
                                             </span>
                                         </td>
                                         <td style={styles.td}>
-                                            {r.status === 'Disponível' && r.arquivo ? (
-                                                <a 
-                                                  href={`data:application/pdf;base64,${r.arquivo}`} 
-                                                  download={`cnd-${cliente?.cnpj}-${r.id}.pdf`}
-                                                  style={styles.downloadLink}
+                                            {r.hasArquivo ? (
+                                                <InteractiveButton
+                                                    variant="outline"
+                                                    onClick={() => handleCndDownload(r.id, toast)}
+                                                    style={{ ...styles.downloadLink, border: 'none', background: 'none', padding: 0 }}
                                                 >
                                                     <Download size={16} />
                                                     Baixar
-                                                </a>
+                                                </InteractiveButton>
                                             ) : (
                                                 'Indisponível'
                                             )}
