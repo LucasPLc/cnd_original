@@ -1,6 +1,7 @@
 package br.com.sisaudcon.saam.saam_sped_cnd.domain.service;
 
 import br.com.sisaudcon.saam.saam_sped_cnd.domain.exception.ClienteNotFoundException;
+import br.com.sisaudcon.saam.saam_sped_cnd.domain.exception.ResultadoNotFoundException;
 import br.com.sisaudcon.saam.saam_sped_cnd.domain.model.Cliente;
 import br.com.sisaudcon.saam.saam_sped_cnd.domain.model.CndResultado;
 import br.com.sisaudcon.saam.saam_sped_cnd.domain.repository.ClienteRepository;
@@ -45,7 +46,14 @@ public class CndResultadoService{
     @Transactional(readOnly = true)
     public List<CndResultadoDTO> findAllByClienteId(Integer clienteId) {
         List<CndResultado> resultados = resultadoRepository.findAllByCliente_Id(clienteId);
-        return cndResultadoMapper.toDTOList(resultados);
+        return cndResultadoMapper.toSummaryDTOList(resultados);
+    }
+
+    @Transactional(readOnly = true)
+    public CndResultadoDTO buscarPorId(Long id) {
+        return resultadoRepository.findById(id)
+                .map(cndResultadoMapper::toDTO)
+                .orElseThrow(() -> new ResultadoNotFoundException("Resultado CND não encontrado para o ID: " + id));
     }
 
     @Transactional(readOnly = true)
@@ -67,6 +75,7 @@ public class CndResultadoService{
         dto.setStatus(resultado.getStatus());
         dto.setOrgaoEmissor(resultado.getOrgaoEmissor());
         dto.setTipoCertidao(resultado.getTipoCertidao());
+        dto.setHasArquivo(resultado.getArquivo() != null && !resultado.getArquivo().isBlank());
 
         CndResultadoComClienteDTO.ClienteInfo clienteInfo = new CndResultadoComClienteDTO.ClienteInfo();
         clienteInfo.setId(resultado.getCliente().getId());
