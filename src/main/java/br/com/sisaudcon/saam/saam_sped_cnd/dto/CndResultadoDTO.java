@@ -18,4 +18,7 @@ public class CndResultadoDTO {
     private String codigoControle;
     private String status;
     private Long clienteId;
+    private String orgaoEmissor;
+    private String tipoCertidao;
+    private boolean hasArquivo;
 }

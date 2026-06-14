@@ -60,6 +60,7 @@ const CNDMonitoramento = () => {
         setResultsLoading(true);
         try {
             const response = await axios.get('/api/resultados');
+            // CndResultadoComClienteDTO contains the full client info needed for the ResultsTable
             setAllResults(response.data);
         } catch (error) {
             showToast.error("Erro ao buscar todos os resultados.");
