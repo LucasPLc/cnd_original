@@ -2,6 +2,8 @@ import React from 'react';
 import Modal from './ui/Modal';
 import theme from '../theme';
 import { Download } from 'lucide-react';
+import { handleCndDownload } from '../util/download';
+import InteractiveButton from './ui/InteractiveButton';
 
 const ResultadoCNDModal = ({ isOpen, cliente, resultados, onClose, loading }) => {
     if (!cliente) return null;
@@ -84,18 +86,16 @@ const ResultadoCNDModal = ({ isOpen, cliente, resultados, onClose, loading }) =>
                                             </span>
                                         </td>
                                         <td style={styles.td}>
-                                            {r.status === 'Disponível' && r.arquivo ? (
-                                                <a 
-                                                  href={`data:application/pdf;base64,${r.arquivo}`} 
-                                                  download={`cnd-${cliente?.cnpj}-${r.id}.pdf`}
-                                                  style={styles.downloadLink}
-                                                >
-                                                    <Download size={16} />
-                                                    Baixar
-                                                </a>
-                                            ) : (
-                                                'Indisponível'
-                                            )}
+                                            <InteractiveButton
+                                                onClick={() => handleCndDownload(r.id, cliente?.cnpj)}
+                                                disabled={!r.hasArquivo}
+                                                variant="secondary"
+                                                title={r.hasArquivo ? "Baixar PDF" : "PDF não disponível"}
+                                                style={{fontSize: '0.8rem', padding: '4px 10px', display: 'flex', alignItems: 'center', gap: '4px'}}
+                                            >
+                                                <Download size={14} />
+                                                Baixar
+                                            </InteractiveButton>
                                         </td>
                                     </tr>
                                 ))
