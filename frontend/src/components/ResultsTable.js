@@ -1,5 +1,8 @@
 import React from 'react';
 import theme from '../theme';
+import { Download } from 'lucide-react';
+import { handleCndDownload } from '../util/download';
+import InteractiveButton from './ui/InteractiveButton';
 
 const ResultsTable = ({ results, loading }) => {
     const styles = {
@@ -37,6 +40,13 @@ const ResultsTable = ({ results, loading }) => {
             color: theme.colors.primary,
             flexShrink: 0,
         },
+        downloadButton: {
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            padding: '6px 12px',
+            fontSize: '0.875rem',
+        }
     };
 
     const formatDate = (dateString) => {
@@ -55,11 +65,12 @@ const ResultsTable = ({ results, loading }) => {
                         <th style={styles.th}>Data de Emissão</th>
                         <th style={styles.th}>Data de Validade</th>
                         <th style={styles.th}>Status</th>
+                        <th style={styles.th}>Ações</th>
                     </tr>
                 </thead>
                 <tbody>
                     {loading ? (
-                        <tr><td colSpan="6" style={{textAlign: 'center', padding: theme.spacing.xl}}>Carregando resultados...</td></tr>
+                        <tr><td colSpan="7" style={{textAlign: 'center', padding: theme.spacing.xl}}>Carregando resultados...</td></tr>
                     ) : (
                         results.map(result => (
                             <tr key={result.id}>
@@ -87,6 +98,18 @@ const ResultsTable = ({ results, loading }) => {
                                     }}>
                                         {result.status || 'Pendente'}
                                     </span>
+                                </td>
+                                <td style={styles.td}>
+                                    <InteractiveButton
+                                        onClick={() => handleCndDownload(result.id, result.cliente?.cnpj)}
+                                        disabled={!result.hasArquivo}
+                                        style={styles.downloadButton}
+                                        variant="secondary"
+                                        title={result.hasArquivo ? "Baixar PDF" : "PDF não disponível"}
+                                    >
+                                        <Download size={16} />
+                                        PDF
+                                    </InteractiveButton>
                                 </td>
                             </tr>
                         ))
