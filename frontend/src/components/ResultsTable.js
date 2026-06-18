@@ -1,7 +1,22 @@
-import React from 'react';
+import React, { useState } from 'react';
 import theme from '../theme';
+import { Download } from 'lucide-react';
+import InteractiveButton from './ui/InteractiveButton';
+import { handleCndDownload } from '../util/download';
 
 const ResultsTable = ({ results, loading }) => {
+    const [downloadingId, setDownloadingId] = useState(null);
+
+    const onDownload = async (result) => {
+        setDownloadingId(result.id);
+        try {
+            await handleCndDownload(result.id, result.cliente?.cnpj);
+        } catch (error) {
+            alert('Falha ao baixar CND. Por favor, tente novamente.');
+        } finally {
+            setDownloadingId(null);
+        }
+    };
     const styles = {
         tableContainer: {
             background: theme.colors.background,
@@ -55,11 +70,12 @@ const ResultsTable = ({ results, loading }) => {
                         <th style={styles.th}>Data de Emissão</th>
                         <th style={styles.th}>Data de Validade</th>
                         <th style={styles.th}>Status</th>
+                        <th style={styles.th}>Ações</th>
                     </tr>
                 </thead>
                 <tbody>
                     {loading ? (
-                        <tr><td colSpan="6" style={{textAlign: 'center', padding: theme.spacing.xl}}>Carregando resultados...</td></tr>
+                        <tr><td colSpan="7" style={{textAlign: 'center', padding: theme.spacing.xl}}>Carregando resultados...</td></tr>
                     ) : (
                         results.map(result => (
                             <tr key={result.id}>
@@ -87,6 +103,17 @@ const ResultsTable = ({ results, loading }) => {
                                     }}>
                                         {result.status || 'Pendente'}
                                     </span>
+                                </td>
+                                <td style={styles.td}>
+                                    <InteractiveButton
+                                        title="Baixar PDF"
+                                        variant="secondary"
+                                        disabled={!result.hasArquivo || downloadingId === result.id}
+                                        onClick={() => onDownload(result)}
+                                        style={{ padding: '6px 12px' }}
+                                    >
+                                        <Download size={16} />
+                                    </InteractiveButton>
                                 </td>
                             </tr>
                         ))
