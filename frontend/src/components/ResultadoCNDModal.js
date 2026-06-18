@@ -1,9 +1,23 @@
-import React from 'react';
+import React, { useState } from 'react';
 import Modal from './ui/Modal';
 import theme from '../theme';
 import { Download } from 'lucide-react';
+import InteractiveButton from './ui/InteractiveButton';
+import { handleCndDownload } from '../util/download';
 
 const ResultadoCNDModal = ({ isOpen, cliente, resultados, onClose, loading }) => {
+    const [downloadingId, setDownloadingId] = useState(null);
+
+    const onDownload = async (r) => {
+        setDownloadingId(r.id);
+        try {
+            await handleCndDownload(r.id, cliente.cnpj);
+        } catch (error) {
+            alert('Falha ao baixar CND. Por favor, tente novamente.');
+        } finally {
+            setDownloadingId(null);
+        }
+    };
     if (!cliente) return null;
 
     const styles = {
@@ -84,15 +98,17 @@ const ResultadoCNDModal = ({ isOpen, cliente, resultados, onClose, loading }) =>
                                             </span>
                                         </td>
                                         <td style={styles.td}>
-                                            {r.status === 'Disponível' && r.arquivo ? (
-                                                <a 
-                                                  href={`data:application/pdf;base64,${r.arquivo}`} 
-                                                  download={`cnd-${cliente?.cnpj}-${r.id}.pdf`}
-                                                  style={styles.downloadLink}
+                                            {r.hasArquivo ? (
+                                                <InteractiveButton
+                                                    title="Baixar"
+                                                    variant="secondary"
+                                                    disabled={downloadingId === r.id}
+                                                    onClick={() => onDownload(r)}
+                                                    style={{ padding: '4px 8px', fontSize: '0.8rem' }}
                                                 >
-                                                    <Download size={16} />
+                                                    <Download size={14} style={{ marginRight: '4px' }} />
                                                     Baixar
-                                                </a>
+                                                </InteractiveButton>
                                             ) : (
                                                 'Indisponível'
                                             )}

@@ -1,6 +1,7 @@
 package br.com.sisaudcon.saam.saam_sped_cnd.domain.service;
 
 import br.com.sisaudcon.saam.saam_sped_cnd.domain.exception.ClienteNotFoundException;
+import br.com.sisaudcon.saam.saam_sped_cnd.domain.exception.ResultadoNotFoundException;
 import br.com.sisaudcon.saam.saam_sped_cnd.domain.model.Cliente;
 import br.com.sisaudcon.saam.saam_sped_cnd.domain.model.CndResultado;
 import br.com.sisaudcon.saam.saam_sped_cnd.domain.repository.ClienteRepository;
@@ -9,6 +10,8 @@ import br.com.sisaudcon.saam.saam_sped_cnd.dto.CndResultadoComClienteDTO;
 import br.com.sisaudcon.saam.saam_sped_cnd.dto.CndResultadoDTO;
 import br.com.sisaudcon.saam.saam_sped_cnd.mapper.CndResultadoMapper;
 import lombok.AllArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,6 +22,8 @@ import java.util.stream.Collectors;
 @AllArgsConstructor
 @Service
 public class CndResultadoService{
+    private static final Logger logger = LoggerFactory.getLogger(CndResultadoService.class);
+
     private final ClienteRepository clienteRepo;
     private final CndResultadoRepository resultadoRepository;
     private final SituacaoValidationService situacaoValidationService;
@@ -37,9 +42,20 @@ public class CndResultadoService{
     @Transactional
     public void excluirResultado(Long resultadoId) {
         if (!resultadoRepository.existsById(resultadoId)) {
-            throw new ClienteNotFoundException("Resultado não encontrado.");
+            throw new ResultadoNotFoundException("Resultado não encontrado.");
         }
         resultadoRepository.deleteById(resultadoId);
+    }
+
+    @Transactional(readOnly = true)
+    public CndResultadoDTO buscarPorId(Long id) {
+        logger.info("Iniciando busca de resultado de CND para download. ID: {}", id);
+        return resultadoRepository.findById(id)
+                .map(cndResultadoMapper::toDTO)
+                .orElseThrow(() -> {
+                    logger.error("Resultado de CND não encontrado para download. ID: {}", id);
+                    return new ResultadoNotFoundException("Resultado não encontrado.");
+                });
     }
 
     @Transactional(readOnly = true)
@@ -67,6 +83,7 @@ public class CndResultadoService{
         dto.setStatus(resultado.getStatus());
         dto.setOrgaoEmissor(resultado.getOrgaoEmissor());
         dto.setTipoCertidao(resultado.getTipoCertidao());
+        dto.setHasArquivo(resultado.getArquivo() != null && !resultado.getArquivo().isBlank());
 
         CndResultadoComClienteDTO.ClienteInfo clienteInfo = new CndResultadoComClienteDTO.ClienteInfo();
         clienteInfo.setId(resultado.getCliente().getId());
