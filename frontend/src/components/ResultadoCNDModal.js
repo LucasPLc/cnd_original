@@ -2,6 +2,7 @@ import React from 'react';
 import Modal from './ui/Modal';
 import theme from '../theme';
 import { Download } from 'lucide-react';
+import { handleCndDownload } from '../util/download';
 
 const ResultadoCNDModal = ({ isOpen, cliente, resultados, onClose, loading }) => {
     if (!cliente) return null;
@@ -32,18 +33,27 @@ const ResultadoCNDModal = ({ isOpen, cliente, resultados, onClose, loading }) =>
             borderRadius: theme.borderRadius.full,
             display: 'inline-block',
         },
-        downloadLink: {
+        downloadButton: {
             color: theme.colors.primary,
-            textDecoration: 'none',
+            background: 'transparent',
+            border: 'none',
+            cursor: 'pointer',
             display: 'flex',
             alignItems: 'center',
             gap: theme.spacing.sm,
             fontWeight: 500,
+            padding: 0,
+            transition: 'opacity 0.2s',
+        },
+        disabledButton: {
+            color: theme.colors.mutedForeground,
+            cursor: 'not-allowed',
+            opacity: 0.5,
         }
     };
 
     const getStatusStyle = (status) => {
-        if (status === 'Disponível') {
+        if (status === 'Disponível' || status === 'Concluído') {
             return {
                 background: 'hsl(142.1, 76.2%, 90%)',
                 color: 'hsl(142.1, 70.2%, 30%)',
@@ -84,17 +94,16 @@ const ResultadoCNDModal = ({ isOpen, cliente, resultados, onClose, loading }) =>
                                             </span>
                                         </td>
                                         <td style={styles.td}>
-                                            {r.status === 'Disponível' && r.arquivo ? (
-                                                <a 
-                                                  href={`data:application/pdf;base64,${r.arquivo}`} 
-                                                  download={`cnd-${cliente?.cnpj}-${r.id}.pdf`}
-                                                  style={styles.downloadLink}
+                                            {r.hasArquivo ? (
+                                                <button
+                                                  onClick={() => handleCndDownload(r.id, cliente.cnpj, r.orgaoEmissor)}
+                                                  style={styles.downloadButton}
                                                 >
                                                     <Download size={16} />
                                                     Baixar
-                                                </a>
+                                                </button>
                                             ) : (
-                                                'Indisponível'
+                                                <span style={{color: theme.colors.mutedForeground, fontSize: '0.875rem'}}>Indisponível</span>
                                             )}
                                         </td>
                                     </tr>
