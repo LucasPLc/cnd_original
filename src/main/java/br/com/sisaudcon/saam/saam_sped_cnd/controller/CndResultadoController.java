@@ -29,10 +29,9 @@ public class CndResultadoController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<CndResultado> getResultadoPorId(@PathVariable Long id) {
-        return cndResultadoRepository.findById(id)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+    public ResponseEntity<CndResultadoDTO> getResultadoPorId(@PathVariable Long id) {
+        CndResultadoDTO resultado = cndResultadoService.buscarPorId(id);
+        return ResponseEntity.ok(resultado);
     }
 
     @GetMapping("/cliente/{clienteId}")
