@@ -1,6 +1,7 @@
 package br.com.sisaudcon.saam.saam_sped_cnd.domain.service;
 
 import br.com.sisaudcon.saam.saam_sped_cnd.domain.exception.ClienteNotFoundException;
+import br.com.sisaudcon.saam.saam_sped_cnd.domain.exception.ResultadoNotFoundException;
 import br.com.sisaudcon.saam.saam_sped_cnd.domain.model.Cliente;
 import br.com.sisaudcon.saam.saam_sped_cnd.domain.model.CndResultado;
 import br.com.sisaudcon.saam.saam_sped_cnd.domain.repository.ClienteRepository;
@@ -9,6 +10,8 @@ import br.com.sisaudcon.saam.saam_sped_cnd.dto.CndResultadoComClienteDTO;
 import br.com.sisaudcon.saam.saam_sped_cnd.dto.CndResultadoDTO;
 import br.com.sisaudcon.saam.saam_sped_cnd.mapper.CndResultadoMapper;
 import lombok.AllArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,6 +22,7 @@ import java.util.stream.Collectors;
 @AllArgsConstructor
 @Service
 public class CndResultadoService{
+    private static final Logger logger = LoggerFactory.getLogger(CndResultadoService.class);
     private final ClienteRepository clienteRepo;
     private final CndResultadoRepository resultadoRepository;
     private final SituacaoValidationService situacaoValidationService;
@@ -49,6 +53,14 @@ public class CndResultadoService{
     }
 
     @Transactional(readOnly = true)
+    public CndResultadoDTO buscarPorId(Long id) {
+        logger.info("Iniciando busca do resultado CND por ID: {}", id);
+        return resultadoRepository.findById(id)
+                .map(cndResultadoMapper::toDTO)
+                .orElseThrow(() -> new ResultadoNotFoundException("Resultado não encontrado para o ID: " + id));
+    }
+
+    @Transactional(readOnly = true)
     public List<CndResultadoComClienteDTO> listarTodosComCliente() {
         List<CndResultado> resultados = resultadoRepository.findAllWithClienteAndEmpresa();
         return resultados.stream()
@@ -65,6 +77,7 @@ public class CndResultadoService{
         dto.setDataValidade(resultado.getDataValidade());
         dto.setCodigoControle(resultado.getCodigoControle());
         dto.setStatus(resultado.getStatus());
+        dto.setHasArquivo(resultado.getArquivo() != null && !resultado.getArquivo().isBlank());
         dto.setOrgaoEmissor(resultado.getOrgaoEmissor());
         dto.setTipoCertidao(resultado.getTipoCertidao());
 
