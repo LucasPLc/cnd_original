@@ -2,8 +2,9 @@ import React from 'react';
 import Modal from './ui/Modal';
 import theme from '../theme';
 import { Download } from 'lucide-react';
+import InteractiveButton from './ui/InteractiveButton';
 
-const ResultadoCNDModal = ({ isOpen, cliente, resultados, onClose, loading }) => {
+const ResultadoCNDModal = ({ isOpen, cliente, resultados, onClose, loading, onDownload }) => {
     if (!cliente) return null;
 
     const styles = {
@@ -84,15 +85,15 @@ const ResultadoCNDModal = ({ isOpen, cliente, resultados, onClose, loading }) =>
                                             </span>
                                         </td>
                                         <td style={styles.td}>
-                                            {r.status === 'Disponível' && r.arquivo ? (
-                                                <a 
-                                                  href={`data:application/pdf;base64,${r.arquivo}`} 
-                                                  download={`cnd-${cliente?.cnpj}-${r.id}.pdf`}
-                                                  style={styles.downloadLink}
+                                            {r.hasArquivo ? (
+                                                <InteractiveButton
+                                                  onClick={() => onDownload(r.id)}
+                                                  variant="secondary"
+                                                  style={{padding: '4px 8px', height: 'auto'}}
                                                 >
                                                     <Download size={16} />
                                                     Baixar
-                                                </a>
+                                                </InteractiveButton>
                                             ) : (
                                                 'Indisponível'
                                             )}

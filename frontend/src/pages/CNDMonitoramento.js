@@ -10,6 +10,7 @@ import FilterActions from '../components/FilterActions';
 import ClientsTable from '../components/ClientsTable';
 import ResultsTable from '../components/ResultsTable'; // Importa a nova tabela
 import { showToast } from '../components/ui/Toast';
+import { handleCndDownload } from '../util/download';
 import theme from '../theme';
 import ImportSaamModal from '../components/ImportSaamModal';
 import ResultadoCNDModal from '../components/ResultadoCNDModal';
@@ -73,6 +74,17 @@ const CNDMonitoramento = () => {
         setViewMode(mode);
         if (mode === 'results' && allResults.length === 0) {
             fetchAllResults();
+        }
+    };
+
+    const handleDownloadCnd = async (resultadoId) => {
+        try {
+            const response = await axios.get(`/api/resultados/${resultadoId}`);
+            handleCndDownload(response.data);
+            showToast.success("Download iniciado com sucesso!");
+        } catch (error) {
+            showToast.error("Erro ao buscar arquivo para download.");
+            console.error("Erro ao baixar CND:", error);
         }
     };
 
@@ -262,7 +274,11 @@ const CNDMonitoramento = () => {
                     onRowClick={handleRowClick}
                 />
             ) : (
-                <ResultsTable results={allResults} loading={resultsLoading} />
+                <ResultsTable
+                    results={allResults}
+                    loading={resultsLoading}
+                    onDownload={handleDownloadCnd}
+                />
             )}
 
             <Modal isOpen={isFormModalOpen} onClose={closeFormModal} title={clientToEdit ? 'Editar Cliente' : 'Cadastrar Novo Cliente'}>
@@ -284,7 +300,14 @@ const CNDMonitoramento = () => {
             </Modal>
 
             {isResultadoModalOpen && selectedClientForModal && (
-                <ResultadoCNDModal isOpen={isResultadoModalOpen} cliente={selectedClientForModal} resultados={cndResultados} onClose={() => { setResultadoModalOpen(false); setSelectedClientForModal(null); }} loading={isResultadoLoading} />
+                <ResultadoCNDModal
+                    isOpen={isResultadoModalOpen}
+                    cliente={selectedClientForModal}
+                    resultados={cndResultados}
+                    onClose={() => { setResultadoModalOpen(false); setSelectedClientForModal(null); }}
+                    loading={isResultadoLoading}
+                    onDownload={handleDownloadCnd}
+                />
             )}
         </div>
     );
