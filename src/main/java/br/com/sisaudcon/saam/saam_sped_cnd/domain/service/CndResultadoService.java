@@ -5,10 +5,13 @@ import br.com.sisaudcon.saam.saam_sped_cnd.domain.model.Cliente;
 import br.com.sisaudcon.saam.saam_sped_cnd.domain.model.CndResultado;
 import br.com.sisaudcon.saam.saam_sped_cnd.domain.repository.ClienteRepository;
 import br.com.sisaudcon.saam.saam_sped_cnd.domain.repository.CndResultadoRepository;
+import br.com.sisaudcon.saam.saam_sped_cnd.domain.exception.ResultadoNotFoundException;
 import br.com.sisaudcon.saam.saam_sped_cnd.dto.CndResultadoComClienteDTO;
 import br.com.sisaudcon.saam.saam_sped_cnd.dto.CndResultadoDTO;
 import br.com.sisaudcon.saam.saam_sped_cnd.mapper.CndResultadoMapper;
 import lombok.AllArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,6 +22,8 @@ import java.util.stream.Collectors;
 @AllArgsConstructor
 @Service
 public class CndResultadoService{
+    private static final Logger logger = LoggerFactory.getLogger(CndResultadoService.class);
+
     private final ClienteRepository clienteRepo;
     private final CndResultadoRepository resultadoRepository;
     private final SituacaoValidationService situacaoValidationService;
@@ -56,6 +61,16 @@ public class CndResultadoService{
                 .collect(Collectors.toList());
     }
 
+    @Transactional(readOnly = true)
+    public CndResultadoDTO buscarPorId(Long id) {
+        CndResultado resultado = resultadoRepository.findById(id)
+                .orElseThrow(() -> new ResultadoNotFoundException("Resultado não encontrado."));
+
+        logger.info("Tentativa de download do PDF para o resultado ID: {}", id);
+
+        return cndResultadoMapper.toDTO(resultado);
+    }
+
     private CndResultadoComClienteDTO mapToComClienteDTO(CndResultado resultado) {
         CndResultadoComClienteDTO dto = new CndResultadoComClienteDTO();
         dto.setId(resultado.getId());
@@ -67,6 +82,7 @@ public class CndResultadoService{
         dto.setStatus(resultado.getStatus());
         dto.setOrgaoEmissor(resultado.getOrgaoEmissor());
         dto.setTipoCertidao(resultado.getTipoCertidao());
+        dto.setHasArquivo(resultado.getArquivo() != null && !resultado.getArquivo().isBlank());
 
         CndResultadoComClienteDTO.ClienteInfo clienteInfo = new CndResultadoComClienteDTO.ClienteInfo();
         clienteInfo.setId(resultado.getCliente().getId());
