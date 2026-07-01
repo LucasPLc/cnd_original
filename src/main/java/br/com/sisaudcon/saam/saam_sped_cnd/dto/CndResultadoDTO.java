@@ -18,4 +18,6 @@ public class CndResultadoDTO {
     private String codigoControle;
     private String status;
     private Long clienteId;
+    private String arquivo;
+    private boolean hasArquivo;
 }

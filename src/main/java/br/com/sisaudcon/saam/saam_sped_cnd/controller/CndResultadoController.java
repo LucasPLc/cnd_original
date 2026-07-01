@@ -6,6 +6,7 @@ import br.com.sisaudcon.saam.saam_sped_cnd.domain.service.CndResultadoService;
 import br.com.sisaudcon.saam.saam_sped_cnd.dto.CndResultadoComClienteDTO;
 import br.com.sisaudcon.saam.saam_sped_cnd.dto.CndResultadoDTO;
 import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -14,6 +15,7 @@ import jakarta.validation.Valid;
 
 import java.util.List;
 
+@Slf4j
 @RestController
 @RequestMapping("/resultados")
 @AllArgsConstructor
@@ -29,10 +31,10 @@ public class CndResultadoController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<CndResultado> getResultadoPorId(@PathVariable Long id) {
-        return cndResultadoRepository.findById(id)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+    public ResponseEntity<CndResultadoDTO> getResultadoPorId(@PathVariable Long id) {
+        log.info("Requisição para buscar resultado de CND por ID: {}", id);
+        CndResultadoDTO resultado = cndResultadoService.buscarPorId(id);
+        return ResponseEntity.ok(resultado);
     }
 
     @GetMapping("/cliente/{clienteId}")
