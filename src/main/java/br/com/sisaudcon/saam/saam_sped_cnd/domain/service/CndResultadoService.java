@@ -7,8 +7,10 @@ import br.com.sisaudcon.saam.saam_sped_cnd.domain.repository.ClienteRepository;
 import br.com.sisaudcon.saam.saam_sped_cnd.domain.repository.CndResultadoRepository;
 import br.com.sisaudcon.saam.saam_sped_cnd.dto.CndResultadoComClienteDTO;
 import br.com.sisaudcon.saam.saam_sped_cnd.dto.CndResultadoDTO;
+import br.com.sisaudcon.saam.saam_sped_cnd.domain.exception.ResultadoNotFoundException;
 import br.com.sisaudcon.saam.saam_sped_cnd.mapper.CndResultadoMapper;
 import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -16,6 +18,7 @@ import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
+@Slf4j
 @AllArgsConstructor
 @Service
 public class CndResultadoService{
@@ -56,6 +59,14 @@ public class CndResultadoService{
                 .collect(Collectors.toList());
     }
 
+    @Transactional(readOnly = true)
+    public CndResultadoDTO buscarPorId(Long id) {
+        log.info("Buscando resultado de CND por ID: {}", id);
+        CndResultado resultado = resultadoRepository.findById(id)
+                .orElseThrow(() -> new ResultadoNotFoundException("Resultado não encontrado para o ID: " + id));
+        return cndResultadoMapper.toDTO(resultado);
+    }
+
     private CndResultadoComClienteDTO mapToComClienteDTO(CndResultado resultado) {
         CndResultadoComClienteDTO dto = new CndResultadoComClienteDTO();
         dto.setId(resultado.getId());
@@ -67,6 +78,7 @@ public class CndResultadoService{
         dto.setStatus(resultado.getStatus());
         dto.setOrgaoEmissor(resultado.getOrgaoEmissor());
         dto.setTipoCertidao(resultado.getTipoCertidao());
+        dto.setHasArquivo(resultado.getArquivo() != null && !resultado.getArquivo().isBlank());
 
         CndResultadoComClienteDTO.ClienteInfo clienteInfo = new CndResultadoComClienteDTO.ClienteInfo();
         clienteInfo.setId(resultado.getCliente().getId());
