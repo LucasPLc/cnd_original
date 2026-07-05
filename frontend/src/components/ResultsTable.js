@@ -1,5 +1,8 @@
 import React from 'react';
 import theme from '../theme';
+import { Download } from 'lucide-react';
+import InteractiveButton from './ui/InteractiveButton';
+import { handleCndDownload } from '../util/download';
 
 const ResultsTable = ({ results, loading }) => {
     const styles = {
@@ -55,11 +58,12 @@ const ResultsTable = ({ results, loading }) => {
                         <th style={styles.th}>Data de Emissão</th>
                         <th style={styles.th}>Data de Validade</th>
                         <th style={styles.th}>Status</th>
+                        <th style={styles.th}>Ações</th>
                     </tr>
                 </thead>
                 <tbody>
                     {loading ? (
-                        <tr><td colSpan="6" style={{textAlign: 'center', padding: theme.spacing.xl}}>Carregando resultados...</td></tr>
+                        <tr><td colSpan="7" style={{textAlign: 'center', padding: theme.spacing.xl}}>Carregando resultados...</td></tr>
                     ) : (
                         results.map(result => (
                             <tr key={result.id}>
@@ -87,6 +91,16 @@ const ResultsTable = ({ results, loading }) => {
                                     }}>
                                         {result.status || 'Pendente'}
                                     </span>
+                                </td>
+                                <td style={styles.td}>
+                                    <InteractiveButton
+                                        onClick={() => handleCndDownload(result.id, result.cliente?.cnpj, result.orgaoEmissor, result.dataEmissao)}
+                                        disabled={!result.hasArquivo}
+                                        variant="outline"
+                                        title={result.hasArquivo ? "Baixar PDF" : "Arquivo indisponível"}
+                                    >
+                                        <Download size={16} />
+                                    </InteractiveButton>
                                 </td>
                             </tr>
                         ))
