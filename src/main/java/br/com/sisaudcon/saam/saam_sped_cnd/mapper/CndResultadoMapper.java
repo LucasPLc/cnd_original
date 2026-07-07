@@ -20,6 +20,9 @@ public class CndResultadoMapper {
         dto.setDataValidade(cndResultado.getDataValidade());
         dto.setCodigoControle(cndResultado.getCodigoControle());
         dto.setStatus(cndResultado.getStatus());
+        dto.setOrgaoEmissor(cndResultado.getOrgaoEmissor());
+        dto.setTipoCertidao(cndResultado.getTipoCertidao());
+        dto.setHasArquivo(cndResultado.getArquivo() != null && !cndResultado.getArquivo().isBlank());
         if (cndResultado.getCliente() != null && cndResultado.getCliente().getId() != null) {
             dto.setClienteId(cndResultado.getCliente().getId().longValue());
         }

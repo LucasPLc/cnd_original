@@ -5,10 +5,12 @@ import br.com.sisaudcon.saam.saam_sped_cnd.domain.model.Cliente;
 import br.com.sisaudcon.saam.saam_sped_cnd.domain.model.CndResultado;
 import br.com.sisaudcon.saam.saam_sped_cnd.domain.repository.ClienteRepository;
 import br.com.sisaudcon.saam.saam_sped_cnd.domain.repository.CndResultadoRepository;
+import br.com.sisaudcon.saam.saam_sped_cnd.domain.exception.ResultadoNotFoundException;
 import br.com.sisaudcon.saam.saam_sped_cnd.dto.CndResultadoComClienteDTO;
 import br.com.sisaudcon.saam.saam_sped_cnd.dto.CndResultadoDTO;
 import br.com.sisaudcon.saam.saam_sped_cnd.mapper.CndResultadoMapper;
 import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -16,6 +18,7 @@ import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
+@Slf4j
 @AllArgsConstructor
 @Service
 public class CndResultadoService{
@@ -43,6 +46,14 @@ public class CndResultadoService{
     }
 
     @Transactional(readOnly = true)
+    public CndResultadoDTO buscarPorId(Long id) {
+        log.info("Tentativa de download do resultado CND ID: {}", id);
+        return resultadoRepository.findById(id)
+                .map(cndResultadoMapper::toDTO)
+                .orElseThrow(() -> new ResultadoNotFoundException("Resultado não encontrado com ID: " + id));
+    }
+
+    @Transactional(readOnly = true)
     public List<CndResultadoDTO> findAllByClienteId(Integer clienteId) {
         List<CndResultado> resultados = resultadoRepository.findAllByCliente_Id(clienteId);
         return cndResultadoMapper.toDTOList(resultados);
@@ -67,6 +78,7 @@ public class CndResultadoService{
         dto.setStatus(resultado.getStatus());
         dto.setOrgaoEmissor(resultado.getOrgaoEmissor());
         dto.setTipoCertidao(resultado.getTipoCertidao());
+        dto.setHasArquivo(resultado.getArquivo() != null && !resultado.getArquivo().isBlank());
 
         CndResultadoComClienteDTO.ClienteInfo clienteInfo = new CndResultadoComClienteDTO.ClienteInfo();
         clienteInfo.setId(resultado.getCliente().getId());
