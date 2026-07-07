@@ -1,7 +1,18 @@
-import React from 'react';
+import React, { useState } from 'react';
 import theme from '../theme';
+import { Download } from 'lucide-react';
+import { handleCndDownload } from '../util/download';
+import InteractiveButton from './ui/InteractiveButton';
 
 const ResultsTable = ({ results, loading }) => {
+    const [downloadingId, setDownloadingId] = useState(null);
+
+    const onDownload = async (result) => {
+        setDownloadingId(result.id);
+        await handleCndDownload(result);
+        setDownloadingId(null);
+    };
+
     const styles = {
         tableContainer: {
             background: theme.colors.background,
@@ -55,11 +66,12 @@ const ResultsTable = ({ results, loading }) => {
                         <th style={styles.th}>Data de Emissão</th>
                         <th style={styles.th}>Data de Validade</th>
                         <th style={styles.th}>Status</th>
+                        <th style={styles.th}>Ações</th>
                     </tr>
                 </thead>
                 <tbody>
                     {loading ? (
-                        <tr><td colSpan="6" style={{textAlign: 'center', padding: theme.spacing.xl}}>Carregando resultados...</td></tr>
+                        <tr><td colSpan="7" style={{textAlign: 'center', padding: theme.spacing.xl}}>Carregando resultados...</td></tr>
                     ) : (
                         results.map(result => (
                             <tr key={result.id}>
@@ -87,6 +99,17 @@ const ResultsTable = ({ results, loading }) => {
                                     }}>
                                         {result.status || 'Pendente'}
                                     </span>
+                                </td>
+                                <td style={styles.td}>
+                                    <InteractiveButton
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() => onDownload(result)}
+                                        disabled={!result.hasArquivo || downloadingId === result.id}
+                                        title={result.hasArquivo ? "Baixar PDF" : "PDF não disponível"}
+                                    >
+                                        <Download size={18} color={result.hasArquivo ? theme.colors.primary : theme.colors.mutedForeground} />
+                                    </InteractiveButton>
                                 </td>
                             </tr>
                         ))
