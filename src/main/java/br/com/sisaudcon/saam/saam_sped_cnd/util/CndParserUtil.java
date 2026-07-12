@@ -7,6 +7,8 @@ import java.io.ByteArrayInputStream;
 import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class CndParserUtil {
 
@@ -28,20 +30,36 @@ public class CndParserUtil {
         Map<String, String> dados = new HashMap<>();
         String texto = extrairTextoBase64(base64Arquivo);
 
-        int iSit = texto.indexOf("CERTIDÃO");
-        int iNome = texto.indexOf("DE DÉBITOS");
-        if (iSit >= 0 && iNome > iSit) {
-            dados.put("situacao", texto.substring(iSit, iNome).trim());
+        // Situação (Ex: CERTIDÃO NEGATIVA DE DÉBITOS RELATIVOS...)
+        Pattern situacaoPattern = Pattern.compile("CERTIDÃO\\s+(.*?)\\s+DE DÉBITOS", Pattern.CASE_INSENSITIVE);
+        Matcher situacaoMatcher = situacaoPattern.matcher(texto);
+        if (situacaoMatcher.find()) {
+            dados.put("situacao", situacaoMatcher.group(1).trim());
         }
 
-        dados.put("dataEmissao", extrairEntre(texto, "Emitida às ", " <"));
+        // Data de Emissão (Ex: Emitida às 10:00:00 do dia 01/01/2024)
+        Pattern emissaoPattern = Pattern.compile("Emitida às\\s+([\\d:]+)\\s+do dia\\s+(\\d{2}/\\d{2}/\\d{4})", Pattern.CASE_INSENSITIVE);
+        Matcher emissaoMatcher = emissaoPattern.matcher(texto);
+        if (emissaoMatcher.find()) {
+            dados.put("dataEmissao", emissaoMatcher.group(2).trim());
+        } else {
+            // Fallback para o formato anterior se necessário
+            dados.put("dataEmissao", extrairEntre(texto, "Emitida às ", " <"));
+        }
 
-        dados.put("dataValidade", extrairEntre(texto, "Válida até ", "."));
+        // Data de Validade (Ex: Válida até 01/07/2024)
+        Pattern validadePattern = Pattern.compile("Válida até\\s+(\\d{2}/\\d{2}/\\d{4})", Pattern.CASE_INSENSITIVE);
+        Matcher validadeMatcher = validadePattern.matcher(texto);
+        if (validadeMatcher.find()) {
+            dados.put("dataValidade", validadeMatcher.group(1).trim());
+        }
 
-        dados.put(
-                "codigoControle",
-                extrairEntre(texto, "Código de controle da certidão: ", " ")
-        );
+        // Código de Controle
+        Pattern codigoPattern = Pattern.compile("Código de controle da certidão:\\s+([A-Z0-9.-]+)", Pattern.CASE_INSENSITIVE);
+        Matcher codigoMatcher = codigoPattern.matcher(texto);
+        if (codigoMatcher.find()) {
+            dados.put("codigoControle", codigoMatcher.group(1).trim());
+        }
 
         return dados;
     }
