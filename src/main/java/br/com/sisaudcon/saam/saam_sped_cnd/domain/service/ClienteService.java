@@ -5,6 +5,7 @@ import br.com.sisaudcon.saam.saam_sped_cnd.domain.model.Cliente;
 import br.com.sisaudcon.saam.saam_sped_cnd.domain.repository.ClienteRepository;
 import br.com.sisaudcon.saam.saam_sped_cnd.dto.ClienteDTO;
 import br.com.sisaudcon.saam.saam_sped_cnd.mapper.ClienteMapper;
+import br.com.sisaudcon.saam.saam_sped_cnd.dto.CndResultadoComClienteDTO;
 import br.com.sisaudcon.saam.saam_sped_cnd.dto.CndResultadoDTO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -38,7 +39,7 @@ public class ClienteService {
         Cliente cliente = clienteRepository.findByCnpjSemFormatacao(cnpj)
                 .orElseThrow(() -> new ClienteNotFoundException("Cliente não encontrado para o CNPJ: " + cnpj));
 
-        List<CndResultadoDTO> resultados = cndResultadoService.findAllByClienteId(cliente.getId());
+        List<CndResultadoComClienteDTO> resultados = cndResultadoService.findAllByClienteId(cliente.getId());
 
         Map<String, Object> debugInfo = new HashMap<>();
         debugInfo.put("clienteEncontrado", ClienteMapper.toDTO(cliente));

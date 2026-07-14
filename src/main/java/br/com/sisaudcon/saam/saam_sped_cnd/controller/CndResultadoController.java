@@ -29,15 +29,14 @@ public class CndResultadoController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<CndResultado> getResultadoPorId(@PathVariable Long id) {
-        return cndResultadoRepository.findById(id)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+    public ResponseEntity<CndResultadoDTO> getResultadoPorId(@PathVariable Long id) {
+        CndResultadoDTO resultado = cndResultadoService.buscarPorId(id);
+        return ResponseEntity.ok(resultado);
     }
 
     @GetMapping("/cliente/{clienteId}")
-    public ResponseEntity<List<CndResultadoDTO>> getResultadosPorClienteId(@PathVariable Integer clienteId) {
-        List<CndResultadoDTO> resultados = cndResultadoService.findAllByClienteId(clienteId);
+    public ResponseEntity<List<CndResultadoComClienteDTO>> getResultadosPorClienteId(@PathVariable Integer clienteId) {
+        List<CndResultadoComClienteDTO> resultados = cndResultadoService.findAllByClienteId(clienteId);
         return ResponseEntity.ok(resultados);
     }
 
