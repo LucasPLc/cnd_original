@@ -2,6 +2,8 @@ import React from 'react';
 import Modal from './ui/Modal';
 import theme from '../theme';
 import { Download } from 'lucide-react';
+import InteractiveButton from './ui/InteractiveButton';
+import { handleCndDownload } from '../util/download';
 
 const ResultadoCNDModal = ({ isOpen, cliente, resultados, onClose, loading }) => {
     if (!cliente) return null;
@@ -32,18 +34,10 @@ const ResultadoCNDModal = ({ isOpen, cliente, resultados, onClose, loading }) =>
             borderRadius: theme.borderRadius.full,
             display: 'inline-block',
         },
-        downloadLink: {
-            color: theme.colors.primary,
-            textDecoration: 'none',
-            display: 'flex',
-            alignItems: 'center',
-            gap: theme.spacing.sm,
-            fontWeight: 500,
-        }
     };
 
     const getStatusStyle = (status) => {
-        if (status === 'Disponível') {
+        if (status === 'Disponível' || status === 'Concluído') {
             return {
                 background: 'hsl(142.1, 76.2%, 90%)',
                 color: 'hsl(142.1, 70.2%, 30%)',
@@ -84,18 +78,14 @@ const ResultadoCNDModal = ({ isOpen, cliente, resultados, onClose, loading }) =>
                                             </span>
                                         </td>
                                         <td style={styles.td}>
-                                            {r.status === 'Disponível' && r.arquivo ? (
-                                                <a 
-                                                  href={`data:application/pdf;base64,${r.arquivo}`} 
-                                                  download={`cnd-${cliente?.cnpj}-${r.id}.pdf`}
-                                                  style={styles.downloadLink}
-                                                >
-                                                    <Download size={16} />
-                                                    Baixar
-                                                </a>
-                                            ) : (
-                                                'Indisponível'
-                                            )}
+                                            <InteractiveButton
+                                                onClick={() => handleCndDownload(r.id)}
+                                                variant="ghost"
+                                                disabled={!r.hasArquivo}
+                                                title={r.hasArquivo ? "Baixar PDF" : "Arquivo indisponível"}
+                                            >
+                                                <Download size={18} />
+                                            </InteractiveButton>
                                         </td>
                                     </tr>
                                 ))

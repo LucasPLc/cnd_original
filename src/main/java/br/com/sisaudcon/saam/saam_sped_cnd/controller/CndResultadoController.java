@@ -1,11 +1,12 @@
 package br.com.sisaudcon.saam.saam_sped_cnd.controller;
 
 import br.com.sisaudcon.saam.saam_sped_cnd.domain.model.CndResultado;
-import br.com.sisaudcon.saam.saam_sped_cnd.domain.repository.CndResultadoRepository;
 import br.com.sisaudcon.saam.saam_sped_cnd.domain.service.CndResultadoService;
 import br.com.sisaudcon.saam.saam_sped_cnd.dto.CndResultadoComClienteDTO;
 import br.com.sisaudcon.saam.saam_sped_cnd.dto.CndResultadoDTO;
 import lombok.AllArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -19,7 +20,7 @@ import java.util.List;
 @AllArgsConstructor
 public class CndResultadoController {
 
-    private final CndResultadoRepository cndResultadoRepository;
+    private static final Logger logger = LoggerFactory.getLogger(CndResultadoController.class);
     private final CndResultadoService cndResultadoService;
 
     @GetMapping
@@ -29,10 +30,10 @@ public class CndResultadoController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<CndResultado> getResultadoPorId(@PathVariable Long id) {
-        return cndResultadoRepository.findById(id)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+    public ResponseEntity<CndResultadoDTO> getResultadoPorId(@PathVariable Long id) {
+        logger.info("Solicitado download/detalhe do resultado CND ID: {}", id);
+        CndResultadoDTO resultado = cndResultadoService.buscarPorId(id);
+        return ResponseEntity.ok(resultado);
     }
 
     @GetMapping("/cliente/{clienteId}")

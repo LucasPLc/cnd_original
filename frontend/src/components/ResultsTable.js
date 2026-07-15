@@ -1,5 +1,8 @@
 import React from 'react';
 import theme from '../theme';
+import { Download } from 'lucide-react';
+import InteractiveButton from './ui/InteractiveButton';
+import { handleCndDownload } from '../util/download';
 
 const ResultsTable = ({ results, loading }) => {
     const styles = {
@@ -24,6 +27,7 @@ const ResultsTable = ({ results, loading }) => {
         td: {
             padding: theme.spacing.md,
             borderTop: `1px solid ${theme.colors.border}`,
+            verticalAlign: 'middle',
         },
         avatar: {
             width: '40px',
@@ -55,11 +59,12 @@ const ResultsTable = ({ results, loading }) => {
                         <th style={styles.th}>Data de Emissão</th>
                         <th style={styles.th}>Data de Validade</th>
                         <th style={styles.th}>Status</th>
+                        <th style={styles.th}>Ações</th>
                     </tr>
                 </thead>
                 <tbody>
                     {loading ? (
-                        <tr><td colSpan="6" style={{textAlign: 'center', padding: theme.spacing.xl}}>Carregando resultados...</td></tr>
+                        <tr><td colSpan="7" style={{textAlign: 'center', padding: theme.spacing.xl}}>Carregando resultados...</td></tr>
                     ) : (
                         results.map(result => (
                             <tr key={result.id}>
@@ -82,11 +87,21 @@ const ResultsTable = ({ results, loading }) => {
                                         fontSize: '0.75rem',
                                         fontWeight: 500,
                                         borderRadius: theme.borderRadius.full,
-                                        background: result.status === 'Concluído' ? 'hsl(142.1, 76.2%, 80%)' : 'hsl(35, 92%, 80%)',
-                                        color: result.status === 'Concluído' ? 'hsl(142.1, 70.2%, 25%)' : 'hsl(35, 92%, 25%)',
+                                        background: result.status === 'Concluído' || result.status === 'Disponível' ? 'hsl(142.1, 76.2%, 80%)' : 'hsl(35, 92%, 80%)',
+                                        color: result.status === 'Concluído' || result.status === 'Disponível' ? 'hsl(142.1, 70.2%, 25%)' : 'hsl(35, 92%, 25%)',
                                     }}>
                                         {result.status || 'Pendente'}
                                     </span>
+                                </td>
+                                <td style={styles.td}>
+                                    <InteractiveButton
+                                        onClick={() => handleCndDownload(result.id)}
+                                        variant="ghost"
+                                        disabled={!result.hasArquivo}
+                                        title={result.hasArquivo ? "Baixar PDF" : "Arquivo indisponível"}
+                                    >
+                                        <Download size={18} />
+                                    </InteractiveButton>
                                 </td>
                             </tr>
                         ))
