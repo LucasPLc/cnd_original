@@ -20,13 +20,30 @@ public class CndResultadoMapper {
         dto.setDataValidade(cndResultado.getDataValidade());
         dto.setCodigoControle(cndResultado.getCodigoControle());
         dto.setStatus(cndResultado.getStatus());
-        if (cndResultado.getCliente() != null && cndResultado.getCliente().getId() != null) {
-            dto.setClienteId(cndResultado.getCliente().getId().longValue());
+        dto.setOrgaoEmissor(cndResultado.getOrgaoEmissor());
+        dto.setTipoCertidao(cndResultado.getTipoCertidao());
+        dto.setHasArquivo(cndResultado.getArquivo() != null && !cndResultado.getArquivo().isBlank());
+
+        if (cndResultado.getCliente() != null) {
+            if (cndResultado.getCliente().getId() != null) {
+                dto.setClienteId(cndResultado.getCliente().getId().longValue());
+            }
+            dto.setClienteCnpj(cndResultado.getCliente().getCnpj());
         }
+        return dto;
+    }
+
+    public CndResultadoDTO toSummaryDTO(CndResultado cndResultado) {
+        CndResultadoDTO dto = toDTO(cndResultado);
+        dto.setArquivo(null); // Excluir Base64 para listagens
         return dto;
     }
 
     public List<CndResultadoDTO> toDTOList(List<CndResultado> cndResultados) {
         return cndResultados.stream().map(this::toDTO).collect(Collectors.toList());
+    }
+
+    public List<CndResultadoDTO> toSummaryDTOList(List<CndResultado> cndResultados) {
+        return cndResultados.stream().map(this::toSummaryDTO).collect(Collectors.toList());
     }
 }
